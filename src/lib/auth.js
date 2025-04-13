@@ -3,19 +3,18 @@
 const API_URL = 'https://videora-ai.onrender.com';
 
 /**
- * Handle Google authentication with authorization code
- * Used for the AuthCallback component that handles OAuth redirect flow
+ * Handle authentication with backend token generation
  */
-export const handleGoogleCallback = async (code) => {
+export const loginWithBackend = async (googleCredential) => {
   try {
-    console.log('Processing authorization code');
+    console.log('Requesting token from backend');
     
-    const response = await fetch(`${API_URL}/auth/google`, {
+    const response = await fetch(`${API_URL}/auth/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ googleCredential }),
     });
 
     if (!response.ok) {
@@ -23,9 +22,9 @@ export const handleGoogleCallback = async (code) => {
     }
 
     const data = await response.json();
-    console.log('Google authentication successful');
+    console.log('Backend authentication successful');
     
-    // Store tokens in localStorage
+    // Store tokens from backend in localStorage
     localStorage.setItem('access_token', data.access_token || '');
     localStorage.setItem('token', data.token || '');
     
@@ -34,19 +33,36 @@ export const handleGoogleCallback = async (code) => {
     } else if (process.env.NODE_ENV === 'development') {
       // Create mock user if not returned (development only)
       const mockUser = {
-        id: `google_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'Google User',
+        id: `user_${Math.random().toString(36).substring(2, 15)}`,
+        name: 'User',
         email: 'user@example.com',
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('userData', JSON.stringify(mockUser));
     }
     
-    localStorage.setItem('authType', 'google');
+    localStorage.setItem('authType', 'backend');
     
     return data;
   } catch (error) {
-    console.error('Google authentication error:', error);
+    console.error('Authentication error:', error);
+    
+    // For development only: create mock user on failure
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Creating mock user for development');
+      const mockUser = {
+        id: `mock_${Math.random().toString(36).substring(2, 15)}`,
+        name: 'Mock User',
+        email: 'mock@example.com',
+        createdAt: new Date().toISOString()
+      };
+      localStorage.setItem('userData', JSON.stringify(mockUser));
+      localStorage.setItem('authType', 'backend');
+      localStorage.setItem('token', 'mock_token');
+      
+      return { user: mockUser, token: 'mock_token' };
+    }
+    
     throw error;
   }
 };
