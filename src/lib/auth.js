@@ -50,24 +50,85 @@ export const handleGoogleCallback = async (code) => {
     return data;
   } catch (error) {
     console.error('Google authentication error:', error);
-    
-    // For testing/demo purposes in development, create a mock user on failure
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating mock user for development environment');
-      const mockUser = {
-        id: `google_mock_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'Mock Google User',
-        email: 'mock@example.com',
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('userData', JSON.stringify(mockUser));
-      localStorage.setItem('authType', 'google');
-      localStorage.setItem('access_token', 'mock_token');
-      localStorage.setItem('token', 'mock_token');
-      
-      return { user: mockUser, token: 'mock_token' };
-    }
-    
     throw error;
   }
+};
+
+/**
+ * Creates a free session for users without authentication
+ * @returns {Promise<Object>} - Mock user data for free session
+ */
+export const createFreeSession = async () => {
+  try {
+    // Create a free session user
+    const freeUser = {
+      id: `free_${Math.random().toString(36).substring(2, 15)}`,
+      name: 'Free User',
+      email: 'free@videora.app',
+      createdAt: new Date().toISOString(),
+      isFree: true
+    };
+    
+    // Store the free user in localStorage
+    localStorage.setItem('userData', JSON.stringify(freeUser));
+    localStorage.setItem('authType', 'free');
+    localStorage.setItem('access_token', 'free_token');
+    
+    // Set query limits for free users
+    localStorage.setItem('queryCount', '0');
+    
+    return freeUser;
+  } catch (error) {
+    console.error('Free session creation error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Gets the current user data from localStorage
+ * @returns {Object|null}
+ */
+export const getCurrentUser = () => {
+  const userData = localStorage.getItem('userData');
+  return userData ? JSON.parse(userData) : null;
+};
+
+/**
+ * Gets the current authentication token (JWT)
+ * @returns {string|null}
+ */
+export const getToken = () => {
+  return localStorage.getItem('token');
+};
+
+/**
+ * Gets the OAuth2 access token specifically
+ * @returns {string|null}
+ */
+export const getAccessToken = () => {
+  return localStorage.getItem('access_token');
+};
+
+/**
+ * Creates an authenticated fetch request with the access token
+ * @param {string} url - The URL to fetch
+ * @param {Object} options - Fetch options
+ * @returns {Promise<Response>} - The fetch response
+ */
+export const authenticatedFetch = async (url, options = {}) => {
+  const accessToken = getAccessToken();
+  
+  if (!accessToken) {
+    throw new Error('No access token available. User may not be authenticated.');
+  }
+  
+  const headers = {
+    ...options.headers,
+    'Authorization': `Bearer ${accessToken}`
+  };
+  
+  return fetch(url, {
+    ...options,
+    headers
+  });
 }; 
