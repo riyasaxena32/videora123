@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext';
 
 function HomePage() {
   const [activeNavItem, setActiveNavItem] = useState("Home");
@@ -8,6 +9,7 @@ function HomePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -136,9 +138,37 @@ function HomePage() {
           <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
             <Bell className="w-4 h-4" />
           </button>
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
-            <User className="w-4 h-4" />
-          </button>
+          <div className="relative group">
+            <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
+              {user?.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-full h-full rounded-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/placeholder-user.jpg';
+                  }}
+                />
+              ) : (
+                <User className="w-4 h-4" />
+              )}
+            </button>
+            <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] rounded-md shadow-lg py-1 z-20 hidden group-hover:block">
+              {user && (
+                <div className="px-4 py-2 border-b border-[#333]">
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-[#b0b0b0] truncate">{user.email}</p>
+                </div>
+              )}
+              <button
+                onClick={logout}
+                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#270E00] transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
