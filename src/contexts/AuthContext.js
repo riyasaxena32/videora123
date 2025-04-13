@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { handleGoogleCallback } from '../lib/auth';
 
 const AuthContext = createContext(null);
 
@@ -50,18 +51,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Handle Google login with authorization code
+  const handleGoogleAuthCode = async (code) => {
+    try {
+      setLoading(true);
+      const response = await handleGoogleCallback(code);
+      
+      // User data should already be stored in localStorage by handleGoogleCallback
+      const userData = localStorage.getItem('userData');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+      
+      // Navigate to home page after successful login
+      navigate('/');
+      return response;
+    } catch (error) {
+      console.error('Google auth code login failed', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle logout
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('access_token');
     localStorage.removeItem('userData');
     localStorage.removeItem('authType');
+    
+    // Also remove any query limit data
+    localStorage.removeItem('queryLimitReached');
+    localStorage.removeItem('queryCount');
+    
     setUser(null);
     navigate('/login');
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">
+    return <div className="flex items-center justify-center h-screen bg-black">
       <div className="animate-spin h-10 w-10 border-4 border-[#9747ff] rounded-full border-t-transparent"></div>
     </div>;
   }
@@ -70,6 +99,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{ 
       user, 
       handleGoogleLogin, 
+      handleGoogleAuthCode, 
       logout, 
       isAuthenticated: !!user 
     }}>

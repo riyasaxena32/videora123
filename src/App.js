@@ -1,8 +1,10 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import CreatePage from './pages/CreatePage';
 import LoginPage from './pages/LoginPage';
+import AuthCallback from './components/AuthCallback';
+import AuthLoading from './components/AuthLoading';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected route component
@@ -21,6 +23,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/google/callback" element={<AuthCallback />} />
+      <Route path="/auth/loading" element={<AuthLoading />} />
       <Route 
         path="/" 
         element={
