@@ -26,8 +26,7 @@ export default function AuthCallback() {
           console.log('Authentication successful:', authData);
           
           // Reset query count on successful Google auth
-          localStorage.removeItem('queryLimitReached');
-          localStorage.removeItem('queryCount');
+         
           
           // Redirect to homepage on success
           navigate('/', { replace: true });
