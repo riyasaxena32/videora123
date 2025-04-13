@@ -4,11 +4,7 @@ const API_URL = 'https://videora-ai.onrender.com';
 
 /**
  * Handle Google authentication with authorization code
- * This supports both the OAuth redirect flow and the direct curl command:
- * 
- * curl --location 'https://videora-ai.onrender.com/auth/google' \
- *   --header 'Content-Type: application/json' \
- *   --data '{ "code": "YOUR_AUTHORIZATION_CODE" }'
+ * Used for the AuthCallback component that handles OAuth redirect flow
  */
 export const handleGoogleCallback = async (code) => {
   try {
@@ -23,9 +19,7 @@ export const handleGoogleCallback = async (code) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Auth error response:', errorText);
-      throw new Error(`Authentication failed: ${response.status}`);
+      throw new Error('Authentication failed');
     }
 
     const data = await response.json();
@@ -39,7 +33,6 @@ export const handleGoogleCallback = async (code) => {
       localStorage.setItem('userData', JSON.stringify(data.user));
     } else if (process.env.NODE_ENV === 'development') {
       // Create mock user if not returned (development only)
-      console.log('Creating mock user for development');
       const mockUser = {
         id: `google_${Math.random().toString(36).substring(2, 15)}`,
         name: 'Google User',
@@ -51,31 +44,9 @@ export const handleGoogleCallback = async (code) => {
     
     localStorage.setItem('authType', 'google');
     
-    // Reset query limits if applicable
-    localStorage.removeItem('queryLimitReached');
-    localStorage.removeItem('queryCount');
-    
     return data;
   } catch (error) {
     console.error('Google authentication error:', error);
-    
-    // For testing/demo purposes, create a mock user even on failure in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating mock user for development environment');
-      const mockUser = {
-        id: `google_mock_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'Mock Google User',
-        email: 'mock@example.com',
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('userData', JSON.stringify(mockUser));
-      localStorage.setItem('authType', 'google');
-      localStorage.setItem('access_token', 'mock_token');
-      localStorage.setItem('token', 'mock_token');
-      
-      return { user: mockUser, token: 'mock_token' };
-    }
-    
     throw error;
   }
 };
