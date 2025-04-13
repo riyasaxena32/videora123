@@ -1,28 +1,8 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import CreatePage from './pages/CreatePage';
 import LoginPage from './pages/LoginPage';
-
-// Temporary Google Auth callback handler component
-const GoogleAuthCallback = () => {
-  React.useEffect(() => {
-    // Parse the URL params to get the auth token
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    
-    if (token) {
-      // Store the token in localStorage or your auth state management
-      localStorage.setItem('auth_token', token);
-      console.log('Auth token received:', token);
-    }
-    
-    // You might want to add more robust error handling here
-  }, []);
-  
-  // Redirect to home page after processing auth
-  return <Navigate to="/" replace />;
-};
 
 function App() {
   return (
@@ -30,7 +10,13 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={<CreatePage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+      <Route path="/auth/loading" element={<div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606] mx-auto mb-4"></div>
+          <p className="text-xl">Connecting to Google...</p>
+        </div>
+      </div>} />
+      <Route path="/auth/google/callback" element={<LoginPage />} />
       {/* Add other routes for About, Playground, Studio, Community, etc. */}
       <Route path="/about" element={<div className="p-10 bg-black text-white">About Page</div>} />
       <Route path="/playground" element={<div className="p-10 bg-black text-white">Playground</div>} />

@@ -3,7 +3,7 @@
 // Use consistent redirect URLs across the application
 const API_URL = 'https://videora-ai.onrender.com';
 const REDIRECT_URI = 'https://videora123.vercel.app/auth/google/callback';
-const CLIENT_ID = '382914397769-d7u5ssj0tih6cu8lj2ge1ooqvf6gajll.apps.googleusercontent.com';
+const CLIENT_ID = '1035965460197-fingmcmt79qnhidf5j3iiubdb7ge2tas.apps.googleusercontent.com';
 
 /**
  * Initiates Google OAuth flow with a loading screen
@@ -16,7 +16,8 @@ export const initiateGoogleAuth = () => {
   // Then set a timeout to redirect to Google auth
   setTimeout(() => {
     const encodedRedirectUri = encodeURIComponent(REDIRECT_URI);
-    window.location.href = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=email%20profile%20openid&access_type=offline&prompt=consent`;
+    const scope = encodeURIComponent('email profile openid');
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
   }, 1000); // Small delay to show loading screen
 };
 

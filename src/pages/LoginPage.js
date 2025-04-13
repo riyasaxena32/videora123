@@ -1,41 +1,14 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { initiateGoogleAuth, handleGoogleCallback } from '../lib/auth';
 
+// API URL for authentication
 const API_URL = 'https://videora-ai.onrender.com';
-
-// Function to handle Google OAuth callback
-const handleGoogleCallback = async (code) => {
-  try {
-    const response = await fetch(`${API_URL}/auth/google`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Authentication failed');
-    }
-
-    const data = await response.json();
-    console.log('Google authentication response:', data);
-    // Store tokens in localStorage
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userData', JSON.stringify(data.user));
-    localStorage.setItem('authType', 'google');
-    
-    return data;
-  } catch (error) {
-    console.error('Google authentication error:', error);
-    throw error;
-  }
-};
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Gradient button style
   const gradientButtonStyle = {
@@ -70,100 +43,9 @@ function LoginPage() {
     }
   }, [navigate]);
 
-  // Initialize Google Sign-In
-  useEffect(() => {
-    const loadGoogleScript = () => {
-      // Remove existing Google script if it exists
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-      
-      // Create new script element
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-      
-      script.onload = () => {
-        if (window.google) {
-          window.google.accounts.id.initialize({
-            client_id: '1035965460197-fingmcmt79qnhidf5j3iiubdb7ge2tas.apps.googleusercontent.com',
-            callback: handleCredentialResponse,
-            auto_select: false
-          });
-          
-          // Display the Sign In With Google button
-          window.google.accounts.id.renderButton(
-            document.getElementById('googleSignInButton'),
-            { 
-              type: 'standard',
-              theme: 'outline',
-              size: 'large',
-              text: 'continue_with',
-              shape: 'rectangular',
-              logo_alignment: 'left',
-              width: 280
-            }
-          );
-        }
-      };
-    };
-    
-    loadGoogleScript();
-    
-    return () => {
-      // Cleanup function
-      const script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (script) {
-        document.body.removeChild(script);
-      }
-    };
-  }, []);
-
-  const handleCredentialResponse = (response) => {
-    // Send the ID token to your server
-    const credential = response.credential;
-    fetch(`${API_URL}/auth/google`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code: credential }),
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Authentication failed');
-      }
-      return response.json();
-    })
-    .then(data => {
-      // Store tokens in localStorage
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userData', JSON.stringify(data.user));
-      localStorage.setItem('authType', 'google');
-      
-      // Redirect to home page
-      navigate('/');
-    })
-    .catch(error => {
-      console.error('Authentication error:', error);
-    });
-  };
-
-  // Function to handle custom Google Sign In button click
+  // Function to handle Google Sign In
   const handleGoogleSignIn = () => {
-    // Create OAuth URL
-    const redirectUri = encodeURIComponent(window.location.origin + '/login');
-    const clientId = '1035965460197-fingmcmt79qnhidf5j3iiubdb7ge2tas.apps.googleusercontent.com';
-    const scope = encodeURIComponent('email profile');
-    
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
-    
-    // Redirect to Google's OAuth page
-    window.location.href = googleAuthUrl;
+    initiateGoogleAuth();
   };
 
   return (
@@ -209,7 +91,6 @@ function LoginPage() {
           
           {/* Google Sign-In Button */}
           <div 
-            id="googleSignInButton" 
             className="flex items-center justify-center gap-2 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white rounded-lg p-3 mb-6 cursor-pointer border border-[#333]"
             onClick={handleGoogleSignIn}
           >
