@@ -6,19 +6,12 @@ const REDIRECT_URI = 'https://videora123.vercel.app/auth/google/callback';
 const CLIENT_ID = '1035965460197-fingmcmt79qnhidf5j3iiubdb7ge2tas.apps.googleusercontent.com';
 
 /**
- * Initiates Google OAuth flow with a loading screen
- * Redirects user first to loading screen, then to Google auth
+ * Initiates Google OAuth flow by redirecting directly to Google auth
  */
 export const initiateGoogleAuth = () => {
-  // First navigate to the loading screen
-  window.location.href = "/auth/loading";
-
-  // Then set a timeout to redirect to Google auth
-  setTimeout(() => {
-    const encodedRedirectUri = encodeURIComponent(REDIRECT_URI);
-    const scope = encodeURIComponent('email profile openid');
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
-  }, 1000); // Small delay to show loading screen
+  const encodedRedirectUri = encodeURIComponent(REDIRECT_URI);
+  const scope = encodeURIComponent('email profile openid');
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
 };
 
 /**
