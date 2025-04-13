@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import CreatePage from './pages/CreatePage';
 import LoginPage from './pages/LoginPage';
+import AuthCallback from './pages/AuthCallback';
 
 function App() {
   return (
@@ -10,7 +11,7 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={<CreatePage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/google/callback" element={<LoginPage />} />
+      <Route path="/auth/google/callback" element={<AuthCallback />} />
       {/* Add other routes for About, Playground, Studio, Community, etc. */}
       <Route path="/about" element={<div className="p-10 bg-black text-white">About Page</div>} />
       <Route path="/playground" element={<div className="p-10 bg-black text-white">Playground</div>} />
