@@ -3,18 +3,19 @@
 const API_URL = 'https://videora-ai.onrender.com';
 
 /**
- * Handle authentication with backend token generation
+ * Handle Google authentication with authorization code
+ * Used for the AuthCallback component that handles OAuth redirect flow
  */
-export const loginWithBackend = async (googleCredential) => {
+export const handleGoogleCallback = async (code) => {
   try {
-    console.log('Requesting token from backend');
+    console.log('Processing authorization code');
     
-    const response = await fetch(`${API_URL}/auth/token`, {
+    const response = await fetch(`${API_URL}/auth/google`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ googleCredential }),
+      body: JSON.stringify({ code }),
     });
 
     if (!response.ok) {
@@ -22,9 +23,9 @@ export const loginWithBackend = async (googleCredential) => {
     }
 
     const data = await response.json();
-    console.log('Backend authentication successful');
+    console.log('Google authentication successful');
     
-    // Store tokens from backend in localStorage
+    // Store tokens in localStorage
     localStorage.setItem('access_token', data.access_token || '');
     localStorage.setItem('token', data.token || '');
     
@@ -33,36 +34,19 @@ export const loginWithBackend = async (googleCredential) => {
     } else if (process.env.NODE_ENV === 'development') {
       // Create mock user if not returned (development only)
       const mockUser = {
-        id: `user_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'User',
+        id: `google_${Math.random().toString(36).substring(2, 15)}`,
+        name: 'Google User',
         email: 'user@example.com',
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('userData', JSON.stringify(mockUser));
     }
     
-    localStorage.setItem('authType', 'backend');
+    localStorage.setItem('authType', 'google');
     
     return data;
   } catch (error) {
-    console.error('Authentication error:', error);
-    
-    // For development only: create mock user on failure
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating mock user for development');
-      const mockUser = {
-        id: `mock_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'Mock User',
-        email: 'mock@example.com',
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('userData', JSON.stringify(mockUser));
-      localStorage.setItem('authType', 'backend');
-      localStorage.setItem('token', 'mock_token');
-      
-      return { user: mockUser, token: 'mock_token' };
-    }
-    
+    console.error('Google authentication error:', error);
     throw error;
   }
 };

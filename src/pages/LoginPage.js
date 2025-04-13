@@ -5,17 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 function LoginPage() {
   const { handleGoogleLogin } = useAuth();
 
-  // Handle Google login success
-  const onGoogleLoginSuccess = (credentialResponse) => {
-    console.log('Google login successful, exchanging for backend token');
-    handleGoogleLogin(credentialResponse);
-  };
-
-  // Handle Google login error
-  const onGoogleLoginError = () => {
-    console.error('Google login failed');
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
       <div className="w-full max-w-md p-8 space-y-8 bg-[#111] rounded-lg border border-[#333]">
@@ -29,8 +18,8 @@ function LoginPage() {
           <div className="flex justify-center">
             <GoogleLogin
               clientId="1035965460197-fingmcmt79qnhidf5j3iiubdb7ge2tas.apps.googleusercontent.com"
-              onSuccess={onGoogleLoginSuccess}
-              onError={onGoogleLoginError}
+              onSuccess={handleGoogleLogin}
+              onError={() => console.log('Login Failed')}
               useOneTap
               theme="filled_black"
               shape="pill"

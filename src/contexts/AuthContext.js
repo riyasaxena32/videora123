@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginWithBackend } from '../lib/auth';
 
 const AuthContext = createContext(null);
 
@@ -27,26 +26,27 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Handle Google login success and get token from backend
-  const handleGoogleLogin = async (credentialResponse) => {
+  // Handle Google login success from Google button
+  const handleGoogleLogin = (credentialResponse) => {
     try {
-      setLoading(true);
+      // Store the credential in localStorage
+      localStorage.setItem('token', credentialResponse.credential);
       
-      // Send Google credential to backend to get our own token
-      const authData = await loginWithBackend(credentialResponse.credential);
+      // For the @react-oauth/google library credential format
+      const base64Url = credentialResponse.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
       
-      // Get user data from authData or localStorage
-      const userData = localStorage.getItem('userData');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
+      const userData = JSON.parse(jsonPayload);
+      localStorage.setItem('userData', JSON.stringify(userData));
+      setUser(userData);
       
       // Navigate to home page after successful login
       navigate('/');
     } catch (error) {
       console.error('Login failed', error);
-    } finally {
-      setLoading(false);
     }
   };
 
