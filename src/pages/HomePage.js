@@ -242,9 +242,9 @@ function HomePage() {
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">Creators</h3>
               <nav className="space-y-1">
                 {[
-                  { name: "MrWhosTheBoss", image: "/placeholder-user.jpg" },
-                  { name: "MKBHD", image: "/placeholder-user.jpg" },
-                  { name: "T-SERIES", image: "/placeholder-user.jpg" },
+                  { name: "MrWhosTheBoss", image: "/user-avatar.jpg" },
+                  { name: "MKBHD", image: "/user-avatar.jpg" },
+                  { name: "T-SERIES", image: "/user-avatar.jpg" },
                 ].map((item) => (
                   <a
                     key={item.name}
@@ -269,11 +269,7 @@ function HomePage() {
                         alt={`${item.name} avatar`} 
                         width={20} 
                         height={20} 
-                        className="rounded-full" 
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.style.display = 'none';
-                        }}
+                        className="rounded-full"
                       />
                     </div>
                     <span className="sidebar-text">{item.name}</span>
@@ -360,15 +356,11 @@ function HomePage() {
                 <p className="text-sm text-[#b0b0b0]">Created by:</p>
                 <div className="flex items-center gap-2">
                   <img
-                    src="/placeholder-user.jpg"
+                    src="/user-avatar.jpg"
                     alt="Creator"
                     width={24}
                     height={24}
                     className="rounded-full"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                     
-                    }}
                   />
                   <span className="text-sm">Naruto</span>
                 </div>
@@ -475,26 +467,16 @@ function HomePage() {
 function VideoCard({ title, image, tag }) {
   // Use demo image placeholders for different categories
   const getImage = () => {
-    // Set default image paths based on category tags
-    if (tag.includes("Crime")) return "/image 28.png";
-    if (tag.includes("Sci-Fi")) return "/image 28.png";
-    if (tag.includes("History")) return "/image 28.png";
-    if (tag.includes("Comedy")) return "/image 28.png";
-    if (tag.includes("Anime")) return "/image 28.png";
-    return "/image 28.png";
+    return image || "/video-thumbnail.jpg";
   };
 
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
-          src={image || getImage()} 
+          src={getImage()} 
           alt={title} 
-          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = getImage();
-          }}
+          className="w-full h-full object-cover transition-transform group-hover:scale-105"
         />
         {/* Category tag */}
         <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
@@ -519,10 +501,6 @@ function CreatorCard({ name, image, subscribers, videos }) {
           src={image} 
           alt={name} 
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/placeholder-user.jpg';
-          }}
         />
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
@@ -605,12 +583,12 @@ const animeVideos = [
 
 // Sample creator data
 const creatorsData = [
-  { name: "MrWhosTheBoss", image: "/placeholder-user.jpg", subscribers: "12.5M subs", videos: 524 },
-  { name: "MKBHD", image: "/placeholder-user.jpg", subscribers: "18.2M subs", videos: 810 },
-  { name: "T-SERIES", image: "/placeholder-user.jpg", subscribers: "245M subs", videos: 1432 },
-  { name: "Casey Neistat", image: "/placeholder-user.jpg", subscribers: "10.1M subs", videos: 682 },
-  { name: "PewDiePie", image: "/placeholder-user.jpg", subscribers: "111M subs", videos: 2840 },
-  { name: "Linus Tech Tips", image: "/placeholder-user.jpg", subscribers: "15.3M subs", videos: 1215 },
+  { name: "MrWhosTheBoss", image: "/user-avatar.jpg", subscribers: "12.5M subs", videos: 524 },
+  { name: "MKBHD", image: "/user-avatar.jpg", subscribers: "18.2M subs", videos: 810 },
+  { name: "T-SERIES", image: "/user-avatar.jpg", subscribers: "245M subs", videos: 1432 },
+  { name: "Casey Neistat", image: "/user-avatar.jpg", subscribers: "10.1M subs", videos: 682 },
+  { name: "PewDiePie", image: "/user-avatar.jpg", subscribers: "111M subs", videos: 2840 },
+  { name: "Linus Tech Tips", image: "/user-avatar.jpg", subscribers: "15.3M subs", videos: 1215 },
 ];
 
 export default HomePage; 

@@ -56,13 +56,9 @@ function CreatePage() {
           </button>
           <button className="w-9 h-9 flex items-center justify-center bg-[#2f2f2f] hover:bg-[#414141] rounded-full transition-colors">
             <img
-              src="/placeholder-user.jpg"
+              src="/user-avatar.jpg"
               alt="Profile"
               className="w-full h-full rounded-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/placeholder-user.jpg';
-              }}
             />
           </button>
         </div>

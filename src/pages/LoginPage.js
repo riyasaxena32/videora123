@@ -61,10 +61,6 @@ function LoginPage() {
           src="/image 28.png" 
           alt="AI-generated anime character" 
           className="h-full w-full object-cover"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/placeholder.jpg';
-          }}
         />
       </div>
 
