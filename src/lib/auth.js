@@ -1,7 +1,30 @@
-import { authAPI } from './api';
+// import { authAPI } from './api';
 
+// Use consistent redirect URLs across the application
 const API_URL = 'https://videora-ai.onrender.com';
+const REDIRECT_URI = 'https://videora123.vercel.app/auth/google/callback';
+const CLIENT_ID = '382914397769-d7u5ssj0tih6cu8lj2ge1ooqvf6gajll.apps.googleusercontent.com';
 
+/**
+ * Initiates Google OAuth flow with a loading screen
+ * Redirects user first to loading screen, then to Google auth
+ */
+export const initiateGoogleAuth = () => {
+  // First navigate to the loading screen
+  window.location.href = "/auth/loading";
+
+  // Then set a timeout to redirect to Google auth
+  setTimeout(() => {
+    const encodedRedirectUri = encodeURIComponent(REDIRECT_URI);
+    window.location.href = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=email%20profile%20openid&access_type=offline&prompt=consent`;
+  }, 1000); // Small delay to show loading screen
+};
+
+/**
+ * Handles the Google OAuth callback by exchanging the code for tokens
+ * @param {string} code - The authorization code from Google
+ * @returns {Promise<Object>} - The user data and tokens
+ */
 export const handleGoogleCallback = async (code) => {
   try {
     const response = await fetch(`${API_URL}/auth/google`, {
@@ -18,87 +41,106 @@ export const handleGoogleCallback = async (code) => {
 
     const data = await response.json();
     console.log('Google authentication response:', data);
+    
+    // Ensure we received access_token from the API
+    if (!data.access_token) {
+      console.warn('No access_token received from API. Using token as fallback.');
+      data.access_token = data.token || 'missing_access_token';
+    }
+    
+    // Transform Google user data to the desired format
+    let userData;
+    if (data.user) {
+      // If API already returns user in the right format
+      userData = data.user;
+    } else {
+      // If API returns decoded JWT or Google data, transform it
+      const googleData = data.decoded || data;
+      userData = {
+        name: googleData.name || `${googleData.given_name || ''} ${googleData.family_name || ''}`.trim(),
+        email: googleData.email,
+        profilePic: googleData.picture || googleData.profilePic
+      };
+    }
+    
     // Store tokens in localStorage
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userData', JSON.stringify(data.user));
+    localStorage.setItem('access_token', data.access_token); // OAuth2 access token for API requests
+    localStorage.setItem('token', data.token); // JWT or session token
+    localStorage.setItem('userData', JSON.stringify(userData));
     localStorage.setItem('authType', 'google');
     
-    return data;
+    console.log('Access token stored:', data.access_token);
+    console.log('User data stored:', userData);
+    
+    return { ...data, user: userData };
   } catch (error) {
     console.error('Google authentication error:', error);
-    throw error;
-  }
-};
-
-// Method to directly login using auth code (for curl command)
-export const directGoogleLogin = async (code) => {
-  try {
-    console.log('Attempting direct Google login with code:', code);
     
-    // Use the same endpoint as handleGoogleCallback
-    const response = await fetch(`${API_URL}/auth/google`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Direct login error response:', errorText);
-      throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('Direct Google login response:', data);
-    
-    // Store tokens in localStorage
-    localStorage.setItem('access_token', data.access_token || '');
-    localStorage.setItem('token', data.token || '');
-    
-    if (data.user) {
-      localStorage.setItem('userData', JSON.stringify(data.user));
-    } else {
-      // Create mock user if not returned
-      const mockUser = {
-        id: `google_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'Google User',
-        email: 'user@example.com',
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('userData', JSON.stringify(mockUser));
-    }
-    
-    localStorage.setItem('authType', 'google');
-    
-    // Reset query limits if applicable
-    localStorage.removeItem('queryLimitReached');
-    localStorage.removeItem('queryCount');
-    
-    return data;
-  } catch (error) {
-    console.error('Direct Google login error:', error);
-    
-    // For testing/demo purposes, create a mock user even on failure
+    // For testing/demo purposes in development, create a mock user on failure
     if (process.env.NODE_ENV === 'development') {
       console.log('Creating mock user for development environment');
       const mockUser = {
-        id: `google_mock_${Math.random().toString(36).substring(2, 15)}`,
         name: 'Mock Google User',
         email: 'mock@example.com',
-        createdAt: new Date().toISOString()
+        profilePic: 'https://ui-avatars.com/api/?name=Mock+User&background=random'
       };
       localStorage.setItem('userData', JSON.stringify(mockUser));
       localStorage.setItem('authType', 'google');
       localStorage.setItem('access_token', 'mock_token');
-      localStorage.removeItem('queryLimitReached');
-      localStorage.removeItem('queryCount');
+      localStorage.setItem('token', 'mock_token');
       
       return { user: mockUser, token: 'mock_token' };
     }
     
     throw error;
   }
+};
+
+/**
+ * Gets the current user data from localStorage
+ * @returns {Object|null}
+ */
+export const getCurrentUser = () => {
+  const userData = localStorage.getItem('userData');
+  return userData ? JSON.parse(userData) : null;
+};
+
+/**
+ * Gets the current authentication token (JWT)
+ * @returns {string|null}
+ */
+export const getToken = () => {
+  return localStorage.getItem('token');
+};
+
+/**
+ * Gets the OAuth2 access token specifically
+ * @returns {string|null}
+ */
+export const getAccessToken = () => {
+  return localStorage.getItem('access_token');
+};
+
+/**
+ * Creates an authenticated fetch request with the access token
+ * @param {string} url - The URL to fetch
+ * @param {Object} options - Fetch options
+ * @returns {Promise<Response>} - The fetch response
+ */
+export const authenticatedFetch = async (url, options = {}) => {
+  const accessToken = getAccessToken();
+  
+  if (!accessToken) {
+    throw new Error('No access token available. User may not be authenticated.');
+  }
+  
+  const headers = {
+    ...options.headers,
+    'Authorization': `Bearer ${accessToken}`
+  };
+  
+  return fetch(url, {
+    ...options,
+    headers
+  });
 }; 
