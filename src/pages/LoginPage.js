@@ -54,7 +54,7 @@ function LoginPage() {
       <header className="flex items-center justify-between px-6 py-3 w-full">
         <Link to="/" className="flex items-center">
           <img src="/Logo.png" alt="VIDEORA" className="h-8" />
-          <span className="text-white text-xl font-bold ml-2">VIDEORA</span>
+          
         </Link>
         
         <div className="hidden md:flex space-x-8 text-sm">
