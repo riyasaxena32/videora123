@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu } from "lucide-react";
+import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
 function HomePage() {
@@ -7,6 +7,7 @@ function HomePage() {
   const [activeSidebarItem, setActiveSidebarItem] = useState("Recent");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedCreator, setSelectedCreator] = useState(null);
   const navigate = useNavigate();
 
   // Custom button styles
@@ -91,8 +92,96 @@ function HomePage() {
     };
   }, []);
 
+  // Function to handle creator selection
+  const handleCreatorSelect = (creator) => {
+    setSelectedCreator(creator);
+  };
+
+  // Function to close creator profile
+  const closeCreatorProfile = () => {
+    setSelectedCreator(null);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+      {/* Creator Profile Overlay */}
+      {selectedCreator && (
+        <div className="fixed inset-0 bg-black/80 z-50 overflow-auto">
+          <div className="container mx-auto py-10 px-6 max-w-6xl">
+            <button 
+              onClick={closeCreatorProfile}
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-[#2f2f2f] hover:bg-[#414141] rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Creator Header */}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-8 mb-12">
+              <div className="w-36 h-36 rounded-full overflow-hidden bg-[#1a1a1a] flex-shrink-0">
+                <img 
+                  src={selectedCreator.image} 
+                  alt={selectedCreator.name} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-4xl font-bold mb-2">{selectedCreator.name}</h1>
+                <p className="text-[#b0b0b0] mb-4">{selectedCreator.subscribers}</p>
+                <div className="flex gap-4">
+                  <button 
+                    style={gradientButtonStyle}
+                    className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium rounded-full"
+                  >
+                    Subscribe
+                  </button>
+                  <button className="flex items-center gap-2 bg-[#2f2f2f] hover:bg-[#414141] text-white px-6 py-2 rounded-full transition-colors">
+                    Share
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Creator Stats */}
+            <div className="grid grid-cols-3 gap-6 mb-12">
+              <div className="bg-[#111] rounded-lg p-6">
+                <p className="text-sm text-[#b0b0b0] mb-1">Videos</p>
+                <p className="text-2xl font-bold">{selectedCreator.videos}</p>
+              </div>
+              <div className="bg-[#111] rounded-lg p-6">
+                <p className="text-sm text-[#b0b0b0] mb-1">Subscribers</p>
+                <p className="text-2xl font-bold">{selectedCreator.subscribers}</p>
+              </div>
+              <div className="bg-[#111] rounded-lg p-6">
+                <p className="text-sm text-[#b0b0b0] mb-1">AI Score</p>
+                <p className="text-2xl font-bold">92%</p>
+              </div>
+            </div>
+            
+            {/* Creator Videos */}
+            <h2 className="text-2xl font-bold mb-6">Videos</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="relative group cursor-pointer">
+                  <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
+                    <img 
+                      src="/image 28.png" 
+                      alt={`${selectedCreator.name} video ${index + 1}`} 
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    {/* Gradient overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
+                  </div>
+                  <div className="mt-2">
+                    <h3 className="text-sm font-medium">Video Title {index + 1}</h3>
+                    <p className="text-xs text-[#b0b0b0]">1.2M views • 2 days ago</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Navbar - Full Width */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
         <div className="flex items-center gap-8">
@@ -104,7 +193,7 @@ function HomePage() {
             <Menu className="w-5 h-5" />
           </button>
           <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/Image2.png" alt="VIDEORA" className="h-6" />
+            <img src="/Logo.png" alt="VIDEORA" className="h-8" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
@@ -159,13 +248,11 @@ function HomePage() {
         <aside 
           className={`${
             sidebarCollapsed 
-              ? 'w-0 md:w-[60px] opacity-0 md:opacity-100 invisible md:visible' 
+              ? 'w-0 opacity-0 invisible' 
               : 'w-[80%] md:w-[190px] opacity-100 visible'
-          } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile ${
-            sidebarCollapsed ? 'md:sidebar-collapsed' : ''
-          }`}
+          } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile`}
         >
-          <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'p-2' : 'p-5'}`}>
+          <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
             <div className="space-y-4">
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
               <nav className="space-y-1">
@@ -242,9 +329,9 @@ function HomePage() {
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">Creators</h3>
               <nav className="space-y-1">
                 {[
-                  { name: "MrWhosTheBoss", image: "/user-avatar.jpg" },
-                  { name: "MKBHD", image: "/user-avatar.jpg" },
-                  { name: "T-SERIES", image: "/user-avatar.jpg" },
+                  { name: "MrWhosTheBoss", image: "/user-avatar.png" },
+                  { name: "MKBHD", image: "/user-avatar.png" },
+                  { name: "T-SERIES", image: "/user-avatar.png" },
                 ].map((item) => (
                   <a
                     key={item.name}
@@ -269,7 +356,11 @@ function HomePage() {
                         alt={`${item.name} avatar`} 
                         width={20} 
                         height={20} 
-                        className="rounded-full"
+                        className="rounded-full" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                        }}
                       />
                     </div>
                     <span className="sidebar-text">{item.name}</span>
@@ -317,9 +408,7 @@ function HomePage() {
         </aside>
 
         {/* Main Content */}
-        <div className={`flex-1 overflow-y-auto bg-black transition-all duration-300 ${
-          sidebarCollapsed ? 'content-with-collapsed-sidebar' : ''
-        }`}>
+        <div className={`flex-1 overflow-y-auto bg-black transition-all duration-300`}>
           {/* Hero Section */}
           <div className="relative h-[400px] overflow-hidden hero-rockstar">
             <img
@@ -356,7 +445,7 @@ function HomePage() {
                 <p className="text-sm text-[#b0b0b0]">Created by:</p>
                 <div className="flex items-center gap-2">
                   <img
-                    src="/user-avatar.jpg"
+                    src="/user-avatar.png"
                     alt="Creator"
                     width={24}
                     height={24}
@@ -390,7 +479,12 @@ function HomePage() {
             <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="topVideosScroll">
               <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
                 {topVideos.map((video, index) => (
-                  <div key={index} className="snap-start" style={{ width: '280px', flexShrink: 0 }}>
+                  <div 
+                    key={index} 
+                    className="snap-start cursor-pointer" 
+                    style={{ width: '280px', flexShrink: 0 }}
+                    onClick={() => navigate(`/video/${index + 1}`)}
+                  >
                     <VideoCard {...video} />
                   </div>
                 ))}
@@ -420,7 +514,12 @@ function HomePage() {
             <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="animeScroll">
               <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
                 {animeVideos.map((video, index) => (
-                  <div key={index} className="snap-start" style={{ width: '280px', flexShrink: 0 }}>
+                  <div 
+                    key={index} 
+                    className="snap-start cursor-pointer" 
+                    style={{ width: '280px', flexShrink: 0 }}
+                    onClick={() => navigate(`/video/${index + 5}`)}
+                  >
                     <VideoCard {...video} />
                   </div>
                 ))}
@@ -451,7 +550,12 @@ function HomePage() {
             <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="creatorsScroll">
               <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
                 {creatorsData.map((creator, index) => (
-                  <div key={index} className="snap-start" style={{ width: '280px', flexShrink: 0 }}>
+                  <div 
+                    key={index} 
+                    className="snap-start cursor-pointer" 
+                    style={{ width: '280px', flexShrink: 0 }}
+                    onClick={() => navigate(`/creator/${creator.id || creator.name.toLowerCase().replace(/\s+/g, '-')}`)}
+                  >
                     <CreatorCard {...creator} />
                   </div>
                 ))}
@@ -464,19 +568,29 @@ function HomePage() {
   )
 }
 
-function VideoCard({ title, image, tag }) {
+function VideoCard({ title, image, tag, id }) {
   // Use demo image placeholders for different categories
   const getImage = () => {
-    return image || "/video-thumbnail.jpg";
+    // Set default image paths based on category tags
+    if (tag.includes("Crime")) return "/image 28.png";
+    if (tag.includes("Sci-Fi")) return "/image 28.png";
+    if (tag.includes("History")) return "/image 28.png";
+    if (tag.includes("Comedy")) return "/image 28.png";
+    if (tag.includes("Anime")) return "/image 28.png";
+    return "/image 28.png";
   };
 
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
-          src={getImage()} 
+          src={image || getImage()} 
           alt={title} 
-          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = getImage();
+          }}
         />
         {/* Category tag */}
         <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
@@ -566,29 +680,29 @@ function ErrorIcon(props) {
   );
 }
 
-// Sample data with better image references
+// Sample data with better image references and IDs
 const topVideos = [
-  { title: "St Charming", image: "/image 28.png", tag: "Crime/Drama" },
-  { title: "Theory of Everything", image: "/image 28.png", tag: "Sci-Fi/Thriller" },
-  { title: "Oppenheimer", image: "/image 28.png", tag: "History/Drama" },
-  { title: "New Delhi", image: "/image 28.png", tag: "Comedy" },
+  { id: 1, title: "St Charming", image: "/image 28.png", tag: "Crime/Drama" },
+  { id: 2, title: "Theory of Everything", image: "/image 28.png", tag: "Sci-Fi/Thriller" },
+  { id: 3, title: "Oppenheimer", image: "/image 28.png", tag: "History/Drama" },
+  { id: 4, title: "New Delhi", image: "/image 28.png", tag: "Comedy" },
 ];
 
 const animeVideos = [
-  { title: "St Charming", image: "/image 28.png", tag: "Anime/Fantasy" },
-  { title: "Theory of Everything", image: "/image 28.png", tag: "Anime/Sci-Fi" },
-  { title: "Oppenheimer", image: "/image 28.png", tag: "Anime/History" },
-  { title: "New Delhi", image: "/image 28.png", tag: "Anime/Comedy" },
+  { id: 5, title: "St Charming", image: "/image 28.png", tag: "Anime/Fantasy" },
+  { id: 6, title: "Theory of Everything", image: "/image 28.png", tag: "Anime/Sci-Fi" },
+  { id: 7, title: "Oppenheimer", image: "/image 28.png", tag: "Anime/History" },
+  { id: 8, title: "New Delhi", image: "/image 28.png", tag: "Anime/Comedy" },
 ];
 
 // Sample creator data
 const creatorsData = [
-  { name: "MrWhosTheBoss", image: "/user-avatar.jpg", subscribers: "12.5M subs", videos: 524 },
-  { name: "MKBHD", image: "/user-avatar.jpg", subscribers: "18.2M subs", videos: 810 },
-  { name: "T-SERIES", image: "/user-avatar.jpg", subscribers: "245M subs", videos: 1432 },
-  { name: "Casey Neistat", image: "/user-avatar.jpg", subscribers: "10.1M subs", videos: 682 },
-  { name: "PewDiePie", image: "/user-avatar.jpg", subscribers: "111M subs", videos: 2840 },
-  { name: "Linus Tech Tips", image: "/user-avatar.jpg", subscribers: "15.3M subs", videos: 1215 },
+  { name: "MrWhosTheBoss", image: "/user-avatar.png", subscribers: "12.5M subs", videos: 524 },
+  { name: "MKBHD", image: "/user-avatar.png", subscribers: "18.2M subs", videos: 810 },
+  { name: "T-SERIES", image: "/user-avatar.png", subscribers: "245M subs", videos: 1432 },
+  { name: "Casey Neistat", image: "/user-avatar.png", subscribers: "10.1M subs", videos: 682 },
+  { name: "PewDiePie", image: "/user-avatar.png", subscribers: "111M subs", videos: 2840 },
+  { name: "Linus Tech Tips", image: "/user-avatar.png", subscribers: "15.3M subs", videos: 1215 },
 ];
 
 export default HomePage; 

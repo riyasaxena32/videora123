@@ -199,8 +199,7 @@ button {
 
 /* Sidebar transition */
 .sidebar-collapsed {
-  width: 60px !important;
-  min-width: 60px;
+  display: none;
 }
 
 .sidebar-collapsed .sidebar-text {
@@ -209,16 +208,12 @@ button {
 
 .sidebar-collapsed .sidebar-item {
   justify-content: center;
-  padding-left: 0 !important;
-  padding-right: 0 !important; 
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .sidebar-collapsed .sidebar-heading {
-  opacity: 0;
-  height: 0;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  display: none;
 }
 
 /* Sidebar hover indicator */
@@ -238,13 +233,13 @@ button {
 
 /* Animation for sidebar toggle */
 @keyframes slideIn {
-  from { width: 0; opacity: 0; }
-  to { width: 190px; opacity: 1; }
+  from { width: 0; opacity: 0; visibility: hidden; }
+  to { width: 190px; opacity: 1; visibility: visible; }
 }
 
 @keyframes slideOut {
-  from { width: 190px; opacity: 1; }
-  to { width: 0; opacity: 0; }
+  from { width: 190px; opacity: 1; visibility: visible; }
+  to { width: 0; opacity: 0; visibility: hidden; }
 }
 
 .sidebar-enter {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, HelpCircle, ArrowUpRight } from 'lucide-react';
+import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, HelpCircle, ArrowUpRight, ArrowLeft, ChevronRight } from 'lucide-react';
 
 function CreatePage() {
   const [activeTab, setActiveTab] = useState('Generate Video');
@@ -17,6 +17,20 @@ function CreatePage() {
     border: '1px solid #ED5606',
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
     borderRadius: '9999px'
+  };
+
+  // Content to display based on active tab
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'Generate Video':
+        return <GenerateVideoContent gradientButtonStyle={gradientButtonStyle} />;
+      case 'AI Video Edit':
+        return <AIVideoEditContent gradientButtonStyle={gradientButtonStyle} />;
+      case 'Video Narration':
+        return <VideoNarrationContent gradientButtonStyle={gradientButtonStyle} />;
+      default:
+        return <GenerateVideoContent gradientButtonStyle={gradientButtonStyle} />;
+    }
   };
 
   return (
@@ -56,7 +70,7 @@ function CreatePage() {
           </button>
           <button className="w-9 h-9 flex items-center justify-center bg-[#2f2f2f] hover:bg-[#414141] rounded-full transition-colors">
             <img
-              src="/user-avatar.jpg"
+              src="/user-avatar.png"
               alt="Profile"
               className="w-full h-full rounded-full object-cover"
             />
@@ -65,97 +79,251 @@ function CreatePage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-3 gap-6 p-6">
-        {/* Left Panel: Upload Media */}
-        <div className="flex flex-col space-y-6">
-          <h2 className="text-sm font-medium">Upload Your Media</h2>
-          <div className="flex-1 border border-[#333] bg-[#111] rounded-md flex flex-col items-center justify-center p-6">
-            <div className="w-full h-36 border-2 border-dashed border-[#333] rounded-md flex flex-col items-center justify-center mb-4">
-              <UploadCloud className="w-8 h-8 text-[#666] mb-2" />
-              <button className="mt-2 text-[#666]">
-                <Upload className="w-5 h-5" />
-              </button>
+      {renderContent()}
+    </div>
+  );
+}
+
+// Generate Video Tab Content
+function GenerateVideoContent({ gradientButtonStyle }) {
+  return (
+    <div className="flex-1 grid grid-cols-3 gap-6 p-6">
+      {/* Left Panel: Upload Media */}
+      <div className="flex flex-col space-y-6">
+        <h2 className="text-sm font-medium">Upload Your Media</h2>
+        <div className="flex-1 border border-[#333] bg-[#111] rounded-md flex flex-col items-center justify-center p-6">
+          <div className="w-full h-36 border-2 border-dashed border-[#333] rounded-md flex flex-col items-center justify-center mb-4">
+            <UploadCloud className="w-8 h-8 text-[#666] mb-2" />
+            <button className="mt-2 text-[#666]">
+              <Upload className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-xs text-[#777] text-center">
+            Drag and drop your video or image here, or click here to upload.
+          </p>
+        </div>
+        
+        {/* Camera Movements */}
+        <h2 className="text-sm font-medium">Choose Camera Movements</h2>
+        <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2 text-xs text-[#888] border border-[#333] bg-[#191919] rounded px-3 py-2">
+              <ChevronDown className="w-4 h-4" />
+              <span>Click to add camera movement</span>
             </div>
+            <div className="text-xs text-[#888] border border-[#333] bg-[#191919] rounded px-2 py-2">
+              Set camera movement timing
+            </div>
+          </div>
+          <div className="h-20 flex items-center justify-center">
             <p className="text-xs text-[#777] text-center">
-              Drag and drop your video or image here, or click here to upload.
+              Your selected camera movements and timing will appear here
             </p>
           </div>
-          
-          {/* Camera Movements */}
-          <h2 className="text-sm font-medium">Choose Camera Movements</h2>
-          <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2 text-xs text-[#888] border border-[#333] bg-[#191919] rounded px-3 py-2">
-                <ChevronDown className="w-4 h-4" />
-                <span>Click to add camera movement</span>
-              </div>
-              <div className="text-xs text-[#888] border border-[#333] bg-[#191919] rounded px-2 py-2">
-                Set camera movement timing
-              </div>
-            </div>
-            <div className="h-20 flex items-center justify-center">
-              <p className="text-xs text-[#777] text-center">
-                Your selected camera movements and timing will appear here
-              </p>
-            </div>
-          </div>
         </div>
+      </div>
 
-        {/* Middle Panel: Creative Prompt */}
-        <div className="flex flex-col space-y-6">
-          <h2 className="text-sm font-medium">Pick Your Style</h2>
-          <div className="border border-[#333] bg-[#111] rounded-md p-4">
-            <div className="flex items-center justify-between mb-2">
-              <ChevronDown className="w-4 h-4" />
-              <span className="text-sm">Select a vibe that matches your version</span>
-            </div>
-            <p className="text-xs text-[#777] pl-4">Lorem ipsum description text</p>
+      {/* Middle Panel: Creative Prompt */}
+      <div className="flex flex-col space-y-6">
+        <h2 className="text-sm font-medium">Pick Your Style</h2>
+        <div className="border border-[#333] bg-[#111] rounded-md p-4">
+          <div className="flex items-center justify-between mb-2">
+            <ChevronDown className="w-4 h-4" />
+            <span className="text-sm">Select a vibe that matches your version</span>
           </div>
-          
-          <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
-          <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
-            <textarea 
-              className="w-full h-[300px] bg-transparent border-none text-[#999] text-sm focus:outline-none resize-none"
-              placeholder="Type what you want in your video.
+          <p className="text-xs text-[#777] pl-4">Lorem ipsum description text</p>
+        </div>
+        
+        <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
+        <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
+          <textarea 
+            className="w-full h-[300px] bg-transparent border-none text-[#999] text-sm focus:outline-none resize-none"
+            placeholder="Type what you want in your video.
 
 For example, 'Make it look like a sunny day at the beach.'"
-            ></textarea>
+          ></textarea>
+        </div>
+      </div>
+
+      {/* Right Panel: Audio & Caption */}
+      <div className="flex flex-col space-y-6">
+        <h2 className="text-sm font-medium">Add Audio</h2>
+        <div className="border border-[#333] bg-[#111] rounded-md p-4">
+          <h3 className="text-sm font-medium mb-2">Caption</h3>
+          <div className="h-40 border border-[#222] bg-[#0a0a0a] rounded p-3 text-xs text-[#777]">
+            Your live caption will appear here after the file is uploaded and processed.
+          </div>
+          
+          <div className="flex justify-end mt-4 gap-2">
+            <button className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
+              <Edit3 className="w-3 h-3" />
+              Edit Text
+            </button>
+            <button className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
+              <UploadIcon className="w-3 h-3" />
+              Upload Voice
+            </button>
+            <button className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
+              <Mic className="w-3 h-3" />
+              Record Voice
+            </button>
           </div>
         </div>
+        
+        {/* Generate Button */}
+        <div className="flex justify-end mt-auto pt-4">
+          <button 
+            style={gradientButtonStyle}
+            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
+          >
+            Get Started
+            <ArrowUpRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Right Panel: Audio & Caption */}
-        <div className="flex flex-col space-y-6">
-          <h2 className="text-sm font-medium">Add Audio</h2>
-          <div className="border border-[#333] bg-[#111] rounded-md p-4">
-            <h3 className="text-sm font-medium mb-2">Caption</h3>
-            <div className="h-40 border border-[#222] bg-[#0a0a0a] rounded p-3 text-xs text-[#777]">
-              Your live caption will appear here after the file is uploaded and processed.
+// AI Video Edit Tab Content
+function AIVideoEditContent({ gradientButtonStyle }) {
+  return (
+    <div className="flex-1 p-6">
+      <h2 className="text-xl font-bold mb-4">AI Video Edit</h2>
+      <p className="text-sm text-[#999]">This feature is coming soon.</p>
+    </div>
+  );
+}
+
+// Video Narration Tab Content - Matches the UI from the image
+function VideoNarrationContent({ gradientButtonStyle }) {
+  const [currentTime, setCurrentTime] = useState('00:08');
+  const [duration, setDuration] = useState('00:20');
+  
+  return (
+    <div className="flex-1 flex flex-col bg-black">
+      {/* Main content area */}
+      <div className="flex flex-1 max-h-[calc(100vh-4.5rem)]">
+        {/* Left side - Video player */}
+        <div className="w-3/5 p-3 flex flex-col">
+          {/* Video preview */}
+          <div className="relative bg-[#0A0A0A] rounded-md overflow-hidden" style={{ height: '36vh' }}>
+            <img 
+              src="/image 28.png" 
+              alt="Video preview" 
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Video controls overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex items-center gap-4">
+                <button className="w-8 h-8 bg-black/50 rounded-full flex items-center justify-center">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12L5 21V3L19 12Z" fill="white"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             
-            <div className="flex justify-end mt-4 gap-2">
-              <button className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
-                <Edit3 className="w-3 h-3" />
-                Edit Text
-              </button>
-              <button className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
-                <UploadIcon className="w-3 h-3" />
-                Upload Voice
-              </button>
-              <button className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
-                <Mic className="w-3 h-3" />
-                Record Voice
-              </button>
+            {/* Time indicators and progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 flex items-center px-3">
+              <div className="text-xs text-white mr-2">{currentTime}</div>
+              <div className="flex-1 bg-[#333] h-1 rounded-full overflow-hidden">
+                <div className="bg-[#ED5606] h-full" style={{ width: '40%' }}></div>
+              </div>
+              <div className="text-xs text-white ml-2">{duration}</div>
             </div>
           </div>
           
-          {/* Generate Button */}
-          <div className="flex justify-end mt-auto pt-4">
+          {/* Bottom controls section */}
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 grid grid-cols-3 gap-2">
+              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2 flex flex-col items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
+                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M7 10L12 15L17 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 15V3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-[9px] text-center text-[#999]">Upload your video</span>
+              </div>
+              
+              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2 flex flex-col items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
+                  <path d="M12 5V19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-[9px] text-center text-[#999]">Auto Generate</span>
+              </div>
+              
+              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2 flex flex-col items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
+                  <path d="M21 12H3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15 6L21 12L15 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-[9px] text-center text-[#999]">AI Edit</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Organize Your Video section */}
+          <div className="mt-2">
+            <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2">
+              <h3 className="text-xs font-medium mb-1">Organize Your Video</h3>
+              <p className="text-[9px] text-[#777] mb-2">Choose a setting to control who can see this content</p>
+              
+              <div className="relative">
+                <select className="w-full appearance-none bg-[#151515] border border-[#333] rounded p-1.5 text-xs text-white px-3 pr-8 focus:outline-none">
+                  <option>Public (anyone can access)</option>
+                  <option>Private (only you can access)</option>
+                  <option>Unlisted (anyone with link can access)</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="#777" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Right side - Narration details */}
+        <div className="w-2/5 border-l border-[#222] flex flex-col">
+          <div className="p-3">
+            <h2 className="text-xs font-medium">Details</h2>
+            <div className="mt-2">
+              <div className="mb-2">
+                <label className="block text-[9px] text-[#777] mb-1">Provide Your video title here...</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-[#151515] border border-[#333] rounded p-2 text-xs text-white focus:outline-none focus:border-[#ED5606]"
+                  placeholder="Enter video title..."
+                />
+              </div>
+              
+              <div className="mb-2">
+                <label className="block text-[9px] text-[#777] mb-1">Provide Your video description here...</label>
+                <textarea 
+                  className="w-full bg-[#151515] border border-[#333] rounded p-2 text-xs text-white focus:outline-none focus:border-[#ED5606] resize-none"
+                  style={{ height: '14vh' }}
+                  placeholder="Enter video description..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom navigation */}
+          <div className="mt-auto p-3 border-t border-[#222] flex justify-between">
+            <button className="flex items-center gap-1 text-white bg-[#151515] hover:bg-[#222] px-3 py-1.5 rounded text-xs">
+              <ArrowLeft className="w-3 h-3" />
+              <span>Back</span>
+            </button>
             <button 
               style={gradientButtonStyle}
-              className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
+              className="flex items-center gap-1 text-white px-4 py-1.5 text-xs font-medium"
             >
-              Get Started
-              <ArrowUpRight className="w-4 h-4" />
+              <span>Publish Video</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
         </div>

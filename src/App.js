@@ -4,6 +4,8 @@ import HomePage from './pages/HomePage';
 import CreatePage from './pages/CreatePage';
 import LoginPage from './pages/LoginPage';
 import AuthCallback from './pages/AuthCallback';
+import CreatorPage from './pages/CreatorPage';
+import VideoPage from './pages/VideoPage';
 
 function App() {
   return (
@@ -12,6 +14,8 @@ function App() {
       <Route path="/create" element={<CreatePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/google/callback" element={<AuthCallback />} />
+      <Route path="/creator/:creatorId" element={<CreatorPage />} />
+      <Route path="/video/:videoId" element={<VideoPage />} />
       {/* Add other routes for About, Playground, Studio, Community, etc. */}
       <Route path="/about" element={<div className="p-10 bg-black text-white">About Page</div>} />
       <Route path="/playground" element={<div className="p-10 bg-black text-white">Playground</div>} />
