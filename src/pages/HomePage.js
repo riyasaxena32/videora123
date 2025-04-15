@@ -63,22 +63,40 @@ function HomePage() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('https://videora-ai.onrender.com/api/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
+      // Clear credentials using the exact key names from the network tab
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('authType');
+      localStorage.removeItem('userData');
+      
+      // Try to clear cookies if possible (may not work in all browsers)
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       
-      if (response.ok) {
-        // Redirect to login page after successful logout
-        navigate('/login');
-      } else {
-        console.error('Logout failed');
+      console.log('Logged out successfully (client-side)');
+      
+      // Make a client-side logout call to update state in React
+      try {
+        // Try to call the logout endpoint without waiting for a response
+        fetch('https://videora-ai.onrender.com/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        }).catch(e => console.log('Backend logout attempt:', e));
+      } catch (err) {
+        // Ignore errors from backend logout attempt
+        console.log('Backend logout attempt error:', err);
       }
+      
+      // Redirect to login page
+      navigate('/login');
     } catch (error) {
       console.error('Error during logout:', error);
+      // Redirect to login anyway if there's an error
+      navigate('/login');
     }
   };
 
@@ -733,27 +751,16 @@ function HomePage() {
 }
 
 function VideoCard({ title, image, tag, id }) {
-  // Use demo image placeholders for different categories
-  const getImage = () => {
-    // Set default image paths based on category tags
-    if (tag?.includes("Crime")) return "/image 28.png";
-    if (tag?.includes("Sci-Fi")) return "/image 28.png";
-    if (tag?.includes("History")) return "/image 28.png";
-    if (tag?.includes("Comedy")) return "/image 28.png";
-    if (tag?.includes("Anime")) return "/image 28.png";
-    return "/image 28.png";
-  };
-
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
-          src={image || getImage()} 
+          src={image || "/image 28.png"} 
           alt={title} 
           className="w-full h-full object-cover transition-transform group-hover:scale-105" 
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = getImage();
+            e.target.src = "/image 28.png";
           }}
         />
         {/* Category tag */}
