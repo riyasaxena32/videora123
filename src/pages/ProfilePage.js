@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Save } from 'lucide-react';
-import { authenticatedFetch, getAuthToken } from '../lib/auth';
-import { useAuth } from '../contexts/AuthContext';
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,28 +17,17 @@ function ProfilePage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
     const fetchUserProfile = async () => {
       try {
-        const jwt = getAuthToken();
-        if (!jwt) {
-          throw new Error('Not authenticated');
-        }
-
-        const response = await authenticatedFetch('https://videora-ai.onrender.com/user/profile', {
-          method: 'GET'
+        const response = await fetch('https://videora-ai.onrender.com/user/profile', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
-            navigate('/login');
-            return;
-          }
           throw new Error('Failed to fetch profile');
         }
 
@@ -58,14 +44,11 @@ function ProfilePage() {
         console.error('Error fetching profile:', err);
         setError(err.message);
         setLoading(false);
-        if (err.message === 'Not authenticated') {
-          navigate('/login');
-        }
       }
     };
 
     fetchUserProfile();
-  }, [navigate, isAuthenticated]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,19 +58,16 @@ function ProfilePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await authenticatedFetch('https://videora-ai.onrender.com/user/profile/update', {
+      const response = await fetch('https://videora-ai.onrender.com/user/profile/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          navigate('/login');
-          return;
-        }
         throw new Error('Failed to update profile');
       }
 
@@ -95,9 +75,7 @@ function ProfilePage() {
       console.log('Profile updated successfully');
     } catch (err) {
       console.error('Error updating profile:', err);
-      if (err.message === 'Not authenticated') {
-        navigate('/login');
-      }
+      // Show error message
     }
   };
 
