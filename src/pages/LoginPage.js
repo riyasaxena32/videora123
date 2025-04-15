@@ -1,15 +1,23 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { initiateGoogleAuth, handleGoogleCallback } from '../lib/auth';
+import { initiateGoogleAuth } from '../lib/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 // API URL for authentication
 const API_URL = 'https://videora-ai.onrender.com';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { user } = useAuth();
   
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
+
   // Gradient button style
   const gradientButtonStyle = {
     background: `
@@ -24,25 +32,6 @@ function LoginPage() {
     borderRadius: '9999px'
   };
 
-  // Check for auth code in URL (for Google callback)
-  useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const code = urlParams.get('code');
-    
-    if (code) {
-      // Process the Google auth code
-      handleGoogleCallback(code)
-        .then(data => {
-          console.log('Authentication successful', data);
-          navigate('/');
-        })
-        .catch(error => {
-          console.error('Authentication error:', error);
-        });
-    }
-  }, [navigate]);
-
   // Function to handle Google Sign In
   const handleGoogleSignIn = () => {
     initiateGoogleAuth();
@@ -54,7 +43,6 @@ function LoginPage() {
       <header className="flex items-center justify-between px-6 py-3 w-full">
         <Link to="/" className="flex items-center">
           <img src="/Logo.png" alt="VIDEORA" className="h-8" />
-          
         </Link>
         
         <div className="hidden md:flex space-x-8 text-sm">

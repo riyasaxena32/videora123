@@ -11,90 +11,116 @@ export const AuthProvider = ({ children }) => {
 
   // Check for authentication on initial load
   useEffect(() => {
-    // First check for userData in localStorage (new auth method)
-    const userData = localStorage.getItem('userData');
-    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-    
-    if (userData) {
+    const checkAuth = async () => {
       try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Invalid user data', error);
-        localStorage.removeItem('userData');
-        localStorage.removeItem('token');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('authType');
-        setUser(null);
-      }
-    } else if (token) {
-      // Fallback to old token-based auth
-      try {
-        const decoded = jwtDecode(token);
-        // Check if token is expired
-        if (decoded.exp * 1000 < Date.now()) {
-          localStorage.removeItem('access_token');
-          setUser(null);
-        } else {
-          setUser(decoded);
+        // First check for OAuth2 token
+        const oauthToken = localStorage.getItem('token');
+        // Then check for JWT access token
+        const jwtToken = localStorage.getItem('access_token');
+        
+        if (oauthToken) {
+          // Handle OAuth2 token
+          try {
+            // Store user data from OAuth token
+            const userData = {
+              token: oauthToken,
+              tokenType: 'oauth2'
+            };
+            setUser(userData);
+          } catch (error) {
+            console.error('Invalid OAuth token:', error);
+            clearAuthData();
+          }
+        } else if (jwtToken) {
+          // Handle JWT token
+          try {
+            const decoded = jwtDecode(jwtToken);
+            // Check if JWT token is expired
+            if (decoded.exp * 1000 < Date.now()) {
+              console.error('JWT token expired');
+              clearAuthData();
+            } else {
+              setUser({
+                ...decoded,
+                token: jwtToken,
+                tokenType: 'jwt'
+              });
+            }
+          } catch (error) {
+            console.error('Invalid JWT token:', error);
+            clearAuthData();
+          }
         }
       } catch (error) {
-        console.error('Invalid token', error);
-        localStorage.removeItem('access_token');
-        setUser(null);
+        console.error('Auth check failed:', error);
+        clearAuthData();
+      } finally {
+        setLoading(false);
       }
-    }
-    
-    setLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
+  const clearAuthData = () => {
+    localStorage.removeItem('token'); // OAuth2 token
+    localStorage.removeItem('access_token'); // JWT token
+    localStorage.removeItem('userData');
+    localStorage.removeItem('authType');
+    setUser(null);
+  };
+
   // Handle Google login success with credential
-  const handleGoogleLogin = (credentialResponse) => {
+  const handleGoogleLogin = async (credentialResponse) => {
     try {
+      // Google OAuth returns a JWT token
       const decoded = jwtDecode(credentialResponse.credential);
-      // Store the credential in localStorage
-      localStorage.setItem('access_token', credentialResponse.credential);
-      setUser(decoded);
       
-      // Navigate to home page after successful login
+      // Store the JWT token
+      localStorage.setItem('access_token', credentialResponse.credential);
+      localStorage.setItem('authType', 'google');
+      
+      setUser({
+        ...decoded,
+        token: credentialResponse.credential,
+        tokenType: 'jwt'
+      });
+      
       navigate('/');
     } catch (error) {
-      console.error('Login failed', error);
+      console.error('Login failed:', error);
+      clearAuthData();
     }
   };
 
   // Handle logout
   const logout = async () => {
     try {
-      // Make API call to logout endpoint
+      const token = user?.tokenType === 'jwt' ? 
+        localStorage.getItem('access_token') : 
+        localStorage.getItem('token');
+
+      // Make API call to logout endpoint with appropriate token
       await fetch('https://api.videora.ai/api/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include', // Include cookies if needed
+        credentials: 'include',
       });
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
-      // Clear all auth-related localStorage items
-      localStorage.removeItem('token');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('authType');
-      
-      setUser(null);
+      clearAuthData();
       navigate('/login');
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <AuthContext.Provider value={{ 
       user, 
+      loading,
       handleGoogleLogin,
       logout, 
       isAuthenticated: !!user 
