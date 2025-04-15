@@ -11,64 +11,35 @@ export const AuthProvider = ({ children }) => {
 
   // Check for authentication on initial load
   useEffect(() => {
-    // First check for userData in localStorage (new auth method)
     const userData = localStorage.getItem('userData');
-    const token = localStorage.getItem('token') || localStorage.getItem('videora_token');
+    const jwt = localStorage.getItem('access_token');
     
-    if (userData) {
+    if (userData && jwt) {
       try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Invalid user data', error);
-        localStorage.removeItem('userData');
-        localStorage.removeItem('token');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('authType');
-        setUser(null);
-      }
-    } else if (token) {
-      // Fallback to old token-based auth
-      try {
-        const decoded = jwtDecode(token);
-        // Check if token is expired
+        // Verify JWT is valid
+        const decoded = jwtDecode(jwt);
         if (decoded.exp * 1000 < Date.now()) {
-          localStorage.removeItem('videora_token');
-          setUser(null);
+          // Token expired, clear auth
+          logout();
         } else {
-          setUser(decoded);
+          setUser(JSON.parse(userData));
         }
       } catch (error) {
         console.error('Invalid token', error);
-        localStorage.removeItem('videora_token');
-        setUser(null);
+        logout();
       }
+    } else {
+      setUser(null);
     }
     
     setLoading(false);
   }, []);
 
-  // Handle Google login success with credential
-  const handleGoogleLogin = (credentialResponse) => {
-    try {
-      const decoded = jwtDecode(credentialResponse.credential);
-      // Store the credential in localStorage
-      localStorage.setItem('videora_token', credentialResponse.credential);
-      setUser(decoded);
-      
-      // Navigate to home page after successful login
-      navigate('/');
-    } catch (error) {
-      console.error('Login failed', error);
-    }
-  };
-
   // Handle logout
   const logout = () => {
-    // Clear all auth-related localStorage items
-    localStorage.removeItem('videora_token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('access_token');
+    // Clear only the specific items we're using
+    localStorage.removeItem('access_token'); // JWT
+    localStorage.removeItem('token'); // OAuth token
     localStorage.removeItem('userData');
     localStorage.removeItem('authType');
     
@@ -83,7 +54,6 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{ 
       user, 
-      handleGoogleLogin,
       logout, 
       isAuthenticated: !!user 
     }}>
