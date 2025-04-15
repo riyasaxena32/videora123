@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
 function VideoPage() {
   const { videoId } = useParams();
@@ -9,6 +9,12 @@ function VideoPage() {
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [relatedVideos, setRelatedVideos] = useState([]);
+  const videoRef = useRef(null);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -28,16 +34,94 @@ function VideoPage() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
+  // Format time from seconds to MM:SS
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds}`;
+  };
+
+  // Toggle play/pause
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Toggle mute
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Handle video time update
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const currentTime = videoRef.current.currentTime;
+      const duration = videoRef.current.duration;
+      const progressPercent = (currentTime / duration) * 100;
+      
+      setProgress(progressPercent);
+      setCurrentTime(currentTime);
+    }
+  };
+
+  // Handle seeking in the video
+  const handleSeek = (e) => {
+    if (videoRef.current) {
+      const seekBar = e.currentTarget;
+      const rect = seekBar.getBoundingClientRect();
+      const seekPos = (e.clientX - rect.left) / rect.width;
+      
+      videoRef.current.currentTime = videoRef.current.duration * seekPos;
+    }
+  };
+
   useEffect(() => {
-    // Simulate fetching video data
-    const fetchVideo = () => {
+    // Fetch video data from API
+    const fetchVideo = async () => {
       setLoading(true);
       
-      // Find video in our mock data
-      const foundVideo = videos.find(v => v.id === parseInt(videoId)) || videos[0];
-      setVideo(foundVideo);
-      
-      setLoading(false);
+      try {
+        // Fetch all videos first
+        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch videos');
+        }
+        
+        const data = await response.json();
+        console.log('Fetched videos:', data);
+        
+        if (data && data.video && Array.isArray(data.video)) {
+          // Find the specific video by ID
+          const foundVideo = data.video.find(v => v._id === videoId);
+          
+          if (foundVideo) {
+            setVideo(foundVideo);
+            // Set related videos (other videos excluding the current one)
+            setRelatedVideos(data.video.filter(v => v._id !== videoId));
+          } else {
+            console.error('Video not found');
+            // Fallback to the first video if specific one not found
+            if (data.video.length > 0) {
+              setVideo(data.video[0]);
+              setRelatedVideos(data.video.slice(1));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching video:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     
     fetchVideo();
@@ -47,6 +131,22 @@ function VideoPage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+      </div>
+    );
+  }
+
+  if (!video) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <h2 className="text-2xl font-bold mb-4">Video Not Found</h2>
+        <p className="mb-6">The video you're looking for doesn't exist or has been removed.</p>
+        <button 
+          onClick={() => navigate('/')} 
+          style={gradientButtonStyle}
+          className="px-6 py-2 text-white"
+        >
+          Back to Home
+        </button>
       </div>
     );
   }
@@ -85,6 +185,7 @@ function VideoPage() {
           <button 
             style={gradientButtonStyle}
             className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
+            onClick={() => navigate('/create')}
           >
             Create <Plus className="w-4 h-4" />
           </button>
@@ -101,30 +202,34 @@ function VideoPage() {
         {/* Left Sidebar - Video List */}
         <div className="w-[120px] md:w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
           <div className="py-1">
-            {sideVideoThumbnails.map((thumbnailVideo, index) => (
+            {relatedVideos.map((relatedVideo) => (
               <div 
-                key={index}
-                className={`relative cursor-pointer mb-2 ${thumbnailVideo.id === parseInt(videoId) ? 'border border-[#ED5606]' : ''}`}
-                onClick={() => navigate(`/video/${thumbnailVideo.id}`)}
+                key={relatedVideo._id}
+                className={`relative cursor-pointer mb-2 ${relatedVideo._id === videoId ? 'border border-[#ED5606]' : ''}`}
+                onClick={() => navigate(`/video/${relatedVideo._id}`)}
               >
                 <div className="aspect-video w-full overflow-hidden">
                   <img 
-                    src={thumbnailVideo.image} 
-                    alt={thumbnailVideo.title}
+                    src={relatedVideo.thumbnailLogoUrl || "/image 28.png"} 
+                    alt={relatedVideo.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/image 28.png";
+                    }}
                   />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-1 px-2">
-                  <p className="text-[10px] text-white truncate">{thumbnailVideo.title}</p>
+                  <p className="text-[10px] text-white truncate">{relatedVideo.name}</p>
                 </div>
-                {thumbnailVideo.id === parseInt(videoId) && (
+                {relatedVideo._id === videoId && (
                   <div className="absolute top-0 right-0 bottom-0 w-[3px] bg-[#ED5606]"></div>
                 )}
                 <div className="absolute top-1 right-1 bg-black/70 text-[8px] px-1 rounded text-white">
-                  {thumbnailVideo.duration}
+                  {formatTime(relatedVideo.duration || 0)}
                 </div>
                 <div className="absolute bottom-6 left-1 text-[8px] bg-black/70 px-1 rounded text-white">
-                  {thumbnailVideo.quality}
+                  {relatedVideo.category}
                 </div>
               </div>
             ))}
@@ -135,28 +240,115 @@ function VideoPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Video Player */}
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
-            <img 
-              src={video.image} 
-              alt={video.title}
-              className="w-full h-full object-cover"
-              style={{ maxHeight: '70vh' }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              {/* Add play button overlay if needed */}
+            {/* Video element */}
+            <div className="relative w-full aspect-video bg-black">
+              {video.videoUrl ? (
+                <video
+                  ref={videoRef}
+                  src={video.videoUrl}
+                  poster={video.thumbnailLogoUrl || "/image 28.png"}
+                  className="w-full h-full object-contain"
+                  onTimeUpdate={handleTimeUpdate}
+                  onError={(e) => {
+                    console.error('Video error:', e);
+                  }}
+                  onEnded={() => setIsPlaying(false)}
+                ></video>
+              ) : (
+                <img 
+                  src={video.thumbnailLogoUrl || "/image 28.png"} 
+                  alt={video.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/image 28.png";
+                  }}
+                />
+              )}
+              
+              {/* Custom video controls */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                {/* Progress bar */}
+                <div 
+                  className="w-full h-1 bg-gray-600 rounded-full mb-3 cursor-pointer"
+                  onClick={handleSeek}
+                >
+                  <div 
+                    className="h-full bg-[#ED5606] rounded-full"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    {/* Play/Pause button */}
+                    <button 
+                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                      onClick={togglePlay}
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-5 h-5" />
+                      ) : (
+                        <Play className="w-5 h-5" />
+                      )}
+                    </button>
+                    
+                    {/* Mute/Unmute button */}
+                    <button 
+                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                      onClick={toggleMute}
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-5 h-5" />
+                      ) : (
+                        <Volume2 className="w-5 h-5" />
+                      )}
+                    </button>
+                    
+                    {/* Time display */}
+                    <div className="text-sm">
+                      {formatTime(currentTime)} / {formatTime(video.duration || 0)}
+                    </div>
+                  </div>
+                  
+                  {/* Video quality indicator */}
+                  <div className="text-xs px-2 py-1 bg-black/60 rounded">
+                    HD
+                  </div>
+                </div>
+              </div>
+              
+              {/* Play button overlay when paused */}
+              {!isPlaying && (
+                <button 
+                  className="absolute inset-0 flex items-center justify-center"
+                  onClick={togglePlay}
+                >
+                  <div className="w-20 h-20 bg-black/50 rounded-full flex items-center justify-center">
+                    <Play className="w-8 h-8 text-white" />
+                  </div>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Video Info */}
           <div className="p-6 max-w-[1200px] mx-auto">
-            {/* Days ago indicator */}
+            {/* Upload date indicator */}
             <div className="text-xs text-gray-400 mb-2">
-              08 Days Ago
+              {video.uploadDate ? new Date(video.uploadDate).toLocaleDateString() : 'Recently uploaded'}
             </div>
             
             {/* Video Title */}
             <div className="mb-4">
               <h1 className="text-xl font-bold flex items-center gap-2 mb-1">
-                {video.title} <span className="text-xs font-normal">•</span> <span className="text-sm font-normal">{video.subtitle}</span>
+                {video.name} 
+                {video.category && (
+                  <>
+                    <span className="text-xs font-normal">•</span> 
+                    <span className="text-sm font-normal">{video.category}</span>
+                  </>
+                )}
               </h1>
             </div>
             
@@ -166,24 +358,18 @@ function VideoPage() {
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222]">
                   <img 
-                    src={video.creator.image} 
-                    alt={video.creator.name}
+                    src="/user-avatar.png" 
+                    alt={video.uploadedBy}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium">{video.creator.name}</h3>
-                  <p className="text-xs text-gray-400">{video.creator.subscribers} subscribers</p>
+                  <h3 className="text-sm font-medium">{video.uploadedBy}</h3>
+                  <p className="text-xs text-gray-400">{video.views || 0} views</p>
                 </div>
                 <button 
                   className="ml-2 text-xs text-white px-4 py-1 rounded-full"
-                  style={{
-                    background: `
-                      linear-gradient(0deg, #270E00, #270E00),
-                      conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)
-                    `,
-                    border: '1px solid #ED5606'
-                  }}
+                  style={gradientButtonStyle}
                 >
                   Follow
                 </button>
@@ -193,7 +379,7 @@ function VideoPage() {
               <div className="flex items-center gap-3">
                 <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
                   <ThumbsUp className="w-4 h-4" />
-                  <span className="text-xs mr-1">Like</span>
+                  <span className="text-xs mr-1">Like {video.likes || 0}</span>
                 </button>
                 <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
                   <Share className="w-4 h-4" />
@@ -212,118 +398,60 @@ function VideoPage() {
             
             {/* Video Description */}
             <div className="mb-6 bg-[#101010] p-3 rounded-lg">
-              <p className="text-sm text-gray-300 mb-2">
-                Naruto the Movie: Legend of the Stone of Gelel | 劇場版 NARUTO -ナルト- 大活劇！雪姫忍法帖だってばよ！！ Gekijō-ban Naruto: Daigekitotsu! Maboroshi no Chiteiiseki Dattebayo (2005)
-              </p>
-              <button className="text-xs text-[#ED5606]">See More</button>
+              <p className="text-sm text-gray-300 mb-2">{video.description}</p>
+              {video.tags && video.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {video.tags.map((tag, index) => (
+                    <span key={index} className="text-xs text-[#ED5606]">#{tag}</span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-[#222] pt-6">
-              <h2 className="text-lg font-medium mb-4">Comments</h2>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-medium">Comments</h3>
+                <div className="text-xs text-gray-400">{video.comments?.length || 0}</div>
+              </div>
               
-              {video.comments.map((comment, index) => (
-                <div key={index} className="flex gap-3 mb-6 pb-4 border-b border-[#222]">
-                  <div className="w-8 h-8 bg-[#222] rounded-full flex-shrink-0 overflow-hidden">
-                    <img 
-                      src={comment.user.image} 
-                      alt={comment.user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-xs font-medium">{comment.user.name}</h4>
-                      <span className="text-xs text-[#666]">{comment.time}</span>
-                    </div>
-                    <p className="text-xs text-[#ddd] mb-2">{comment.text}</p>
-                    <div className="flex items-center gap-3">
-                      <button className="text-xs text-[#666] hover:text-white transition-colors flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" /> <span className="text-[10px]">{comment.likes}</span>
-                      </button>
-                      <button className="text-xs text-[#666] hover:text-white transition-colors">Reply</button>
-                    </div>
-                  </div>
+              {/* Comment input */}
+              <div className="flex gap-3 mb-6">
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                  <img src="/user-avatar.png" alt="Your avatar" className="w-full h-full object-cover" />
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Right Sidebar */}
-        <div className="w-80 border-l overflow-y-auto flex-shrink-0 hidden lg:block" 
-          style={{
-            borderImageSource: "linear-gradient(90deg, #140F0A 0%, #7B3F0E 49.59%, #140F0A 100%), linear-gradient(180deg, #401C00 0%, #A15111 49.59%, #401C00 100%)",
-            borderImageSlice: "1",
-            background: "linear-gradient(0deg, #000000, #000000), linear-gradient(180deg, rgba(141, 78, 22, 0.2) -11.48%, rgba(24, 15, 7, 0.2) 50.18%)"
-          }}
-        >
-          {/* Chat Header */}
-          <div className="border-b flex" 
-            style={{
-              borderImageSource: "linear-gradient(90deg, #140F0A 0%, #7B3F0E 49.59%, #140F0A 100%), linear-gradient(180deg, #401C00 0%, #A15111 49.59%, #401C00 100%)",
-              borderImageSlice: "1"
-            }}
-          >
-            <div className="flex-1 py-3 text-sm font-medium text-white text-center">
-              Chat in Video
-            </div>
-          </div>
-          
-          <div className="flex flex-col h-[calc(100%-48px)]" 
-            style={{
-              background: "linear-gradient(0deg, #000000, #000000), linear-gradient(180deg, rgba(141, 78, 22, 0.2) -11.48%, rgba(24, 15, 7, 0.2) 50.18%)"
-            }}
-          >
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto">
-              {chatMessages.map((message, index) => (
-                <div key={index} 
-                  className="flex gap-2 items-center p-2.5 border-t" 
-                  style={{
-                    borderImageSource: "linear-gradient(90deg, #140F0A 0%, #7B3F0E 49.59%, #140F0A 100%)",
-                    borderImageSlice: "1"
-                  }}
-                >
-                  <img 
-                    src="/user-avatar.png" 
-                    alt="User" 
-                    className="w-5 h-5 opacity-70"
+                <div className="flex-1">
+                  <input 
+                    type="text" 
+                    placeholder="Add a comment..." 
+                    className="w-full bg-transparent border-b border-[#333] p-2 text-sm focus:outline-none focus:border-[#ED5606]"
                   />
-                  <div className="text-[11px] text-gray-400">
-                    <span className="text-white">{message.user}</span> {message.text}
-                  </div>
                 </div>
-              ))}
-            </div>
-            
-            {/* Chat Input */}
-            <div className="mt-auto border-t p-3 flex items-center" 
-              style={{
-                borderImageSource: "linear-gradient(90deg, #140F0A 0%, #7B3F0E 49.59%, #140F0A 100%)",
-                borderImageSlice: "1"
-              }}
-            >
-              <input 
-                type="text" 
-                placeholder="Type your message..." 
-                className="flex-1 bg-transparent text-[12px] text-gray-400 focus:outline-none pl-2 py-1.5"
-              />
-              <button 
-                className="text-white p-1.5 rounded-full flex items-center justify-center"
-                style={{
-                  background: `
-                    linear-gradient(0deg, #270E00, #270E00),
-                    conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg),
-                    linear-gradient(180deg, rgba(69, 24, 0, 0.3) 74.07%, rgba(217, 75, 0, 0.3) 100%),
-                    linear-gradient(270deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%),
-                    linear-gradient(90deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%)
-                  `,
-                  border: '1px solid #ED5606'
-                }}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              </div>
+              
+              {/* Comments list */}
+              {video.comments && video.comments.length > 0 ? (
+                <div className="space-y-4">
+                  {video.comments.map((comment, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                        <img src="/user-avatar.png" alt="User avatar" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="text-sm font-medium">{comment.userId}</div>
+                          <div className="text-xs text-gray-400">
+                            {comment.timestamp && new Date(comment.timestamp).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <p className="text-sm">{comment.comment}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-400">No comments yet. Be the first to comment!</div>
+              )}
             </div>
           </div>
         </div>
@@ -331,82 +459,5 @@ function VideoPage() {
     </div>
   );
 }
-
-// Sample chat messages
-const chatMessages = [
-  { user: "Gekijō-ban Naruto:", text: "Legend of the Stone of Gelel" },
-  { user: "Legend of the Stone of Gelel", text: "" },
-  { user: "Gekijō-ban Naruto:", text: "Legend of the Stone of Gelel" },
-  { user: "Legend of the Stone of Gelel", text: "" },
-  { user: "Gekijō-ban Naruto:", text: "Legend of the Stone of Gelel" },
-  { user: "Legend of the Stone of Gelel", text: "" }
-];
-
-// Sample video data
-const videos = [
-  {
-    id: 1,
-    title: "My Neighbor Totoro (1988)",
-    subtitle: "A heartwarming story of two sisters and their encounters with forest spirits",
-    image: "/image 28.png",
-    tag: "Retro Themed",
-    creator: {
-      id: "muse-asia",
-      name: "Muse Asia",
-      image: "/user-avatar.png",
-      subscribers: "1.2M"
-    },
-    comments: [
-      {
-        user: { name: "Shubham Kumar", image: "/user-avatar.png" },
-        text: "Naruto the Movie: Legend of the Stone of Gelel | 劇場版 NARUTO -ナルト- 大活劇！雪姫忍法帖だってばよ！！ Gekijōban Naruto: Daigekitotsu! Maboroshi no Chiteiiseki Dattebayo (2005)",
-        time: "3 days ago",
-        likes: 42
-      },
-      {
-        user: { name: "Shubham Kumar", image: "/user-avatar.png" },
-        text: "Naruto the Movie: Legend of the Stone of Gelel | 劇場版 NARUTO -ナルト- 大活劇！雪姫忍法帖だってばよ！！ Gekijōban Naruto: Daigekitotsu! Maboroshi no Chiteiiseki Dattebayo (2005)",
-        time: "3 days ago",
-        likes: 42
-      },
-      {
-        user: { name: "Sparsh Agrawal", image: "/user-avatar.png" },
-        text: "Naruto the Movie: Legend of the Stone of Gelel | 劇場版 NARUTO -ナルト- 大活劇！雪姫忍法帖だってばよ！！ Gekijōban Naruto: Daigekitotsu! Maboroshi no Chiteiiseki Dattebayo (2005)",
-        time: "4 days ago",
-        likes: 31
-      },
-      {
-        user: { name: "Shubham Kumar", image: "/user-avatar.png" },
-        text: "Naruto the Movie: Legend of the Stone of Gelel | 劇場版 NARUTO -ナルト- 大活劇！雪姫忍法帖だってばよ！！ Gekijōban Naruto: Daigekitotsu! Maboroshi no Chiteiiseki Dattebayo (2005)",
-        time: "5 days ago",
-        likes: 19
-      }
-    ]
-  }
-];
-
-// Sample related videos
-const relatedVideos = [
-  { id: 2, title: "S Charming", image: "/image 28.png", creator: { name: "Sparsh" }, views: "1.5M" },
-  { id: 3, title: "Theory of everything", image: "/image 28.png", creator: { name: "MKBHD" }, views: "2.1M" },
-  { id: 4, title: "Openhiemer", image: "/image 28.png", creator: { name: "T-SERIES" }, views: "3.7M" },
-  { id: 5, title: "New Delhi", image: "/image 28.png", creator: { name: "Casey Neistat" }, views: "900K" },
-  { id: 6, title: "S Charming", image: "/image 28.png", creator: { name: "Sparsh" }, views: "1.5M" },
-  { id: 7, title: "Theory of everything", image: "/image 28.png", creator: { name: "MKBHD" }, views: "2.1M" },
-  { id: 8, title: "Openhiemer", image: "/image 28.png", creator: { name: "T-SERIES" }, views: "3.7M" },
-  { id: 9, title: "New Delhi", image: "/image 28.png", creator: { name: "Casey Neistat" }, views: "900K" }
-];
-
-// Sample data for the left sidebar thumbnails
-const sideVideoThumbnails = [
-  { id: 1, title: "My Neighbor Totoro (1988)", image: "/image 28.png", duration: "2:42", quality: "Ultra HD" },
-  { id: 2, title: "S Charming", image: "/image 28.png", duration: "3:15", quality: "HD" },
-  { id: 3, title: "Theory of everything", image: "/image 28.png", duration: "1:36", quality: "4K" },
-  { id: 4, title: "Openhiemer", image: "/image 28.png", duration: "4:20", quality: "HD" },
-  { id: 5, title: "New Delhi", image: "/image 28.png", duration: "2:18", quality: "Ultra HD" },
-  { id: 6, title: "Spirited Away", image: "/image 28.png", duration: "2:45", quality: "HD" },
-  { id: 7, title: "The Matrix", image: "/image 28.png", duration: "3:22", quality: "4K" },
-  { id: 8, title: "Naruto and the Legend", image: "/image 28.png", duration: "5:10", quality: "Ultra HD" }
-];
 
 export default VideoPage; 
