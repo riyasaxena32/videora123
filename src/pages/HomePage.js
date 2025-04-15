@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext';
 
 function HomePage() {
+  const { isAuthenticated, logout } = useAuth();
   const [activeNavItem, setActiveNavItem] = useState("Home");
   const [activeSidebarItem, setActiveSidebarItem] = useState("Recent");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -197,6 +199,15 @@ function HomePage() {
     likes: 0
   };
 
+  const handleProfileClick = () => {
+    if (isAuthenticated) {
+      navigate('/profile');
+    } else {
+      navigate('/login');
+    }
+    setProfileDropdownOpen(false);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
       {/* Creator Profile Overlay */}
@@ -325,7 +336,7 @@ function HomePage() {
               onClick={toggleProfileDropdown}
             >
               <img
-                src="/user-avatar.png"
+                src={isAuthenticated ? JSON.parse(localStorage.getItem('userData'))?.profilePic || "/user-avatar.png" : "/user-avatar.png"}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -335,12 +346,15 @@ function HomePage() {
             {profileDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
                 <div className="py-2">
-                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
+                  <button 
+                    onClick={handleProfileClick}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
+                  >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <User className="w-4 h-4" />
                     </div>
                     User Profile
-                  </Link>
+                  </button>
                   <button 
                     onClick={handleLogout}
                     className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
