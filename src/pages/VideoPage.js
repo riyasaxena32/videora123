@@ -14,6 +14,7 @@ function VideoPage() {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [relatedVideos, setRelatedVideos] = useState([]);
+  const [videoPlayable, setVideoPlayable] = useState(true);
   const videoRef = useRef(null);
 
   // Custom button styles
@@ -84,6 +85,24 @@ function VideoPage() {
     }
   };
 
+  // Check if the video URL is likely valid
+  const isValidVideoUrl = (url) => {
+    if (!url) return false;
+    
+    // Check if URL contains example.com (placeholder URLs)
+    if (url.includes('example.com')) return false;
+    
+    // Check if URL has a video file extension
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+    const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
+    
+    // Return true if it has a video extension or comes from a common video hosting domain
+    return hasVideoExtension || 
+           url.includes('youtube.com') || 
+           url.includes('vimeo.com') || 
+           url.includes('istockphoto.com');
+  };
+
   useEffect(() => {
     // Fetch video data from API
     const fetchVideo = async () => {
@@ -106,6 +125,8 @@ function VideoPage() {
           
           if (foundVideo) {
             setVideo(foundVideo);
+            // Check if video URL is valid
+            setVideoPlayable(isValidVideoUrl(foundVideo.videoUrl));
             // Set related videos (other videos excluding the current one)
             setRelatedVideos(data.video.filter(v => v._id !== videoId));
           } else {
@@ -113,6 +134,8 @@ function VideoPage() {
             // Fallback to the first video if specific one not found
             if (data.video.length > 0) {
               setVideo(data.video[0]);
+              // Check if video URL is valid
+              setVideoPlayable(isValidVideoUrl(data.video[0].videoUrl));
               setRelatedVideos(data.video.slice(1));
             }
           }
@@ -242,7 +265,7 @@ function VideoPage() {
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
             {/* Video element */}
             <div className="relative w-full aspect-video bg-black">
-              {video.videoUrl ? (
+              {video.videoUrl && isValidVideoUrl(video.videoUrl) ? (
                 <video
                   ref={videoRef}
                   src={video.videoUrl}
@@ -251,6 +274,7 @@ function VideoPage() {
                   onTimeUpdate={handleTimeUpdate}
                   onError={(e) => {
                     console.error('Video error:', e);
+                    setVideoPlayable(false);
                     // Show a more user-friendly error message
                     e.target.style.display = 'none';
                     const errorDiv = document.createElement('div');
@@ -274,68 +298,99 @@ function VideoPage() {
                   controls // Add native browser controls as a fallback
                 ></video>
               ) : (
-                <img 
-                  src={video.thumbnailLogoUrl || "/image 28.png"} 
-                  alt={video.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/image 28.png";
-                  }}
-                />
-              )}
-              
-              {/* Custom video controls */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                {/* Progress bar */}
-                <div 
-                  className="w-full h-1 bg-gray-600 rounded-full mb-3 cursor-pointer"
-                  onClick={handleSeek}
-                >
-                  <div 
-                    className="h-full bg-[#ED5606] rounded-full"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    {/* Play/Pause button */}
-                    <button 
-                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                      onClick={togglePlay}
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-5 h-5" />
-                      ) : (
-                        <Play className="w-5 h-5" />
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black">
+                  <img 
+                    src={video.thumbnailLogoUrl || "/image 28.png"} 
+                    alt={video.name}
+                    className="w-full h-full object-cover absolute"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/image 28.png";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                    <div className="text-white text-center p-6 rounded-lg max-w-md">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-[#270E00] rounded-full flex items-center justify-center">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#ED5606" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M12 8V12" stroke="#ED5606" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M12 16H12.01" stroke="#ED5606" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-medium mb-2">Video Not Available</h3>
+                      <p className="text-sm text-gray-300 mb-4">
+                        {!video.videoUrl ? 
+                          "This video doesn't have a playable source." :
+                          "The video format is not supported or the URL is invalid."}
+                      </p>
+                      {video.videoUrl && (
+                        <a 
+                          href={video.videoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-[#ED5606] text-white rounded-md"
+                        >
+                          View Source Video
+                        </a>
                       )}
-                    </button>
-                    
-                    {/* Mute/Unmute button */}
-                    <button 
-                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                      onClick={toggleMute}
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-5 h-5" />
-                      ) : (
-                        <Volume2 className="w-5 h-5" />
-                      )}
-                    </button>
-                    
-                    {/* Time display */}
-                    <div className="text-sm">
-                      {formatTime(currentTime)} / {formatTime(video.duration || 0)}
                     </div>
                   </div>
+                </div>
+              )}
+              
+              {/* Custom video controls - Only show for valid videos that are playing */}
+              {video.videoUrl && isValidVideoUrl(video.videoUrl) && videoPlayable && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  {/* Progress bar */}
+                  <div 
+                    className="w-full h-1 bg-gray-600 rounded-full mb-3 cursor-pointer"
+                    onClick={handleSeek}
+                  >
+                    <div 
+                      className="h-full bg-[#ED5606] rounded-full"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
                   
-                  {/* Video quality indicator */}
-                  <div className="text-xs px-2 py-1 bg-black/60 rounded">
-                    HD
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      {/* Play/Pause button */}
+                      <button 
+                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                        onClick={togglePlay}
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-5 h-5" />
+                        ) : (
+                          <Play className="w-5 h-5" />
+                        )}
+                      </button>
+                      
+                      {/* Mute/Unmute button */}
+                      <button 
+                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                        onClick={toggleMute}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-5 h-5" />
+                        ) : (
+                          <Volume2 className="w-5 h-5" />
+                        )}
+                      </button>
+                      
+                      {/* Time display */}
+                      <div className="text-sm">
+                        {formatTime(currentTime)} / {formatTime(video.duration || 0)}
+                      </div>
+                    </div>
+                    
+                    {/* Video quality indicator */}
+                    <div className="text-xs px-2 py-1 bg-black/60 rounded">
+                      HD
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               
               {/* Play button overlay when paused */}
               {!isPlaying && (
