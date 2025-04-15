@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
 function HomePage() {
@@ -8,7 +8,11 @@ function HomePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const profileDropdownRef = useRef(null);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -24,9 +28,79 @@ function HomePage() {
     borderRadius: '9999px'
   };
 
+  // Fetch videos from API
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch videos');
+        }
+        
+        const data = await response.json();
+        console.log('Fetched videos:', data);
+        
+        if (data && data.video && Array.isArray(data.video)) {
+          setVideos(data.video);
+        }
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchVideos();
+  }, []);
+  
+  // Group videos by category
+  const educationalVideos = videos.filter(video => video.category === 'Education');
+  const otherVideos = videos.filter(video => video.category !== 'Education');
+
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
+
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('https://videora-ai.onrender.com/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        navigate('/login');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScrollButtonVisibility = (scrollId, leftBtnId, rightBtnId) => {
@@ -101,6 +175,16 @@ function HomePage() {
   const closeCreatorProfile = () => {
     setSelectedCreator(null);
   };
+
+  // Return loading state if videos are still loading
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen bg-black text-white items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+        <p className="mt-4">Loading videos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
@@ -222,12 +306,44 @@ function HomePage() {
             Create
             <Plus className="w-3.5 h-3.5 ml-0.5" />
           </button>
-          <button 
-            className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors"
-            onClick={() => navigate('/login')}
-          >
-            <User className="w-4 h-4" />
-          </button>
+          
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              onClick={toggleProfileDropdown}
+            >
+              <img
+                src="/user-avatar.png"
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </button>
+            
+            {/* Dropdown menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="py-2">
+                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    User Profile
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <LogOut className="w-4 h-4" />
+                    </div>
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
             <Bell className="w-4 h-4" />
           </button>
@@ -412,21 +528,21 @@ function HomePage() {
           {/* Hero Section */}
           <div className="relative h-[400px] overflow-hidden hero-rockstar">
             <img
-              src="/image 28.png"
-              alt="Rockstar"
+              src={videos[0]?.thumbnailLogoUrl || "/image 28.png"}
+              alt={videos[0]?.name || "Featured Video"}
               width={1200}
               height={800}
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "/placeholder.jpg";
+                e.target.src = "/image 28.png";
               }}
             />
             {/* Darker overlay gradient for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-8 w-full z-10">
-              <h1 className="text-6xl font-bold mb-2">ROCKSTAR</h1>
-              <p className="text-xl mb-6">Vibe: Retro</p>
+              <h1 className="text-6xl font-bold mb-2">{videos[0]?.name || "VIDEORA"}</h1>
+              <p className="text-xl mb-6">Category: {videos[0]?.category || "Featured"}</p>
               <div className="flex items-center gap-4">
                 <button className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium">
                   <PlayIcon className="w-5 h-5" />
@@ -442,7 +558,7 @@ function HomePage() {
                 </button>
               </div>
               <div className="flex items-center mt-4 gap-2">
-                <p className="text-sm text-[#b0b0b0]">Created by:</p>
+                <p className="text-sm text-[#b0b0b0]">Uploaded by:</p>
                 <div className="flex items-center gap-2">
                   <img
                     src="/user-avatar.png"
@@ -451,16 +567,16 @@ function HomePage() {
                     height={24}
                     className="rounded-full"
                   />
-                  <span className="text-sm">Naruto</span>
+                  <span className="text-sm">{videos[0]?.uploadedBy || "Creator"}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Top Videos Section - Scrollable */}
+          {/* All Videos Section - Scrollable */}
           <div className="px-8 py-6 relative">
             <div className="flex items-center mb-4">
-              <h2 className="text-xl font-bold">Top Videos</h2>
+              <h2 className="text-xl font-bold">All Videos</h2>
               <div className="ml-auto flex gap-2">
                 <button 
                   id="topVideosLeftBtn"
@@ -478,54 +594,56 @@ function HomePage() {
             </div>
             <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="topVideosScroll">
               <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                {topVideos.map((video, index) => (
+                {videos.map((video, index) => (
                   <div 
-                    key={index} 
+                    key={video._id} 
                     className="snap-start cursor-pointer" 
                     style={{ width: '280px', flexShrink: 0 }}
-                    onClick={() => navigate(`/video/${index + 1}`)}
+                    onClick={() => navigate(`/video/${video._id}`)}
                   >
-                    <VideoCard {...video} />
+                    <ApiVideoCard video={video} />
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Anime Section - Scrollable */}
-          <div className="px-8 py-6 relative">
-            <div className="flex items-center mb-4">
-              <h2 className="text-xl font-bold">Anime</h2>
-              <div className="ml-auto flex gap-2">
-                <button 
-                  id="animeLeftBtn"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('animeScroll').scrollBy({left: -300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                </button>
-                <button 
-                  id="animeRightBtn"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('animeScroll').scrollBy({left: 300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+          {/* Educational Videos Section - Scrollable */}
+          {educationalVideos.length > 0 && (
+            <div className="px-8 py-6 relative">
+              <div className="flex items-center mb-4">
+                <h2 className="text-xl font-bold">Educational</h2>
+                <div className="ml-auto flex gap-2">
+                  <button 
+                    id="animeLeftBtn"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                    onClick={() => document.getElementById('animeScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                    <ChevronRight className="w-4 h-4 rotate-180" />
+                  </button>
+                  <button 
+                    id="animeRightBtn"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                    onClick={() => document.getElementById('animeScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="animeScroll">
+                <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                  {educationalVideos.map((video) => (
+                    <div 
+                      key={video._id} 
+                      className="snap-start cursor-pointer" 
+                      style={{ width: '280px', flexShrink: 0 }}
+                      onClick={() => navigate(`/video/${video._id}`)}
+                    >
+                      <ApiVideoCard video={video} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="animeScroll">
-              <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                {animeVideos.map((video, index) => (
-                  <div 
-                    key={index} 
-                    className="snap-start cursor-pointer" 
-                    style={{ width: '280px', flexShrink: 0 }}
-                    onClick={() => navigate(`/video/${index + 5}`)}
-                  >
-                    <VideoCard {...video} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Top Creators Section - Scrollable */}
           <div className="px-8 py-6 relative">
@@ -566,6 +684,52 @@ function HomePage() {
       </div>
     </div>
   )
+}
+
+// Video card component for API videos
+function ApiVideoCard({ video }) {
+  const formatDuration = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds}`;
+  };
+
+  return (
+    <div className="relative group cursor-pointer video-card">
+      <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
+        <img 
+          src={video.thumbnailLogoUrl || "/image 28.png"} 
+          alt={video.name} 
+          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/image 28.png";
+          }}
+        />
+        {/* Category tag */}
+        <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
+          {video.category}
+        </div>
+        {/* Duration tag */}
+        {video.duration && (
+          <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
+            {formatDuration(video.duration)}
+          </div>
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
+      </div>
+      <div className="mt-2">
+        <h3 className="text-sm font-medium">{video.name}</h3>
+        <p className="text-xs text-[#b0b0b0]">
+          {video.views} views • Uploaded by {video.uploadedBy || "Unknown"}
+        </p>
+        <p className="text-xs text-[#b0b0b0]">
+          {video.tags && video.tags.map(tag => `#${tag}`).join(" ")}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function VideoCard({ title, image, tag, id }) {
