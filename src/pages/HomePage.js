@@ -63,26 +63,40 @@ function HomePage() {
 
   const handleLogout = async () => {
     try {
-      // Clear only the specific tokens and data
-      localStorage.removeItem('access_token'); // JWT
-      localStorage.removeItem('token'); // OAuth token
+      // Clear credentials using the exact key names from the network tab
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token');
       localStorage.removeItem('authType');
       localStorage.removeItem('userData');
+      localStorage.removeItem('videora_token');
       
-      // Call logout endpoint
-      await fetch('https://videora-ai.onrender.com/api/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+      // Try to clear cookies if possible (may not work in all browsers)
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
+      
+      console.log('Logged out successfully (client-side)');
+      
+      // Make a client-side logout call to update state in React
+      try {
+        // Try to call the logout endpoint without waiting for a response
+        fetch('https://videora-ai.onrender.com/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        }).catch(e => console.log('Backend logout attempt:', e));
+      } catch (err) {
+        // Ignore errors from backend logout attempt
+        console.log('Backend logout attempt error:', err);
+      }
       
       // Redirect to login page
       navigate('/login');
     } catch (error) {
       console.error('Error during logout:', error);
-      // Still redirect to login if there's an error
+      // Redirect to login anyway if there's an error
       navigate('/login');
     }
   };
