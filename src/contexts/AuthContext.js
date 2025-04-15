@@ -64,16 +64,28 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Handle logout
-  const logout = () => {
-    // Clear all auth-related localStorage items
-  
-    localStorage.removeItem('token');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('authType');
-    
-    setUser(null);
-    navigate('/login');
+  const logout = async () => {
+    try {
+      // Make API call to logout endpoint
+      await fetch('https://api.videora.ai/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies if needed
+      });
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    } finally {
+      // Clear all auth-related localStorage items
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('authType');
+      
+      setUser(null);
+      navigate('/login');
+    }
   };
 
   if (loading) {
