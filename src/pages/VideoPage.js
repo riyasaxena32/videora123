@@ -1,21 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp } from 'lucide-react';
 
 function VideoPage() {
   const { videoId } = useParams();
   const navigate = useNavigate();
   const [video, setVideo] = useState(null);
+  const [relatedVideos, setRelatedVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [relatedVideos, setRelatedVideos] = useState([]);
-  const [videoPlayable, setVideoPlayable] = useState(true);
-  const videoRef = useRef(null);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -35,81 +30,35 @@ function VideoPage() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  // Format time from seconds to MM:SS
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds}`;
-  };
-
-  // Toggle play/pause
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  // Toggle mute
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  // Handle video time update
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const currentTime = videoRef.current.currentTime;
-      const duration = videoRef.current.duration;
-      const progressPercent = (currentTime / duration) * 100;
-      
-      setProgress(progressPercent);
-      setCurrentTime(currentTime);
-    }
-  };
-
-  // Handle seeking in the video
-  const handleSeek = (e) => {
-    if (videoRef.current) {
-      const seekBar = e.currentTarget;
-      const rect = seekBar.getBoundingClientRect();
-      const seekPos = (e.clientX - rect.left) / rect.width;
-      
-      videoRef.current.currentTime = videoRef.current.duration * seekPos;
-    }
-  };
-
-  // Check if the video URL is likely valid
-  const isValidVideoUrl = (url) => {
-    if (!url) return false;
+  // Format date to show how long ago
+  const formatDateAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
     
-    // Check if URL contains example.com (placeholder URLs)
-    if (url.includes('example.com')) return false;
-    
-    // Check if URL has a video file extension
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
-    const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
-    
-    // Return true if it has a video extension or comes from a common video hosting domain
-    return hasVideoExtension || 
-           url.includes('youtube.com') || 
-           url.includes('vimeo.com') || 
-           url.includes('istockphoto.com');
+    if (diffInDays === 0) {
+      return 'Today';
+    } else if (diffInDays === 1) {
+      return 'Yesterday';
+    } else if (diffInDays < 30) {
+      return `${diffInDays} days ago`;
+    } else if (diffInDays < 365) {
+      const months = Math.floor(diffInDays / 30);
+      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    } else {
+      const years = Math.floor(diffInDays / 365);
+      return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+    }
   };
 
   useEffect(() => {
     // Fetch video data from API
     const fetchVideo = async () => {
-      setLoading(true);
-      
       try {
-        // Fetch all videos first
+        setLoading(true);
+        setError(null);
+        
+        // First fetch all videos
         const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
         
         if (!response.ok) {
@@ -117,37 +66,32 @@ function VideoPage() {
         }
         
         const data = await response.json();
-        console.log('Fetched videos:', data);
+        const videos = data.video || [];
         
-        if (data && data.video && Array.isArray(data.video)) {
-          // Find the specific video by ID
-          const foundVideo = data.video.find(v => v._id === videoId);
-          
-          if (foundVideo) {
-            setVideo(foundVideo);
-            // Check if video URL is valid
-            setVideoPlayable(isValidVideoUrl(foundVideo.videoUrl));
-            // Set related videos (other videos excluding the current one)
-            setRelatedVideos(data.video.filter(v => v._id !== videoId));
-          } else {
-            console.error('Video not found');
-            // Fallback to the first video if specific one not found
-            if (data.video.length > 0) {
-              setVideo(data.video[0]);
-              // Check if video URL is valid
-              setVideoPlayable(isValidVideoUrl(data.video[0].videoUrl));
-              setRelatedVideos(data.video.slice(1));
-            }
-          }
+        // Find the specific video
+        const foundVideo = videos.find(v => v._id === videoId);
+        
+        if (!foundVideo) {
+          throw new Error('Video not found');
         }
-      } catch (error) {
-        console.error('Error fetching video:', error);
-      } finally {
+        
+        // Set the video
+        setVideo(foundVideo);
+        
+        // Set related videos (all other videos)
+        setRelatedVideos(videos.filter(v => v._id !== videoId));
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching video:', err);
+        setError(err.message);
         setLoading(false);
       }
     };
     
-    fetchVideo();
+    if (videoId) {
+      fetchVideo();
+    }
   }, [videoId]);
 
   if (loading) {
@@ -158,17 +102,29 @@ function VideoPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <div className="text-red-500 mb-4 text-xl">Error: {error}</div>
+        <button 
+          className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded px-4 py-2"
+          onClick={() => navigate('/')}
+        >
+          Return to Home
+        </button>
+      </div>
+    );
+  }
+
   if (!video) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-bold mb-4">Video Not Found</h2>
-        <p className="mb-6">The video you're looking for doesn't exist or has been removed.</p>
+        <div className="text-white mb-4 text-xl">Video not found</div>
         <button 
-          onClick={() => navigate('/')} 
-          style={gradientButtonStyle}
-          className="px-6 py-2 text-white"
+          className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded px-4 py-2"
+          onClick={() => navigate('/')}
         >
-          Back to Home
+          Return to Home
         </button>
       </div>
     );
@@ -222,19 +178,19 @@ function VideoPage() {
       </header>
 
       <div className="flex h-[calc(100vh-60px)]">
-        {/* Left Sidebar - Video List */}
+        {/* Left Sidebar - Related Videos List */}
         <div className="w-[120px] md:w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
           <div className="py-1">
-            {relatedVideos.map((relatedVideo) => (
+            {relatedVideos.map((relVideo) => (
               <div 
-                key={relatedVideo._id}
-                className={`relative cursor-pointer mb-2 ${relatedVideo._id === videoId ? 'border border-[#ED5606]' : ''}`}
-                onClick={() => navigate(`/video/${relatedVideo._id}`)}
+                key={relVideo._id}
+                className="relative cursor-pointer mb-2"
+                onClick={() => navigate(`/video/${relVideo._id}`)}
               >
                 <div className="aspect-video w-full overflow-hidden">
                   <img 
-                    src={relatedVideo.thumbnailLogoUrl || "/image 28.png"} 
-                    alt={relatedVideo.name}
+                    src={relVideo.thumbnailLogoUrl || "/image 28.png"} 
+                    alt={relVideo.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -243,16 +199,13 @@ function VideoPage() {
                   />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-1 px-2">
-                  <p className="text-[10px] text-white truncate">{relatedVideo.name}</p>
+                  <p className="text-[10px] text-white truncate">{relVideo.name}</p>
                 </div>
-                {relatedVideo._id === videoId && (
-                  <div className="absolute top-0 right-0 bottom-0 w-[3px] bg-[#ED5606]"></div>
-                )}
                 <div className="absolute top-1 right-1 bg-black/70 text-[8px] px-1 rounded text-white">
-                  {formatTime(relatedVideo.duration || 0)}
+                  {Math.floor(relVideo.duration / 60)}:{String(relVideo.duration % 60).padStart(2, '0')}
                 </div>
                 <div className="absolute bottom-6 left-1 text-[8px] bg-black/70 px-1 rounded text-white">
-                  {relatedVideo.category}
+                  {relVideo.category}
                 </div>
               </div>
             ))}
@@ -263,154 +216,36 @@ function VideoPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Video Player */}
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
-            {/* Video element */}
-            <div className="relative w-full aspect-video bg-black">
-              {video.videoUrl && isValidVideoUrl(video.videoUrl) ? (
-                <video
-                  ref={videoRef}
-                  src={video.videoUrl}
-                  poster={video.thumbnailLogoUrl || "/image 28.png"}
-                  className="w-full h-full object-contain"
-                  onTimeUpdate={handleTimeUpdate}
-                  onError={(e) => {
-                    console.error('Video error:', e);
-                    setVideoPlayable(false);
-                    // Show a more user-friendly error message
-                    e.target.style.display = 'none';
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'absolute inset-0 flex items-center justify-center flex-col bg-black';
-                    errorDiv.innerHTML = `
-                      <div class="text-center p-4">
-                        <div class="w-16 h-16 mx-auto mb-4 bg-[#270E00] rounded-full flex items-center justify-center">
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#ED5606" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M12 8V12" stroke="#ED5606" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M12 16H12.01" stroke="#ED5606" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </div>
-                        <h3 class="text-lg font-medium mb-2 text-white">Video Playback Error</h3>
-                        <p class="text-sm text-gray-300 mb-4">The video cannot be played due to an unsupported format or invalid URL.</p>
-                      </div>
-                    `;
-                    e.target.parentNode.appendChild(errorDiv);
-                  }}
-                  onEnded={() => setIsPlaying(false)}
-                  controls // Add native browser controls as a fallback
-                ></video>
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-black">
-                  <img 
-                    src={video.thumbnailLogoUrl || "/image 28.png"} 
-                    alt={video.name}
-                    className="w-full h-full object-cover absolute"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/image 28.png";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                    <div className="text-white text-center p-6 rounded-lg max-w-md">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-[#270E00] rounded-full flex items-center justify-center">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#ED5606" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M12 8V12" stroke="#ED5606" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M12 16H12.01" stroke="#ED5606" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                      <h3 className="text-xl font-medium mb-2">Video Not Available</h3>
-                      <p className="text-sm text-gray-300 mb-4">
-                        {!video.videoUrl ? 
-                          "This video doesn't have a playable source." :
-                          "The video format is not supported or the URL is invalid."}
-                      </p>
-                      {video.videoUrl && (
-                        <a 
-                          href={video.videoUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-[#ED5606] text-white rounded-md"
-                        >
-                          View Source Video
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Custom video controls - Only show for valid videos that are playing */}
-              {video.videoUrl && isValidVideoUrl(video.videoUrl) && videoPlayable && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  {/* Progress bar */}
-                  <div 
-                    className="w-full h-1 bg-gray-600 rounded-full mb-3 cursor-pointer"
-                    onClick={handleSeek}
-                  >
-                    <div 
-                      className="h-full bg-[#ED5606] rounded-full"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      {/* Play/Pause button */}
-                      <button 
-                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                        onClick={togglePlay}
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5" />
-                        )}
-                      </button>
-                      
-                      {/* Mute/Unmute button */}
-                      <button 
-                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                        onClick={toggleMute}
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-5 h-5" />
-                        ) : (
-                          <Volume2 className="w-5 h-5" />
-                        )}
-                      </button>
-                      
-                      {/* Time display */}
-                      <div className="text-sm">
-                        {formatTime(currentTime)} / {formatTime(video.duration || 0)}
-                      </div>
-                    </div>
-                    
-                    {/* Video quality indicator */}
-                    <div className="text-xs px-2 py-1 bg-black/60 rounded">
-                      HD
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Play button overlay when paused */}
-              {!isPlaying && (
-                <button 
-                  className="absolute inset-0 flex items-center justify-center"
-                  onClick={togglePlay}
-                >
-                  <div className="w-20 h-20 bg-black/50 rounded-full flex items-center justify-center">
-                    <Play className="w-8 h-8 text-white" />
-                  </div>
-                </button>
-              )}
+            {video.videoUrl ? (
+              <video
+                src={video.videoUrl}
+                poster={video.thumbnailLogoUrl || "/image 28.png"}
+                controls
+                className="w-full h-full object-contain"
+                style={{ maxHeight: '70vh' }}
+              />
+            ) : (
+              <img 
+                src={video.thumbnailLogoUrl || "/image 28.png"} 
+                alt={video.name}
+                className="w-full h-full object-cover"
+                style={{ maxHeight: '70vh' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/image 28.png";
+                }}
+              />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Add play button overlay if needed */}
             </div>
           </div>
 
           {/* Video Info */}
           <div className="p-6 max-w-[1200px] mx-auto">
-            {/* Upload date indicator */}
+            {/* Days ago indicator */}
             <div className="text-xs text-gray-400 mb-2">
-              {video.uploadDate ? new Date(video.uploadDate).toLocaleDateString() : 'Recently uploaded'}
+              {formatDateAgo(video.uploadDate)}
             </div>
             
             {/* Video Title */}
@@ -443,7 +278,13 @@ function VideoPage() {
                 </div>
                 <button 
                   className="ml-2 text-xs text-white px-4 py-1 rounded-full"
-                  style={gradientButtonStyle}
+                  style={{
+                    background: `
+                      linear-gradient(0deg, #270E00, #270E00),
+                      conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)
+                    `,
+                    border: '1px solid #ED5606'
+                  }}
                 >
                   Follow
                 </button>
@@ -453,7 +294,7 @@ function VideoPage() {
               <div className="flex items-center gap-3">
                 <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
                   <ThumbsUp className="w-4 h-4" />
-                  <span className="text-xs mr-1">Like {video.likes || 0}</span>
+                  <span className="text-xs mr-1">Like {video.likes > 0 ? `(${video.likes})` : ''}</span>
                 </button>
                 <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
                   <Share className="w-4 h-4" />
@@ -472,61 +313,48 @@ function VideoPage() {
             
             {/* Video Description */}
             <div className="mb-6 bg-[#101010] p-3 rounded-lg">
-              <p className="text-sm text-gray-300 mb-2">{video.description}</p>
+              <p className="text-sm text-gray-300 mb-2">
+                {video.description || 'No description provided.'}
+              </p>
               {video.tags && video.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {video.tags.map((tag, index) => (
-                    <span key={index} className="text-xs text-[#ED5606]">#{tag}</span>
+                    <span key={index} className="text-xs bg-[#1A1A1A] text-[#ED5606] px-2 py-1 rounded">
+                      #{tag}
+                    </span>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Comments Section */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-medium">Comments</h3>
-                <div className="text-xs text-gray-400">{video.comments?.length || 0}</div>
-              </div>
-              
-              {/* Comment input */}
-              <div className="flex gap-3 mb-6">
-                <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
-                  <img src="/user-avatar.png" alt="Your avatar" className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1">
-                  <input 
-                    type="text" 
-                    placeholder="Add a comment..." 
-                    className="w-full bg-transparent border-b border-[#333] p-2 text-sm focus:outline-none focus:border-[#ED5606]"
-                  />
-                </div>
-              </div>
-              
-              {/* Comments list */}
-              {video.comments && video.comments.length > 0 ? (
+            {/* Comments Section - Only show if video has comments */}
+            {video.comments && video.comments.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-md font-medium mb-4">Comments ({video.comments.length})</h3>
                 <div className="space-y-4">
                   {video.comments.map((comment, index) => (
                     <div key={index} className="flex gap-3">
-                      <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
-                        <img src="/user-avatar.png" alt="User avatar" className="w-full h-full object-cover" />
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                        <img 
+                          src="/user-avatar.png" 
+                          alt="User"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="text-sm font-medium">{comment.userId}</div>
-                          <div className="text-xs text-gray-400">
-                            {comment.timestamp && new Date(comment.timestamp).toLocaleDateString()}
-                          </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium">{comment.userId}</h4>
+                          <span className="text-xs text-gray-400">
+                            {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
+                          </span>
                         </div>
-                        <p className="text-sm">{comment.comment}</p>
+                        <p className="text-sm text-gray-300 mt-1">{comment.comment}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-6 text-gray-400">No comments yet. Be the first to comment!</div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
