@@ -203,11 +203,11 @@ function VideoNarrationContent({ gradientButtonStyle }) {
   return (
     <div className="flex-1 flex flex-col bg-black">
       {/* Main content area */}
-      <div className="flex flex-1 max-h-[calc(100vh-4.5rem)]">
+      <div className="flex flex-1">
         {/* Left side - Video player */}
-        <div className="w-3/5 p-3 flex flex-col">
+        <div className="w-3/5 p-4 flex flex-col">
           {/* Video preview */}
-          <div className="relative bg-[#0A0A0A] rounded-md overflow-hidden" style={{ height: '36vh' }}>
+          <div className="relative bg-[#0A0A0A] rounded-md overflow-hidden aspect-video">
             <img 
               src="/image 28.png" 
               alt="Video preview" 
@@ -226,59 +226,59 @@ function VideoNarrationContent({ gradientButtonStyle }) {
             </div>
             
             {/* Time indicators and progress bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-8 flex items-center px-3">
-              <div className="text-xs text-white mr-2">{currentTime}</div>
+            <div className="absolute bottom-0 left-0 right-0 h-10 flex items-center px-4">
+              <div className="text-xs text-white mr-3">{currentTime}</div>
               <div className="flex-1 bg-[#333] h-1 rounded-full overflow-hidden">
                 <div className="bg-[#ED5606] h-full" style={{ width: '40%' }}></div>
               </div>
-              <div className="text-xs text-white ml-2">{duration}</div>
+              <div className="text-xs text-white ml-3">{duration}</div>
             </div>
           </div>
           
           {/* Bottom controls section */}
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-4">
             <div className="flex-1 grid grid-cols-3 gap-2">
-              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2 flex flex-col items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
+              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-3 flex flex-col items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
                   <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M7 10L12 15L17 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M12 15V3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-[9px] text-center text-[#999]">Upload your video</span>
+                <span className="text-[10px] text-center text-[#999]">Upload your video (completed)</span>
               </div>
               
-              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2 flex flex-col items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
+              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-3 flex flex-col items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
                   <path d="M12 5V19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-[9px] text-center text-[#999]">Auto Generate</span>
+                <span className="text-[10px] text-center text-[#999]">Auto Generate Subtitles</span>
               </div>
               
-              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2 flex flex-col items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
+              <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-3 flex flex-col items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-1">
                   <path d="M21 12H3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M15 6L21 12L15 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-[9px] text-center text-[#999]">AI Edit</span>
+                <span className="text-[10px] text-center text-[#999]">AI Edit</span>
               </div>
             </div>
           </div>
           
           {/* Organize Your Video section */}
-          <div className="mt-2">
-            <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-2">
-              <h3 className="text-xs font-medium mb-1">Organize Your Video</h3>
-              <p className="text-[9px] text-[#777] mb-2">Choose a setting to control who can see this content</p>
+          <div className="mt-4">
+            <div className="border border-[#222] rounded-md bg-[#0A0A0A] p-4">
+              <h3 className="text-sm font-medium mb-2">Organize Your Video</h3>
+              <p className="text-xs text-[#777] mb-3">Choose a setting to control who can see this content and where it appears</p>
               
-              <div className="relative">
-                <select className="w-full appearance-none bg-[#151515] border border-[#333] rounded p-1.5 text-xs text-white px-3 pr-8 focus:outline-none">
+              <div className="relative mb-4">
+                <select className="w-full appearance-none bg-[#151515] border border-[#333] rounded p-2 text-sm text-white px-4 pr-10 focus:outline-none">
                   <option>Public (anyone can access)</option>
                   <option>Private (only you can access)</option>
                   <option>Unlisted (anyone with link can access)</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="#777" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -289,23 +289,22 @@ function VideoNarrationContent({ gradientButtonStyle }) {
         
         {/* Right side - Narration details */}
         <div className="w-2/5 border-l border-[#222] flex flex-col">
-          <div className="p-3">
-            <h2 className="text-xs font-medium">Details</h2>
-            <div className="mt-2">
-              <div className="mb-2">
-                <label className="block text-[9px] text-[#777] mb-1">Provide Your video title here...</label>
+          <div className="p-4">
+            <h2 className="text-sm font-medium">Details</h2>
+            <div className="mt-4">
+              <div className="mb-4">
+                <label className="block text-xs text-[#777] mb-1">Provide Your video title here...</label>
                 <input 
                   type="text" 
-                  className="w-full bg-[#151515] border border-[#333] rounded p-2 text-xs text-white focus:outline-none focus:border-[#ED5606]"
+                  className="w-full bg-[#151515] border border-[#333] rounded p-3 text-sm text-white focus:outline-none focus:border-[#ED5606]"
                   placeholder="Enter video title..."
                 />
               </div>
               
-              <div className="mb-2">
-                <label className="block text-[9px] text-[#777] mb-1">Provide Your video description here...</label>
+              <div className="mb-4">
+                <label className="block text-xs text-[#777] mb-1">Provide Your video description here...</label>
                 <textarea 
-                  className="w-full bg-[#151515] border border-[#333] rounded p-2 text-xs text-white focus:outline-none focus:border-[#ED5606] resize-none"
-                  style={{ height: '14vh' }}
+                  className="w-full bg-[#151515] border border-[#333] rounded p-3 text-sm text-white focus:outline-none focus:border-[#ED5606] min-h-[100px] resize-none"
                   placeholder="Enter video description..."
                 ></textarea>
               </div>
@@ -313,17 +312,17 @@ function VideoNarrationContent({ gradientButtonStyle }) {
           </div>
           
           {/* Bottom navigation */}
-          <div className="mt-auto p-3 border-t border-[#222] flex justify-between">
-            <button className="flex items-center gap-1 text-white bg-[#151515] hover:bg-[#222] px-3 py-1.5 rounded text-xs">
-              <ArrowLeft className="w-3 h-3" />
+          <div className="mt-auto p-4 border-t border-[#222] flex justify-between">
+            <button className="flex items-center gap-2 text-white bg-[#151515] hover:bg-[#222] px-4 py-2 rounded text-sm">
+              <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
             </button>
             <button 
               style={gradientButtonStyle}
-              className="flex items-center gap-1 text-white px-4 py-1.5 text-xs font-medium"
+              className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
             >
               <span>Publish Video</span>
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
