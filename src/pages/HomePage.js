@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
 function HomePage() {
@@ -8,7 +8,12 @@ function HomePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const profileDropdownRef = useRef(null);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -24,9 +29,90 @@ function HomePage() {
     borderRadius: '9999px'
   };
 
+  // Fetch videos from API
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch videos');
+        }
+        
+        const data = await response.json();
+        setVideos(data.video || []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching videos:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    
+    fetchVideos();
+  }, []);
+
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
+
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Clear credentials using the exact key names from the network tab
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('authType');
+      localStorage.removeItem('userData');
+      
+      // Try to clear cookies if possible (may not work in all browsers)
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      console.log('Logged out successfully (client-side)');
+      
+      // Make a client-side logout call to update state in React
+      try {
+        // Try to call the logout endpoint without waiting for a response
+        fetch('https://videora-ai.onrender.com/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        }).catch(e => console.log('Backend logout attempt:', e));
+      } catch (err) {
+        // Ignore errors from backend logout attempt
+        console.log('Backend logout attempt error:', err);
+      }
+      
+      // Redirect to login page
+      navigate('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Redirect to login anyway if there's an error
+      navigate('/login');
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScrollButtonVisibility = (scrollId, leftBtnId, rightBtnId) => {
@@ -100,6 +186,28 @@ function HomePage() {
   // Function to close creator profile
   const closeCreatorProfile = () => {
     setSelectedCreator(null);
+  };
+
+  // Get education videos
+  const educationVideos = videos.filter(video => video.category === 'Education');
+  
+  // Get other category videos or use all if no specific categories
+  const otherVideos = videos.filter(video => video.category !== 'Education');
+
+  // Default video if needed
+  const defaultVideo = {
+    _id: "default",
+    name: "Default Video",
+    description: "Default video when no videos are available",
+    category: "Default",
+    tags: ["default"],
+    thumbnailLogoUrl: "/image 28.png",
+    videoUrl: "",
+    duration: 0,
+    uploadedBy: "System",
+    uploadDate: new Date().toISOString(),
+    views: 0,
+    likes: 0
   };
 
   return (
@@ -222,12 +330,44 @@ function HomePage() {
             Create
             <Plus className="w-3.5 h-3.5 ml-0.5" />
           </button>
-          <button 
-            className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors"
-            onClick={() => navigate('/login')}
-          >
-            <User className="w-4 h-4" />
-          </button>
+          
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              onClick={toggleProfileDropdown}
+            >
+              <img
+                src="/user-avatar.png"
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </button>
+            
+            {/* Dropdown menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="py-2">
+                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    User Profile
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <LogOut className="w-4 h-4" />
+                    </div>
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
             <Bell className="w-4 h-4" />
           </button>
@@ -409,199 +549,230 @@ function HomePage() {
 
         {/* Main Content */}
         <div className={`flex-1 overflow-y-auto bg-black transition-all duration-300`}>
-          {/* Hero Section */}
-          <div className="relative h-[400px] overflow-hidden hero-rockstar">
-            <img
-              src="/image 28.png"
-              alt="Rockstar"
-              width={1200}
-              height={800}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/placeholder.jpg";
-              }}
-            />
-            {/* Darker overlay gradient for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 p-8 w-full z-10">
-              <h1 className="text-6xl font-bold mb-2">ROCKSTAR</h1>
-              <p className="text-xl mb-6">Vibe: Retro</p>
-              <div className="flex items-center gap-4">
-                <button className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium">
-                  <PlayIcon className="w-5 h-5" />
-                  Play
-                </button>
-                <button className="flex items-center gap-2 bg-[#2f2f2f] hover:bg-[#414141] text-white px-6 py-2 rounded-full transition-colors">
-                  <Info className="w-5 h-5" />
-                  More Info.
-                </button>
-                <button className="flex items-center gap-2 bg-transparent hover:bg-[#2f2f2f] text-white px-6 py-2 rounded-full border border-[#545454] transition-colors">
-                  <Plus className="w-5 h-5" />
-                  Add to List
-                </button>
-              </div>
-              <div className="flex items-center mt-4 gap-2">
-                <p className="text-sm text-[#b0b0b0]">Created by:</p>
-                <div className="flex items-center gap-2">
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-10">
+              <p className="text-red-500 mb-2">Error loading videos</p>
+              <p className="text-sm text-[#999]">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <>
+              {/* Hero Section - Use first video if available */}
+              {videos.length > 0 && (
+                <div className="relative h-[400px] overflow-hidden hero-rockstar">
                   <img
-                    src="/user-avatar.png"
-                    alt="Creator"
-                    width={24}
-                    height={24}
-                    className="rounded-full"
+                    src={videos[0].thumbnailLogoUrl || "/image 28.png"}
+                    alt={videos[0].name}
+                    width={1200}
+                    height={800}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/image 28.png";
+                    }}
                   />
-                  <span className="text-sm">Naruto</span>
+                  {/* Darker overlay gradient for better text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 p-8 w-full z-10">
+                    <h1 className="text-6xl font-bold mb-2">{videos[0].name.toUpperCase()}</h1>
+                    <p className="text-xl mb-6">Category: {videos[0].category}</p>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium"
+                        onClick={() => navigate(`/video/${videos[0]._id}`)}
+                      >
+                        <PlayIcon className="w-5 h-5" />
+                        Play
+                      </button>
+                      <button className="flex items-center gap-2 bg-[#2f2f2f] hover:bg-[#414141] text-white px-6 py-2 rounded-full transition-colors">
+                        <Info className="w-5 h-5" />
+                        More Info.
+                      </button>
+                      <button className="flex items-center gap-2 bg-transparent hover:bg-[#2f2f2f] text-white px-6 py-2 rounded-full border border-[#545454] transition-colors">
+                        <Plus className="w-5 h-5" />
+                        Add to List
+                      </button>
+                    </div>
+                    <div className="flex items-center mt-4 gap-2">
+                      <p className="text-sm text-[#b0b0b0]">Created by:</p>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src="/user-avatar.png"
+                          alt="Creator"
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                        />
+                        <span className="text-sm">{videos[0].uploadedBy}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Videos Section - Based on category */}
+              {educationVideos.length > 0 && (
+                <div className="px-8 py-6 relative">
+                  <div className="flex items-center mb-4">
+                    <h2 className="text-xl font-bold">Education Videos</h2>
+                    <div className="ml-auto flex gap-2">
+                      <button 
+                        id="topVideosLeftBtn"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('topVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4 rotate-180" />
+                      </button>
+                      <button 
+                        id="topVideosRightBtn"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('topVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="topVideosScroll">
+                    <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                      {educationVideos.map((video) => (
+                        <div 
+                          key={video._id} 
+                          className="snap-start cursor-pointer" 
+                          style={{ width: '280px', flexShrink: 0 }}
+                          onClick={() => navigate(`/video/${video._id}`)}
+                        >
+                          <VideoCard 
+                            id={video._id}
+                            title={video.name}
+                            image={video.thumbnailLogoUrl}
+                            tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Other Videos Section */}
+              {(otherVideos.length > 0 || videos.length === 0) && (
+                <div className="px-8 py-6 relative">
+                  <div className="flex items-center mb-4">
+                    <h2 className="text-xl font-bold">{videos.length === 0 ? 'Videos' : 'Other Videos'}</h2>
+                    <div className="ml-auto flex gap-2">
+                      <button 
+                        id="otherVideosLeftBtn"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('otherVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4 rotate-180" />
+                      </button>
+                      <button 
+                        id="otherVideosRightBtn"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('otherVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="otherVideosScroll">
+                    <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                      {otherVideos.length > 0 ? otherVideos.map((video) => (
+                        <div 
+                          key={video._id} 
+                          className="snap-start cursor-pointer" 
+                          style={{ width: '280px', flexShrink: 0 }}
+                          onClick={() => navigate(`/video/${video._id}`)}
+                        >
+                          <VideoCard 
+                            id={video._id}
+                            title={video.name}
+                            image={video.thumbnailLogoUrl}
+                            tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                          />
+                        </div>
+                      )) : (
+                        <div className="w-full text-center py-10">
+                          <p className="text-gray-400">No videos available</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* We can keep the creators section as is */}
+              <div className="px-8 py-6 relative">
+                <div className="flex items-center mb-4">
+                  <h2 className="text-xl font-bold">Top Creators</h2>
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                  <div className="ml-auto flex gap-2">
+                    <button 
+                      id="creatorsLeftBtn"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                      onClick={() => document.getElementById('creatorsScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                      <ChevronRight className="w-4 h-4 rotate-180" />
+                    </button>
+                    <button 
+                      id="creatorsRightBtn"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                      onClick={() => document.getElementById('creatorsScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="creatorsScroll">
+                  <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                    {creatorsData.map((creator, index) => (
+                      <div 
+                        key={index} 
+                        className="snap-start cursor-pointer" 
+                        style={{ width: '280px', flexShrink: 0 }}
+                        onClick={() => navigate(`/creator/${creator.id || creator.name.toLowerCase().replace(/\s+/g, '-')}`)}
+                      >
+                        <CreatorCard {...creator} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Top Videos Section - Scrollable */}
-          <div className="px-8 py-6 relative">
-            <div className="flex items-center mb-4">
-              <h2 className="text-xl font-bold">Top Videos</h2>
-              <div className="ml-auto flex gap-2">
-                <button 
-                  id="topVideosLeftBtn"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('topVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                </button>
-                <button 
-                  id="topVideosRightBtn"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('topVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="topVideosScroll">
-              <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                {topVideos.map((video, index) => (
-                  <div 
-                    key={index} 
-                    className="snap-start cursor-pointer" 
-                    style={{ width: '280px', flexShrink: 0 }}
-                    onClick={() => navigate(`/video/${index + 1}`)}
-                  >
-                    <VideoCard {...video} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Anime Section - Scrollable */}
-          <div className="px-8 py-6 relative">
-            <div className="flex items-center mb-4">
-              <h2 className="text-xl font-bold">Anime</h2>
-              <div className="ml-auto flex gap-2">
-                <button 
-                  id="animeLeftBtn"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('animeScroll').scrollBy({left: -300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                </button>
-                <button 
-                  id="animeRightBtn"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('animeScroll').scrollBy({left: 300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="animeScroll">
-              <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                {animeVideos.map((video, index) => (
-                  <div 
-                    key={index} 
-                    className="snap-start cursor-pointer" 
-                    style={{ width: '280px', flexShrink: 0 }}
-                    onClick={() => navigate(`/video/${index + 5}`)}
-                  >
-                    <VideoCard {...video} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Top Creators Section - Scrollable */}
-          <div className="px-8 py-6 relative">
-            <div className="flex items-center mb-4">
-              <h2 className="text-xl font-bold">Top Creators</h2>
-              <ChevronRight className="w-5 h-5 ml-2" />
-              <div className="ml-auto flex gap-2">
-                <button 
-                  id="creatorsLeftBtn"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('creatorsScroll').scrollBy({left: -300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                </button>
-                <button 
-                  id="creatorsRightBtn"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                  onClick={() => document.getElementById('creatorsScroll').scrollBy({left: 300, behavior: 'smooth'})}>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="creatorsScroll">
-              <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                {creatorsData.map((creator, index) => (
-                  <div 
-                    key={index} 
-                    className="snap-start cursor-pointer" 
-                    style={{ width: '280px', flexShrink: 0 }}
-                    onClick={() => navigate(`/creator/${creator.id || creator.name.toLowerCase().replace(/\s+/g, '-')}`)}
-                  >
-                    <CreatorCard {...creator} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function VideoCard({ title, image, tag, id }) {
-  // Use demo image placeholders for different categories
-  const getImage = () => {
-    // Set default image paths based on category tags
-    if (tag.includes("Crime")) return "/image 28.png";
-    if (tag.includes("Sci-Fi")) return "/image 28.png";
-    if (tag.includes("History")) return "/image 28.png";
-    if (tag.includes("Comedy")) return "/image 28.png";
-    if (tag.includes("Anime")) return "/image 28.png";
-    return "/image 28.png";
-  };
-
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
-          src={image || getImage()} 
+          src={image || "/image 28.png"} 
           alt={title} 
           className="w-full h-full object-cover transition-transform group-hover:scale-105" 
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = getImage();
+            e.target.src = "/image 28.png";
           }}
         />
         {/* Category tag */}
         <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
-          {tag.split("/")[0]}
+          {tag ? tag.split("/")[0] : "Unknown"}
         </div>
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
       <div className="mt-2">
         <h3 className="text-sm font-medium">{title}</h3>
-        <p className="text-xs text-[#b0b0b0]">{tag}</p>
+        <p className="text-xs text-[#b0b0b0]">{tag || "Unknown"}</p>
       </div>
     </div>
   );
