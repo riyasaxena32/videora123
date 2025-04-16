@@ -13,7 +13,7 @@ const UserProfile = () => {
     profilePic: '',
     PhoneNumber: '',
     Address: '',
-    username: ''
+    userName: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
