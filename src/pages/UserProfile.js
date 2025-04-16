@@ -227,13 +227,18 @@ const UserProfile = () => {
 
       {/* Main Content - Profile Form */}
       <div className="max-w-4xl mx-auto px-4 py-10">
-        <div 
-          className="border border-[#ED5606] rounded-lg p-8"
-          style={{
-            background: 'linear-gradient(180deg, #FAE0C0 0%, #EA8736 100%)',
-          }}
-        >
-          <h1 className="text-2xl font-semibold text-center mb-10 text-[#7E3500]">User Profile</h1>
+        <div className="bg-[#0e0e0e] border border-[#ED5606] rounded-lg p-8">
+          <h1 
+            className="text-2xl font-semibold text-center mb-10" 
+            style={{ 
+              background: 'linear-gradient(180deg, #FAE0C0 0%, #EA8736 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
+            User Profile
+          </h1>
           
           <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
             {/* Left column - Profile pic and username */}
@@ -269,7 +274,7 @@ const UserProfile = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[#7E3500] text-sm mb-1">Name</label>
+                  <label className="block text-gray-400 text-sm mb-1">Name</label>
                   <input
                     type="text"
                     name="name"
@@ -281,7 +286,7 @@ const UserProfile = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-[#7E3500] text-sm mb-1">Email Id</label>
+                  <label className="block text-gray-400 text-sm mb-1">Email Id</label>
                   <input
                     type="email"
                     name="email"
@@ -294,7 +299,7 @@ const UserProfile = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[#7E3500] text-sm mb-1">Country</label>
+                  <label className="block text-gray-400 text-sm mb-1">Country</label>
                   <div className="relative">
                     <select
                       value={selectedCountry}
@@ -318,7 +323,7 @@ const UserProfile = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-[#7E3500] text-sm mb-1">Phone Number</label>
+                  <label className="block text-gray-400 text-sm mb-1">Phone Number</label>
                   <div className="flex">
                     <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-black border border-r-0 border-[#ED5606] rounded-l-md">
                       +91 🇮🇳
@@ -342,7 +347,7 @@ const UserProfile = () => {
               </div>
               
               <div>
-                <label className="block text-[#7E3500] text-sm mb-1">Address</label>
+                <label className="block text-gray-400 text-sm mb-1">Address</label>
                 <input
                   type="text"
                   name="Address"
@@ -365,6 +370,10 @@ const UserProfile = () => {
                   onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
                   disabled={loading}
                   className="bg-[#270E00] hover:bg-[#3A1500] text-white px-4 py-2 rounded-md border border-[#ED5606] flex items-center justify-center gap-2 transition-colors"
+                  style={{ 
+                    border: '1px solid #ED5606', 
+                    borderRadius: '4px'
+                  }}
                 >
                   {loading ? (
                     <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
