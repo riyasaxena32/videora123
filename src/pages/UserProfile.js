@@ -38,6 +38,26 @@ const UserProfile = () => {
     borderRadius: '9999px'
   };
 
+  const profileContainerStyle = {
+    background: 'black',
+    borderColor: '#ED5606',
+    boxShadow: '0 0 20px rgba(237, 86, 6, 0.2)'
+  };
+  
+  const profileTitleStyle = {
+    color: '#FAE0C0'
+  };
+  
+  const saveButtonStyle = {
+    background: 'linear-gradient(180deg, #FAE0C0 0%, #EA8736 100%)',
+    color: '#270E00'
+  };
+  
+  const backgroundStyle = {
+    backgroundImage: 'url(/stars-bg.png)', 
+    backgroundSize: 'cover'
+  };
+
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
   };
@@ -226,14 +246,10 @@ const UserProfile = () => {
       </header>
 
       {/* Main Content - Profile Form */}
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]" style={{backgroundImage: 'url(/stars-bg.png)', backgroundSize: 'cover'}}>
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]" style={backgroundStyle}>
         <div className="max-w-4xl w-full mx-4 my-6">
-          <div className="border rounded-lg overflow-hidden" style={{
-            background: 'black',
-            borderColor: '#ED5606',
-            boxShadow: '0 0 20px rgba(237, 86, 6, 0.2)'
-          }}>
-            <h1 className="text-2xl font-semibold text-center py-4 mb-6" style={{color: '#FAE0C0'}}>User Profile</h1>
+          <div className="border rounded-lg overflow-hidden" style={profileContainerStyle}>
+            <h1 className="text-2xl font-semibold text-center py-4 mb-6" style={profileTitleStyle}>User Profile</h1>
             
             <div className="px-8 pb-8 pt-2">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
@@ -365,18 +381,13 @@ const UserProfile = () => {
                     <button
                       onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
                       disabled={loading}
-                      style={{
-                        background: 'linear-gradient(180deg, #FAE0C0 0%, #EA8736 100%)',
-                        color: '#270E00',
-                      }}
+                      style={saveButtonStyle}
                       className="px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 transition-colors"
                     >
                       {loading ? (
                         <span className="h-4 w-4 border-2 border-t-transparent border-[#270E00] rounded-full animate-spin"></span>
                       ) : (
-                        <>
-                          {isEditing ? 'Save Profile' : 'Edit Profile'}
-                        </>
+                        isEditing ? 'Save Profile' : 'Edit Profile'
                       )}
                     </button>
                   </div>
