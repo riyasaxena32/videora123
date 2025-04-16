@@ -259,7 +259,7 @@ function HomePage() {
 
       {/* Top Navbar - Full Width */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-3">
           <button 
             className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
             onClick={toggleSidebar}
@@ -267,10 +267,14 @@ function HomePage() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-6" />
+          <Link to="/" className="flex items-center">
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-4" />
           </Link>
-          <nav className="hidden md:flex items-center gap-8">
+        </div>
+
+        {/* Center navigation links */}
+        <div className="hidden md:flex items-center justify-center flex-1">
+          <nav className="flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
               <a
                 key={item}
@@ -288,6 +292,7 @@ function HomePage() {
             ))}
           </nav>
         </div>
+        
         <div className="flex items-center gap-3">
           <button 
             style={gradientButtonStyle}
