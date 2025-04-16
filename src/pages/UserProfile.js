@@ -36,13 +36,46 @@ const UserProfile = () => {
 
   // Custom input styles to match the image
   const inputStyle = {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(15, 7, 0, 0.5)',
     border: '1px solid #843D0C',
     color: 'white',
-    padding: '8px 12px',
+    padding: '12px 16px',
     borderRadius: '4px',
     width: '100%',
-    outline: 'none'
+    outline: 'none',
+    height: '48px',
+    fontSize: '16px'
+  };
+  
+  // Save Profile button style
+  const saveButtonStyle = {
+    backgroundColor: '#6B2E0A',
+    border: '1px solid #843D0C',
+    color: 'white',
+    borderRadius: '4px',
+    padding: '10px 24px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontWeight: '500',
+    fontSize: '14px'
+  };
+
+  // Main container background style
+  const containerStyle = {
+    background: 'linear-gradient(180deg, #0C0500 0%, #000000 100%)',
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    minHeight: '100vh'
+  };
+
+  // Profile box style
+  const profileBoxStyle = {
+    backgroundColor: 'rgba(10, 5, 0, 0.95)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+    border: 'none',
+    borderRadius: '12px',
+    padding: '30px'
   };
 
   useEffect(() => {
@@ -136,12 +169,7 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white py-10" style={{ 
-      background: 'linear-gradient(180deg, #000000 0%, #0A0A0A 100%)',
-      backgroundImage: 'url(/stars-bg.png)',
-      backgroundSize: 'cover',
-      backgroundRepeat: 'no-repeat'
-    }}>
+    <div className="min-h-screen text-white py-10" style={containerStyle}>
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] mb-10 bg-black fixed top-0 w-full z-10">
         <div className="flex items-center">
@@ -184,16 +212,13 @@ const UserProfile = () => {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 mt-20">
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-lg p-8" style={{ 
-          backgroundColor: 'rgba(14, 14, 14, 0.9)',
-          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.3)'
-        }}>
-          <h1 className="text-2xl font-bold text-center mb-10" style={{ color: '#C6935C' }}>User Profile</h1>
+        <div style={profileBoxStyle}>
+          <h1 className="text-3xl font-medium text-center mb-10" style={{ color: '#C6935C', fontFamily: 'serif' }}>User Profile</h1>
           
           <div className="grid md:grid-cols-[250px_1fr] gap-10">
             {/* Left column - Profile pic and username */}
             <div className="flex flex-col items-center">
-              <div className="w-[225px] h-[225px] rounded-lg overflow-hidden mb-4 border border-[#843D0C]">
+              <div className="w-[200px] h-[200px] rounded overflow-hidden mb-6" style={{ border: '1px solid #843D0C' }}>
                 <img 
                   src={userData.profilePic || '/user-avatar.png'} 
                   alt="Profile"
@@ -201,7 +226,7 @@ const UserProfile = () => {
                 />
               </div>
               
-              <div className="w-full relative">
+              <div className="w-full relative mt-2">
                 <input
                   type="text"
                   name="username"
@@ -224,7 +249,7 @@ const UserProfile = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Name</label>
+                  <label className="block text-gray-400 text-sm mb-2">Name</label>
                   <input
                     type="text"
                     name="name"
@@ -236,7 +261,7 @@ const UserProfile = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Email Id</label>
+                  <label className="block text-gray-400 text-sm mb-2">Email Id</label>
                   <input
                     type="email"
                     name="email"
@@ -249,12 +274,12 @@ const UserProfile = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Country</label>
+                  <label className="block text-gray-400 text-sm mb-2">Country</label>
                   <div className="relative">
                     <select
                       value={selectedCountry}
                       onChange={(e) => setSelectedCountry(e.target.value)}
-                      style={inputStyle}
+                      style={{...inputStyle, appearance: 'none'}}
                       disabled={!isEditing}
                     >
                       {countries.map(country => (
@@ -272,9 +297,9 @@ const UserProfile = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Phone Number</label>
+                  <label className="block text-gray-400 text-sm mb-2">Phone Number</label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-transparent border border-r-0 border-[#843D0C] rounded-l-md">
+                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-[rgba(15,7,0,0.5)] border border-r-0 border-[#843D0C] rounded-l-md" style={{height: '48px'}}>
                       +91 🇮🇳
                     </span>
                     <input
@@ -295,7 +320,7 @@ const UserProfile = () => {
               </div>
               
               <div>
-                <label className="block text-gray-400 text-sm mb-1">Address</label>
+                <label className="block text-gray-400 text-sm mb-2">Address</label>
                 <input
                   type="text"
                   name="Address"
@@ -312,19 +337,10 @@ const UserProfile = () => {
                 </div>
               )}
               
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-6">
                 <button
                   onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
-                  style={{
-                    backgroundColor: '#6B2E0A',
-                    border: '1px solid #843D0C',
-                    color: 'white',
-                    borderRadius: '4px',
-                    padding: '6px 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
+                  style={saveButtonStyle}
                 >
                   {loading ? (
                     <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
