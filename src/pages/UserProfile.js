@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { User, Plus } from 'lucide-react';
+import { User, Plus, Save } from 'lucide-react';
 
 const UserProfile = () => {
   const { user } = useAuth();
@@ -32,6 +32,17 @@ const UserProfile = () => {
     border: '1px solid #ED5606',
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
     borderRadius: '9999px'
+  };
+
+  // Custom input styles to match the image
+  const inputStyle = {
+    backgroundColor: 'transparent',
+    border: '1px solid #843D0C',
+    color: 'white',
+    padding: '8px 12px',
+    borderRadius: '4px',
+    width: '100%',
+    outline: 'none'
   };
 
   useEffect(() => {
@@ -125,7 +136,12 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white py-10">
+    <div className="min-h-screen bg-black text-white py-10" style={{ 
+      background: 'linear-gradient(180deg, #000000 0%, #0A0A0A 100%)',
+      backgroundImage: 'url(/stars-bg.png)',
+      backgroundSize: 'cover',
+      backgroundRepeat: 'no-repeat'
+    }}>
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] mb-10 bg-black fixed top-0 w-full z-10">
         <div className="flex items-center">
@@ -168,15 +184,18 @@ const UserProfile = () => {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 mt-20">
-        <div className="bg-[#0E0E0E] border border-[#ED5606] rounded-lg p-8">
-          <h1 className="text-2xl font-bold text-center mb-10 text-[#ED5606]">User Profile</h1>
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-lg p-8" style={{ 
+          backgroundColor: 'rgba(14, 14, 14, 0.9)',
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.3)'
+        }}>
+          <h1 className="text-2xl font-bold text-center mb-10" style={{ color: '#C6935C' }}>User Profile</h1>
           
           <div className="grid md:grid-cols-[250px_1fr] gap-10">
             {/* Left column - Profile pic and username */}
             <div className="flex flex-col items-center">
-              <div className="w-[225px] h-[225px] rounded-lg overflow-hidden mb-4 bg-[#1A1A1A] border border-[#333]">
+              <div className="w-[225px] h-[225px] rounded-lg overflow-hidden mb-4 border border-[#843D0C]">
                 <img 
-                  src={userData.profilePic || '/default-avatar.png'} 
+                  src={userData.profilePic || '/user-avatar.png'} 
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -188,11 +207,12 @@ const UserProfile = () => {
                   name="username"
                   value={userData.username || 'shubham8all'}
                   onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                  style={inputStyle}
                   disabled={!isEditing}
                 />
                 <button 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#ED5606]"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  style={{ color: '#C6935C' }}
                   onClick={() => setIsEditing(true)}
                 >
                   ✏️
@@ -210,7 +230,7 @@ const UserProfile = () => {
                     name="name"
                     value={userData.name || 'Shubham Kumar'}
                     onChange={handleInputChange}
-                    className="w-full bg-[#0A0A0A] border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                    style={inputStyle}
                     disabled={!isEditing}
                   />
                 </div>
@@ -221,7 +241,7 @@ const UserProfile = () => {
                     type="email"
                     name="email"
                     value={userData.email || 'shubham8all@gmail.com'}
-                    className="w-full bg-[#0A0A0A] border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                    style={inputStyle}
                     disabled={true} // Email can't be edited
                   />
                 </div>
@@ -234,7 +254,7 @@ const UserProfile = () => {
                     <select
                       value={selectedCountry}
                       onChange={(e) => setSelectedCountry(e.target.value)}
-                      className="w-full appearance-none bg-[#0A0A0A] border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                      style={inputStyle}
                       disabled={!isEditing}
                     >
                       {countries.map(country => (
@@ -254,7 +274,7 @@ const UserProfile = () => {
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">Phone Number</label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-[#0A0A0A] border border-r-0 border-[#333] rounded-l-md">
+                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-transparent border border-r-0 border-[#843D0C] rounded-l-md">
                       +91 🇮🇳
                     </span>
                     <input
@@ -267,7 +287,7 @@ const UserProfile = () => {
                           value: '+91' + e.target.value
                         }
                       })}
-                      className="w-full bg-[#0A0A0A] border border-[#333] rounded-r-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                      style={{...inputStyle, borderRadius: '0 4px 4px 0'}}
                       disabled={!isEditing}
                     />
                   </div>
@@ -281,7 +301,7 @@ const UserProfile = () => {
                   name="Address"
                   value={userData.Address || 'Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore'}
                   onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                  style={inputStyle}
                   disabled={!isEditing}
                 />
               </div>
@@ -295,16 +315,24 @@ const UserProfile = () => {
               <div className="flex justify-end mt-4">
                 <button
                   onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
-                  className="bg-[#270E00] hover:bg-[#3A1500] text-white px-4 py-2 rounded-md border border-[#ED5606] flex items-center justify-center gap-2 transition-colors"
+                  style={{
+                    backgroundColor: '#6B2E0A',
+                    border: '1px solid #843D0C',
+                    color: 'white',
+                    borderRadius: '4px',
+                    padding: '6px 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
                 >
-                  {isEditing ? (
-                    loading ? (
-                      <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
-                    ) : (
-                      "Save Profile"
-                    )
+                  {loading ? (
+                    <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
                   ) : (
-                    "Save Profile" 
+                    <>
+                      <Save size={16} />
+                      Save Profile
+                    </>
                   )}
                 </button>
               </div>
