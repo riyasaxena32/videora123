@@ -83,88 +83,80 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
-    // Try to load from localStorage first for immediate display
-    const cachedData = localStorage.getItem('userProfileData');
-    if (cachedData) {
+    const fetchUserData = async () => {
       try {
-        const parsedData = JSON.parse(cachedData);
-        setUserData(parsedData);
-        console.log("Loaded profile data from localStorage:", parsedData);
-      } catch (err) {
-        console.error("Failed to parse cached profile data:", err);
+        setLoading(true);
+        
+        // First try to load from localStorage for immediate display
+        const cachedData = localStorage.getItem('userProfileData');
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          console.log("Loaded from localStorage:", parsedData);
+          
+          // Debug username specifically
+          console.log("Username from localStorage:", parsedData.username);
+          
+          // Use cached data while waiting for API response
+          setUserData(parsedData);
+        }
+        
+        // Then fetch fresh data from API
+        const token = localStorage.getItem('token');
+        const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log("API profile response:", response.data);
+        
+        if (response.data && response.data.user) {
+          const apiUserData = response.data.user;
+          console.log("Username from API:", apiUserData.username);
+          
+          // Create a complete user data object combining API response with any cached data
+          const completeUserData = {
+            name: apiUserData.name || '',
+            email: apiUserData.email || '',
+            profilePic: apiUserData.profilePic || '',
+            PhoneNumber: apiUserData.PhoneNumber || '',
+            Address: apiUserData.Address || '',
+            username: apiUserData.username || '',
+            bio: apiUserData.bio || '',
+            // Add any other fields that might be in the API response
+          };
+          
+          setUserData(completeUserData);
+          
+          // Update localStorage with fresh data
+          localStorage.setItem('userProfileData', JSON.stringify(completeUserData));
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setError('Failed to load user profile. Please try again later.');
+      } finally {
+        setLoading(false);
       }
-    }
-    
-    // Then fetch from API
-    fetchUserProfile();
+    };
+
+    fetchUserData();
   }, []);
 
-  const fetchUserProfile = async () => {
+  // Function to update and verify the username field
+  const updateUsernameDebug = () => {
+    console.log("Current username state:", userData.username);
+    console.log("Current localStorage data:", localStorage.getItem('userProfileData'));
+    
+    // Check if username is in localStorage
     try {
-      setLoading(true);
-      setError(null);
-      
-      const token = user?.tokenType === 'jwt' ? 
-        localStorage.getItem('access_token') : 
-        localStorage.getItem('token');
-      
-      console.log("Fetching profile with token:", token ? "Token present" : "No token");
-      
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-      
-      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      console.log("Profile data received from API:", response.data);
-      
-      if (response.data && response.data.user) {
-        const profileData = response.data.user;
-        const updatedData = {
-          name: profileData.name || '',
-          email: profileData.email || '',
-          profilePic: profileData.profilePic || '',
-          PhoneNumber: profileData.PhoneNumber || '',
-          Address: profileData.Address || '',
-          username: profileData.username || ''
-        };
-        
-        setUserData(updatedData);
-        
-        // Store in localStorage for persistence
-        localStorage.setItem('userProfileData', JSON.stringify(updatedData));
-        
-        // Also update country selection if it's in the profile data
-        if (profileData.country) {
-          setSelectedCountry(profileData.country);
-        }
-      } else {
-        throw new Error("Invalid profile data received");
-      }
-    } catch (err) {
-      console.error('Error fetching profile:', err);
-      setError('Failed to load profile data: ' + (err.response?.data?.message || err.message));
-      
-      // If API fails, try to use localStorage data as fallback
-      const cachedData = localStorage.getItem('userProfileData');
-      if (cachedData) {
-        try {
-          const parsedData = JSON.parse(cachedData);
-          setUserData(parsedData);
-          console.log("Using cached profile data as fallback:", parsedData);
-        } catch (parseErr) {
-          console.error("Failed to parse cached profile data:", parseErr);
-        }
-      }
-    } finally {
-      setLoading(false);
+      const stored = JSON.parse(localStorage.getItem('userProfileData'));
+      console.log("Parsed localStorage username:", stored?.username);
+    } catch (e) {
+      console.error("Failed to parse localStorage:", e);
     }
   };
 
+  // Enhanced save function with better debugging
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
@@ -173,6 +165,13 @@ const UserProfile = () => {
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      // Log current username before saving
+      console.log("Username before saving:", userData.username);
       
       // Create a FormData object if we have a file to upload
       let updatedData;
@@ -186,6 +185,12 @@ const UserProfile = () => {
         formData.append('Address', userData.Address || '');
         formData.append('username', userData.username || '');
         updatedData = formData;
+        
+        // Log FormData entries for debugging
+        console.log("FormData entries:");
+        for (let pair of formData.entries()) {
+          console.log(pair[0], pair[1]);
+        }
       } else {
         // Regular JSON data without file
         updatedData = {
@@ -194,9 +199,8 @@ const UserProfile = () => {
           Address: userData.Address || '',
           username: userData.username || ''
         };
+        console.log("JSON data being sent:", updatedData);
       }
-      
-      console.log("Sending update with data:", formData ? "FormData with file" : updatedData);
       
       // Set headers based on whether we're uploading a file
       const headers = {
@@ -218,25 +222,38 @@ const UserProfile = () => {
       if (response.data && response.data.user) {
         // Clear selected file after successful upload
         setSelectedFile(null);
+
+        // Extract all fields from API response, using current values as fallback
+        const apiResponse = response.data.user;
         
-        // Ensure we use all fields from the server response
+        // Validate and debug the username in the response
+        console.log("API returned username:", apiResponse.username);
+        
+        // Ensure we use all fields from the server response with proper fallbacks
         const updatedUserData = {
-          ...userData,
-          name: response.data.user.name,
-          email: response.data.user.email,
-          profilePic: response.data.user.profilePic,
-          PhoneNumber: response.data.user.PhoneNumber,
-          Address: response.data.user.Address,
-          username: response.data.user.username
+          name: apiResponse.name || userData.name || '',
+          email: apiResponse.email || userData.email || '',
+          profilePic: apiResponse.profilePic || userData.profilePic || '',
+          PhoneNumber: apiResponse.PhoneNumber || userData.PhoneNumber || '',
+          Address: apiResponse.Address || userData.Address || '',
+          username: apiResponse.username || userData.username || ''
         };
+        
+        console.log("Final userData to be stored:", updatedUserData);
         
         // Update the user data with the complete response from the server
         setUserData(updatedUserData);
         
-        console.log("Updated userData state with new values:", updatedUserData);
-        
-        // Store updated data in localStorage to persist across refreshes
+        // Store in localStorage for persistence, ensuring we include username
         localStorage.setItem('userProfileData', JSON.stringify(updatedUserData));
+        
+        // Verify the localStorage was updated correctly
+        try {
+          const storedData = JSON.parse(localStorage.getItem('userProfileData'));
+          console.log("Verification - stored username in localStorage:", storedData.username);
+        } catch (e) {
+          console.error("Failed to verify localStorage:", e);
+        }
         
         // Update the auth context to reflect changes across the app
         if (typeof user.fetchUserProfile === 'function') {
