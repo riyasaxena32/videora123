@@ -159,24 +159,24 @@ function VideoPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
+        <div className="flex items-center gap-8">
           <button 
-            className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors mr-1" 
+            className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
             onClick={toggleSidebar}
             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link to="/" className="mr-8">
-            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-5" />
+          <Link to="/" className="text-xl font-bold flex items-center">
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-6" />
           </Link>
-          <nav className="hidden md:flex items-center">
+          <nav className="hidden md:flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
               <a
                 key={item}
                 href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                className={`text-sm font-medium transition-colors px-4 ${
+                className={`text-sm font-medium transition-colors ${
                   item === "Home" ? "text-white" : "text-[#b0b0b0] hover:text-white"
                 }`}
               >
