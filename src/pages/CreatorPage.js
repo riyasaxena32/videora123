@@ -259,7 +259,7 @@ function CreatorPage() {
               onClick={toggleProfileDropdown}
             >
               <img
-                src={user?.picture || user?.profilePic || "/user-avatar.png"}
+                src={user?.profilePic || "/user-avatar.png"}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
