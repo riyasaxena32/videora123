@@ -258,80 +258,50 @@ function HomePage() {
       )}
 
       {/* Top Navbar - Full Width */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a] w-full bg-black">
+        <div className="flex items-center gap-4">
           <button 
-            className="mr-5 p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
+            className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors mr-1" 
             onClick={toggleSidebar}
             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link to="/" className="mr-12 text-xl font-bold flex items-center">
-            <span className="text-white mr-1">VI</span>
-            <span className="text-[#ED5606]">DEORA</span>
+          <Link to="/" className="mr-8">
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-5" />
           </Link>
-          <nav className="hidden md:flex items-center space-x-10">
-            <a
-              href="#"
-              className="text-sm font-medium transition-colors text-[#ED5606]"
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveNavItem("Home");
-              }}
-            >
-              Home
-            </a>
-            <a
-              href="#"
-              className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white"
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveNavItem("Trending");
-              }}
-            >
-              Trending
-            </a>
-            <a
-              href="#"
-              className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white"
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveNavItem("Genre");
-              }}
-            >
-              Genre
-            </a>
-            <a
-              href="#"
-              className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white"
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveNavItem("Browse");
-              }}
-            >
-              Browse
-            </a>
+          <nav className="hidden md:flex items-center">
+            {["Home", "Trending", "Genre", "Browse"].map((item, index) => (
+              <a
+                key={item}
+                href="#"
+                className={`text-sm transition-colors px-4 ${
+                  activeNavItem === item ? "text-[#ED5606] border-b-2 border-[#ED5606] pb-1" : "text-[#b0b0b0] hover:text-white"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveNavItem(item);
+                }}
+              >
+                {item}
+              </a>
+            ))}
           </nav>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-3">
           <button 
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-5 py-2 text-sm transition-colors font-medium"
+            className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
             onClick={() => navigate('/create')}
           >
             Create
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-          
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors border border-[#3A1500]">
-            <Bell className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5 ml-0.5" />
           </button>
           
           {/* Profile dropdown */}
           <div className="relative" ref={profileDropdownRef}>
             <button 
-              className="w-9 h-9 rounded-full overflow-hidden border border-[#3A1500] hover:border-[#ED5606] transition-colors focus:outline-none"
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
               onClick={toggleProfileDropdown}
             >
               <img
@@ -364,6 +334,10 @@ function HomePage() {
               </div>
             )}
           </div>
+          
+          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
+            <Bell className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
