@@ -231,7 +231,7 @@ const UserProfile = () => {
                 <input
                   type="text"
                   name="username"
-                  value={userData.username || 'shubham8all'}
+                  value={userData.username || 'username'}
                   onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
@@ -254,7 +254,7 @@ const UserProfile = () => {
                   <input
                     type="text"
                     name="name"
-                    value={userData.name || 'Shubham Kumar'}
+                    value={userData.name || 'name'}
                     onChange={handleInputChange}
                     style={inputStyle}
                     disabled={!isEditing}
@@ -266,7 +266,7 @@ const UserProfile = () => {
                   <input
                     type="email"
                     name="email"
-                    value={userData.email || 'shubham8all@gmail.com'}
+                    value={userData.email || 'email@gmail.com'}
                     style={inputStyle}
                     disabled={true} // Email can't be edited
                   />
