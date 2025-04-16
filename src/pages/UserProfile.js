@@ -113,7 +113,7 @@ const UserProfile = () => {
         
         if (response.data && response.data.user) {
           const apiUserData = response.data.user;
-          console.log("Username from API:", apiUserData.userNme);
+          console.log("Username from API:", apiUserData.userName);
           
           // Create a complete user data object combining API response with any cached data
           const completeUserData = {
@@ -122,7 +122,7 @@ const UserProfile = () => {
             profilePic: apiUserData.profilePic || '',
             PhoneNumber: apiUserData.PhoneNumber || '',
             Address: apiUserData.Address || '',
-            userNme: apiUserData.userNme || '',
+            userNme: apiUserData.userName || '',
             bio: apiUserData.bio || '',
             // Add any other fields that might be in the API response
           };
