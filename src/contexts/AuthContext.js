@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
@@ -20,38 +21,12 @@ export const AuthProvider = ({ children }) => {
         // Then check for JWT access token
         const jwtToken = localStorage.getItem('access_token');
         
-        if (oauthToken) {
-          // Handle OAuth2 token
-          try {
-            // Store user data from OAuth token
-            const userData = {
-              token: oauthToken,
-              tokenType: 'oauth2'
-            };
-            setUser(userData);
-          } catch (error) {
-            console.error('Invalid OAuth token:', error);
-            clearAuthData();
-          }
-        } else if (jwtToken) {
-          // Handle JWT token
-          try {
-            const decoded = jwtDecode(jwtToken);
-            // Check if JWT token is expired
-            if (decoded.exp * 1000 < Date.now()) {
-              console.error('JWT token expired');
-              clearAuthData();
-            } else {
-              setUser({
-                ...decoded,
-                token: jwtToken,
-                tokenType: 'jwt'
-              });
-            }
-          } catch (error) {
-            console.error('Invalid JWT token:', error);
-            clearAuthData();
-          }
+        if (oauthToken || jwtToken) {
+          // If either token exists, try to fetch the user profile
+          await fetchUserProfile(null, oauthToken || jwtToken);
+        } else {
+          // No tokens found
+          clearAuthData();
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -121,7 +96,7 @@ export const AuthProvider = ({ children }) => {
 
   // Modify the checkJwtToken function to fetch profile data after JWT validation
   const checkJwtToken = () => {
-    const token = sessionStorage.getItem('jwt');
+    const token = sessionStorage.getItem('jwt') || localStorage.getItem('access_token');
     if (token) {
       try {
         const decoded = jwtDecode(token);
@@ -130,6 +105,7 @@ export const AuthProvider = ({ children }) => {
         if (decoded.exp < currentTime) {
           // Token expired
           sessionStorage.removeItem('jwt');
+          localStorage.removeItem('access_token');
           setUser(null);
           setIsAuthenticated(false);
           setAuthChecked(true);
@@ -142,6 +118,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("Error decoding token:", error);
         sessionStorage.removeItem('jwt');
+        localStorage.removeItem('access_token');
         setUser(null);
         setIsAuthenticated(false);
         setAuthChecked(true);
@@ -155,39 +132,53 @@ export const AuthProvider = ({ children }) => {
   // Add a new function to fetch user profile
   const fetchUserProfile = async (userId, token) => {
     try {
-      // Fetch user details from API
-      const response = await fetch(`https://videora-ai.onrender.com/auth/user/${userId}`, {
+      // Get the token like in UserProfile.js
+      // If token is provided, use it; otherwise get from localStorage
+      const authToken = token || (user?.tokenType === 'jwt' ? 
+        localStorage.getItem('access_token') : 
+        localStorage.getItem('token'));
+      
+      // Fetch user details from API using axios
+      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       
-      if (response.ok) {
-        const userData = await response.json();
-        // Set user data including profile picture
-        setUser({
-          ...userData.user,
-          profilePic: userData.user.profilePic || null
-        });
-        setIsAuthenticated(true);
-      } else {
-        // API call failed but token is valid
-        const decoded = jwtDecode(token);
-        setUser({
-          id: decoded.id,
-          email: decoded.email
-        });
-        setIsAuthenticated(true);
-      }
+      const profileData = response.data.user;
+      
+      // Set user data including profile picture
+      setUser({
+        ...profileData,
+        name: profileData.name || '',
+        email: profileData.email || '',
+        profilePic: profileData.profilePic || '',
+        PhoneNumber: profileData.PhoneNumber || '',
+        Address: profileData.Address || '',
+        username: profileData.username || ''
+      });
+      
+      setIsAuthenticated(true);
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      // Fallback to token data
-      const decoded = jwtDecode(token);
-      setUser({
-        id: decoded.id,
-        email: decoded.email
-      });
-      setIsAuthenticated(true);
+      // Fallback to token data if we have a token
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setUser({
+            id: decoded.id,
+            email: decoded.email
+          });
+          setIsAuthenticated(true);
+        } catch (decodeError) {
+          console.error("Error decoding token:", decodeError);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } finally {
       setAuthChecked(true);
     }
@@ -198,7 +189,9 @@ export const AuthProvider = ({ children }) => {
       user, 
       loading,
       handleGoogleLogin,
-      logout, 
+      logout,
+      checkJwtToken,
+      fetchUserProfile, 
       isAuthenticated: !!user 
     }}>
       {children}
