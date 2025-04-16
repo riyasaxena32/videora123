@@ -66,7 +66,8 @@ const UserProfile = () => {
     background: 'linear-gradient(180deg, #0C0500 0%, #000000 100%)',
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
-    minHeight: '100vh'
+    minHeight: '100vh',
+    border: '1px solid #843D0C'
   };
 
   // Profile box style
