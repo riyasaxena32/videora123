@@ -67,14 +67,14 @@ const UserProfile = () => {
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     minHeight: '100vh',
-    border: '1px solid #843D0C'
+    
   };
 
   // Profile box style
   const profileBoxStyle = {
     backgroundColor: 'rgba(10, 5, 0, 0.95)',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-    border: 'none',
+    border: '1px solid #843D0C',
     borderRadius: '12px',
     padding: '30px'
   };
