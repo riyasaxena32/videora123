@@ -336,7 +336,7 @@ const UserProfile = () => {
                 <input
                   type="text"
                   name="username"
-                  value={userData.username || ''}
+                  value={userData.userName || ''}
                   onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
