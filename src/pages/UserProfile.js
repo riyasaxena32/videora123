@@ -92,26 +92,39 @@ const UserProfile = () => {
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
+      console.log("Fetching profile with token:", token ? "Token present" : "No token");
+      
       const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      const profileData = response.data.user;
-      setUserData({
-        name: profileData.name || '',
-        email: profileData.email || '',
-        profilePic: profileData.profilePic || '',
-        PhoneNumber: profileData.PhoneNumber || '',
-        Address: profileData.Address || '',
-        username: profileData.username || ''
-      });
+      console.log("Profile data received:", response.data);
+      
+      if (response.data && response.data.user) {
+        const profileData = response.data.user;
+        setUserData({
+          name: profileData.name || '',
+          email: profileData.email || '',
+          profilePic: profileData.profilePic || '',
+          PhoneNumber: profileData.PhoneNumber || '',
+          Address: profileData.Address || '',
+          username: profileData.username || ''
+        });
+        
+        // Also update country selection if it's in the profile data
+        if (profileData.country) {
+          setSelectedCountry(profileData.country);
+        }
+      } else {
+        throw new Error("Invalid profile data received");
+      }
       
       setLoading(false);
     } catch (err) {
       console.error('Error fetching profile:', err);
-      setError('Failed to load profile data');
+      setError('Failed to load profile data: ' + (err.response?.data?.message || err.message));
       setLoading(false);
     }
   };
@@ -125,12 +138,18 @@ const UserProfile = () => {
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
-      const response = await axios.put('https://videora-ai.onrender.com/user/profile/edit', 
-        {
-          name: userData.name,
-          PhoneNumber: userData.PhoneNumber,
-          Address: userData.Address
-        },
+      // Prepare the request payload with the updated fields
+      const updatedData = {
+        name: userData.name,
+        PhoneNumber: userData.PhoneNumber,
+        Address: userData.Address
+      };
+      
+      console.log("Sending update with data:", updatedData);
+      
+      const response = await axios.put(
+        'https://videora-ai.onrender.com/user/profile/edit', 
+        updatedData,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -139,22 +158,33 @@ const UserProfile = () => {
         }
       );
       
-      setUserData({
-        ...userData,
-        ...response.data.user
-      });
+      console.log("API response:", response.data);
       
-      setLoading(false);
+      if (response.data.user) {
+        // Update the user data with the response from the server
+        setUserData({
+          ...userData,
+          ...response.data.user
+        });
+        
+        // Update the user context if needed
+        if (typeof user.fetchUserProfile === 'function') {
+          user.fetchUserProfile();
+        }
+      }
+      
       setIsEditing(false);
     } catch (err) {
       console.error('Error updating profile:', err);
-      setError('Failed to update profile data');
+      setError('Failed to update profile data: ' + (err.response?.data?.message || err.message));
+    } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Updating ${name} field to: ${value}`);
     setUserData({
       ...userData,
       [name]: value
@@ -264,7 +294,7 @@ const UserProfile = () => {
                   <input
                     type="text"
                     name="name"
-                    value={userData.name || 'name'}
+                    value={userData.name || ''}
                     onChange={handleInputChange}
                     style={inputStyle}
                     disabled={!isEditing}
@@ -316,11 +346,11 @@ const UserProfile = () => {
                     <input
                       type="text"
                       name="PhoneNumber"
-                      value={(userData.PhoneNumber?.replace('+91', '') || '8880009991')}
+                      value={(userData.PhoneNumber || '').replace(/^\+91/, '')}
                       onChange={(e) => handleInputChange({
                         target: {
                           name: 'PhoneNumber',
-                          value: '+91' + e.target.value
+                          value: e.target.value.startsWith('+91') ? e.target.value : '+91' + e.target.value
                         }
                       })}
                       style={{...inputStyle, borderRadius: '0 4px 4px 0'}}
@@ -335,7 +365,7 @@ const UserProfile = () => {
                 <input
                   type="text"
                   name="Address"
-                  value={userData.Address || 'Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore'}
+                  value={userData.Address || ''}
                   onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
