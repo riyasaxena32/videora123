@@ -13,7 +13,7 @@ const UserProfile = () => {
     profilePic: '',
     PhoneNumber: '',
     Address: '',
-    userNme: ''
+    userName: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,7 +95,7 @@ const UserProfile = () => {
           console.log("Loaded from localStorage:", parsedData);
           
           // Debug username specifically
-          console.log("Username from localStorage:", parsedData.userNme);
+          console.log("Username from localStorage:", parsedData.userName);
           
           // Use cached data while waiting for API response
           setUserData(parsedData);
@@ -122,7 +122,7 @@ const UserProfile = () => {
             profilePic: apiUserData.profilePic || '',
             PhoneNumber: apiUserData.PhoneNumber || '',
             Address: apiUserData.Address || '',
-            userNme: apiUserData.userName || '',
+            userName: apiUserData.userName || '',
             bio: apiUserData.bio || '',
             // Add any other fields that might be in the API response
           };
@@ -145,13 +145,13 @@ const UserProfile = () => {
 
   // Function to update and verify the username field
   const updateUsernameDebug = () => {
-    console.log("Current username state:", userData.userNme);
+    console.log("Current username state:", userData.userName);
     console.log("Current localStorage data:", localStorage.getItem('userProfileData'));
     
     // Check if username is in localStorage
     try {
       const stored = JSON.parse(localStorage.getItem('userProfileData'));
-      console.log("Parsed localStorage username:", stored?.userNme);
+      console.log("Parsed localStorage username:", stored?.userName);
     } catch (e) {
       console.error("Failed to parse localStorage:", e);
     }
@@ -172,7 +172,7 @@ const UserProfile = () => {
       }
 
       // Log current username before saving
-      console.log("Username before saving:", userData.userNme);
+      console.log("Username before saving:", userData.userName);
       console.log("Profile picture to be uploaded:", selectedFile ? selectedFile.name : "No new file");
       
       // Create a FormData object if we have a file to upload or always use FormData for consistency
@@ -182,7 +182,7 @@ const UserProfile = () => {
       formData.append('name', userData.name || '');
       formData.append('PhoneNumber', userData.PhoneNumber || '');
       formData.append('Address', userData.Address || '');
-      formData.append('userNme', userData.userNme || '');
+      formData.append('userName', userData.userName || '');
       
       // Add profile picture only if a new one was selected
       if (selectedFile) {
@@ -218,7 +218,7 @@ const UserProfile = () => {
         const apiResponse = response.data.user;
         
         // Validate and debug the username in the response
-        console.log("API returned username:", apiResponse.userNme);
+        console.log("API returned username:", apiResponse.userName);
         console.log("API returned profile picture:", apiResponse.profilePic);
         
         // Ensure we use all fields from the server response with proper fallbacks
@@ -228,7 +228,7 @@ const UserProfile = () => {
           profilePic: apiResponse.profilePic || userData.profilePic || '',
           PhoneNumber: apiResponse.PhoneNumber || userData.PhoneNumber || '',
           Address: apiResponse.Address || userData.Address || '',
-          userNme: apiResponse.userNme || userData.userNme || ''
+          userName: apiResponse.userName || userData.userName || ''
         };
         
         console.log("Final userData to be stored:", updatedUserData);
@@ -242,7 +242,7 @@ const UserProfile = () => {
         // Verify the localStorage was updated correctly
         try {
           const storedData = JSON.parse(localStorage.getItem('userProfileData'));
-          console.log("Verification - stored username in localStorage:", storedData.userNme);
+          console.log("Verification - stored username in localStorage:", storedData.userName);
           console.log("Verification - stored profile picture in localStorage:", storedData.profilePic);
         } catch (e) {
           console.error("Failed to verify localStorage:", e);
@@ -331,16 +331,16 @@ const UserProfile = () => {
   };
 
   // Username specific handler for better UX
-  const handleUserNmeChange = (e) => {
+  const handleUserNameChange = (e) => {
     const value = e.target.value;
-    console.log(`Updating userNme to: ${value}`);
+    console.log(`Updating userName to: ${value}`);
     
     // Remove spaces and special characters
     const sanitizedValue = value.replace(/[^a-zA-Z0-9_]/g, '');
     
     setUserData(prev => ({
       ...prev,
-      userNme: sanitizedValue
+      userName: sanitizedValue
     }));
   };
 
@@ -445,9 +445,9 @@ const UserProfile = () => {
               <div className="w-full relative mt-2">
                 <input
                   type="text"
-                  name="userNme"
-                  value={userData.userNme || ''}
-                  onChange={handleUserNmeChange}
+                  name="userName"
+                  value={userData.userName || ''}
+                  onChange={handleUserNameChange}
                   style={inputStyle}
                   disabled={!isEditing}
                 />
