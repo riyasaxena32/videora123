@@ -83,80 +83,55 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        
-        // First try to load from localStorage for immediate display
-        const cachedData = localStorage.getItem('userProfileData');
-        if (cachedData) {
-          const parsedData = JSON.parse(cachedData);
-          console.log("Loaded from localStorage:", parsedData);
-          
-          // Debug username specifically
-          console.log("Username from localStorage:", parsedData.username);
-          
-          // Use cached data while waiting for API response
-          setUserData(parsedData);
-        }
-        
-        // Then fetch fresh data from API
-        const token = localStorage.getItem('token');
-        const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        console.log("API profile response:", response.data);
-        
-        if (response.data && response.data.user) {
-          const apiUserData = response.data.user;
-          console.log("Username from API:", apiUserData.username);
-          
-          // Create a complete user data object combining API response with any cached data
-          const completeUserData = {
-            name: apiUserData.name || '',
-            email: apiUserData.email || '',
-            profilePic: apiUserData.profilePic || '',
-            PhoneNumber: apiUserData.PhoneNumber || '',
-            Address: apiUserData.Address || '',
-            username: apiUserData.username || '',
-            bio: apiUserData.bio || '',
-            // Add any other fields that might be in the API response
-          };
-          
-          setUserData(completeUserData);
-          
-          // Update localStorage with fresh data
-          localStorage.setItem('userProfileData', JSON.stringify(completeUserData));
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setError('Failed to load user profile. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
+    fetchUserProfile();
   }, []);
 
-  // Function to update and verify the username field
-  const updateUsernameDebug = () => {
-    console.log("Current username state:", userData.username);
-    console.log("Current localStorage data:", localStorage.getItem('userProfileData'));
-    
-    // Check if username is in localStorage
+  const fetchUserProfile = async () => {
     try {
-      const stored = JSON.parse(localStorage.getItem('userProfileData'));
-      console.log("Parsed localStorage username:", stored?.username);
-    } catch (e) {
-      console.error("Failed to parse localStorage:", e);
+      setLoading(true);
+      setError(null);
+      
+      const token = user?.tokenType === 'jwt' ? 
+        localStorage.getItem('access_token') : 
+        localStorage.getItem('token');
+      
+      console.log("Fetching profile with token:", token ? "Token present" : "No token");
+      
+      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log("Profile data received:", response.data);
+      
+      if (response.data && response.data.user) {
+        const profileData = response.data.user;
+        setUserData({
+          name: profileData.name || '',
+          email: profileData.email || '',
+          profilePic: profileData.profilePic || '',
+          PhoneNumber: profileData.PhoneNumber || '',
+          Address: profileData.Address || '',
+          username: profileData.username || ''
+        });
+        
+        // Also update country selection if it's in the profile data
+        if (profileData.country) {
+          setSelectedCountry(profileData.country);
+        }
+      } else {
+        throw new Error("Invalid profile data received");
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load profile data: ' + (err.response?.data?.message || err.message));
+      setLoading(false);
     }
   };
 
-  // Enhanced save function with better debugging
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
@@ -166,13 +141,6 @@ const UserProfile = () => {
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
-      // Log current username before saving
-      console.log("Username before saving:", userData.username);
-      
       // Create a FormData object if we have a file to upload
       let updatedData;
       let formData = null;
@@ -180,27 +148,20 @@ const UserProfile = () => {
       if (selectedFile) {
         formData = new FormData();
         formData.append('profilePic', selectedFile);
-        formData.append('name', userData.name || '');
-        formData.append('PhoneNumber', userData.PhoneNumber || '');
-        formData.append('Address', userData.Address || '');
-        formData.append('username', userData.username || '');
+        formData.append('name', userData.name);
+        formData.append('PhoneNumber', userData.PhoneNumber);
+        formData.append('Address', userData.Address);
         updatedData = formData;
-        
-        // Log FormData entries for debugging
-        console.log("FormData entries:");
-        for (let pair of formData.entries()) {
-          console.log(pair[0], pair[1]);
-        }
       } else {
         // Regular JSON data without file
         updatedData = {
-          name: userData.name || '',
-          PhoneNumber: userData.PhoneNumber || '',
-          Address: userData.Address || '',
-          username: userData.username || ''
+          name: userData.name,
+          PhoneNumber: userData.PhoneNumber,
+          Address: userData.Address
         };
-        console.log("JSON data being sent:", updatedData);
       }
+      
+      console.log("Sending update:", selectedFile ? "With profile picture" : "Without profile picture");
       
       // Set headers based on whether we're uploading a file
       const headers = {
@@ -217,58 +178,27 @@ const UserProfile = () => {
         { headers }
       );
       
-      console.log("API response received:", response.data);
+      console.log("API response:", response.data);
       
-      if (response.data && response.data.user) {
+      if (response.data.user) {
         // Clear selected file after successful upload
         setSelectedFile(null);
-
-        // Extract all fields from API response, using current values as fallback
-        const apiResponse = response.data.user;
         
-        // Validate and debug the username in the response
-        console.log("API returned username:", apiResponse.username);
-        
-        // Ensure we use all fields from the server response with proper fallbacks
-        const updatedUserData = {
-          name: apiResponse.name || userData.name || '',
-          email: apiResponse.email || userData.email || '',
-          profilePic: apiResponse.profilePic || userData.profilePic || '',
-          PhoneNumber: apiResponse.PhoneNumber || userData.PhoneNumber || '',
-          Address: apiResponse.Address || userData.Address || '',
-          username: apiResponse.username || userData.username || ''
-        };
-        
-        console.log("Final userData to be stored:", updatedUserData);
-        
-        // Update the user data with the complete response from the server
-        setUserData(updatedUserData);
-        
-        // Store in localStorage for persistence, ensuring we include username
-        localStorage.setItem('userProfileData', JSON.stringify(updatedUserData));
-        
-        // Verify the localStorage was updated correctly
-        try {
-          const storedData = JSON.parse(localStorage.getItem('userProfileData'));
-          console.log("Verification - stored username in localStorage:", storedData.username);
-        } catch (e) {
-          console.error("Failed to verify localStorage:", e);
-        }
+        // Update the user data with the response from the server
+        setUserData({
+          ...userData,
+          ...response.data.user
+        });
         
         // Update the auth context to reflect changes across the app
         if (typeof user.fetchUserProfile === 'function') {
-          try {
-            await user.fetchUserProfile();
-          } catch (err) {
-            console.error("Failed to update auth context:", err);
-          }
+          await user.fetchUserProfile();
         }
         
-        // Immediate success notification
-        setError(null);
-        alert("Profile updated successfully!");
-      } else {
-        throw new Error("Invalid response data");
+        // After successful update, reload profile data to ensure we have latest data
+        setTimeout(() => {
+          fetchUserProfile();
+        }, 500);
       }
       
       setIsEditing(false);
@@ -303,52 +233,21 @@ const UserProfile = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log("File selected:", file.name, file.type, file.size);
-      
-      // Validate file type
-      if (!file.type.match('image.*')) {
-        setError('Please select an image file (JPG, PNG, etc.)');
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image too large. Please select an image less than 5MB.');
-        return;
-      }
-      
       setSelectedFile(file);
-      
-      // Create a preview URL and update state immediately for user feedback
+      // Create a preview URL
       const previewUrl = URL.createObjectURL(file);
       setUserData(prev => ({
         ...prev,
         profilePic: previewUrl // Show preview immediately
       }));
-      
-      console.log("Profile picture preview created:", previewUrl);
     }
   };
-  
+
   // Function to trigger file input click
   const handleProfilePicClick = () => {
     if (isEditing) {
       fileInputRef.current.click();
     }
-  };
-
-  // Username specific handler for better UX
-  const handleUsernameChange = (e) => {
-    const value = e.target.value;
-    console.log(`Updating username to: ${value}`);
-    
-    // Remove spaces and special characters
-    const sanitizedValue = value.replace(/[^a-zA-Z0-9_]/g, '');
-    
-    setUserData(prev => ({
-      ...prev,
-      username: sanitizedValue
-    }));
   };
 
   if (loading && !userData.name) {
@@ -365,7 +264,7 @@ const UserProfile = () => {
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] mb-10 bg-black fixed top-0 w-full z-10">
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-6" />
+            <img src="/Play.png" alt="VIDEORA x PLAYGROUND" className="h-12" />
           </Link>
         </div>
         
@@ -438,19 +337,17 @@ const UserProfile = () => {
                   type="text"
                   name="username"
                   value={userData.username || ''}
-                  onChange={handleUsernameChange}
+                  onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
                 />
-                {!isEditing && (
-                  <button 
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                    style={{ color: '#C6935C' }}
-                    onClick={() => setIsEditing(true)}
-                  >
-                    ✏️
-                  </button>
-                )}
+                <button 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  style={{ color: '#C6935C' }}
+                  onClick={() => setIsEditing(true)}
+                >
+                  ✏️
+                </button>
               </div>
             </div>
             
