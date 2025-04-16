@@ -13,7 +13,7 @@ const UserProfile = () => {
     profilePic: '',
     PhoneNumber: '',
     Address: '',
-    userNme: ''
+    username: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,7 +52,7 @@ const UserProfile = () => {
   
   // Save and Edit Profile button styles
   const saveButtonStyle = {
-    backgroundColor: isEditing ? '#ED5606' : '#6B2E0A',
+    backgroundColor: '#6B2E0A',
     border: '1px solid #843D0C',
     color: 'white',
     borderRadius: '4px',
@@ -61,8 +61,7 @@ const UserProfile = () => {
     alignItems: 'center',
     gap: '8px',
     fontWeight: '500',
-    fontSize: '14px',
-    transition: 'all 0.3s ease'
+    fontSize: '14px'
   };
 
   // Main container background style
@@ -95,7 +94,7 @@ const UserProfile = () => {
           console.log("Loaded from localStorage:", parsedData);
           
           // Debug username specifically
-          console.log("Username from localStorage:", parsedData.userNme);
+          console.log("Username from localStorage:", parsedData.username);
           
           // Use cached data while waiting for API response
           setUserData(parsedData);
@@ -113,7 +112,7 @@ const UserProfile = () => {
         
         if (response.data && response.data.user) {
           const apiUserData = response.data.user;
-          console.log("Username from API:", apiUserData.userName);
+          console.log("Username from API:", apiUserData.username);
           
           // Create a complete user data object combining API response with any cached data
           const completeUserData = {
@@ -122,7 +121,7 @@ const UserProfile = () => {
             profilePic: apiUserData.profilePic || '',
             PhoneNumber: apiUserData.PhoneNumber || '',
             Address: apiUserData.Address || '',
-            userNme: apiUserData.userName || '',
+            username: apiUserData.username || '',
             bio: apiUserData.bio || '',
             // Add any other fields that might be in the API response
           };
@@ -145,13 +144,13 @@ const UserProfile = () => {
 
   // Function to update and verify the username field
   const updateUsernameDebug = () => {
-    console.log("Current username state:", userData.userNme);
+    console.log("Current username state:", userData.username);
     console.log("Current localStorage data:", localStorage.getItem('userProfileData'));
     
     // Check if username is in localStorage
     try {
       const stored = JSON.parse(localStorage.getItem('userProfileData'));
-      console.log("Parsed localStorage username:", stored?.userNme);
+      console.log("Parsed localStorage username:", stored?.username);
     } catch (e) {
       console.error("Failed to parse localStorage:", e);
     }
@@ -172,39 +171,49 @@ const UserProfile = () => {
       }
 
       // Log current username before saving
-      console.log("Username before saving:", userData.userNme);
-      console.log("Profile picture to be uploaded:", selectedFile ? selectedFile.name : "No new file");
+      console.log("Username before saving:", userData.username);
       
-      // Create a FormData object if we have a file to upload or always use FormData for consistency
-      let formData = new FormData();
+      // Create a FormData object if we have a file to upload
+      let updatedData;
+      let formData = null;
       
-      // Always add the basic profile fields to FormData
-      formData.append('name', userData.name || '');
-      formData.append('PhoneNumber', userData.PhoneNumber || '');
-      formData.append('Address', userData.Address || '');
-      formData.append('userNme', userData.userNme || '');
-      
-      // Add profile picture only if a new one was selected
       if (selectedFile) {
+        formData = new FormData();
         formData.append('profilePic', selectedFile);
-        console.log("Adding profile picture to form data:", selectedFile.name);
+        formData.append('name', userData.name || '');
+        formData.append('PhoneNumber', userData.PhoneNumber || '');
+        formData.append('Address', userData.Address || '');
+        formData.append('username', userData.username || '');
+        updatedData = formData;
+        
+        // Log FormData entries for debugging
+        console.log("FormData entries:");
+        for (let pair of formData.entries()) {
+          console.log(pair[0], pair[1]);
+        }
+      } else {
+        // Regular JSON data without file
+        updatedData = {
+          name: userData.name || '',
+          PhoneNumber: userData.PhoneNumber || '',
+          Address: userData.Address || '',
+          username: userData.username || ''
+        };
+        console.log("JSON data being sent:", updatedData);
       }
       
-      // Log FormData entries for debugging
-      console.log("FormData entries:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-      
-      // Set headers without Content-Type to let browser set it with boundary for FormData
+      // Set headers based on whether we're uploading a file
       const headers = {
         'Authorization': `Bearer ${token}`
       };
       
-      console.log("Sending profile update request to API...");
+      if (!formData) {
+        headers['Content-Type'] = 'application/json';
+      }
+      
       const response = await axios.put(
         'https://videora-ai.onrender.com/user/profile/edit', 
-        formData,
+        updatedData,
         { headers }
       );
       
@@ -218,8 +227,7 @@ const UserProfile = () => {
         const apiResponse = response.data.user;
         
         // Validate and debug the username in the response
-        console.log("API returned username:", apiResponse.userNme);
-        console.log("API returned profile picture:", apiResponse.profilePic);
+        console.log("API returned username:", apiResponse.username);
         
         // Ensure we use all fields from the server response with proper fallbacks
         const updatedUserData = {
@@ -228,7 +236,7 @@ const UserProfile = () => {
           profilePic: apiResponse.profilePic || userData.profilePic || '',
           PhoneNumber: apiResponse.PhoneNumber || userData.PhoneNumber || '',
           Address: apiResponse.Address || userData.Address || '',
-          userNme: apiResponse.userNme || userData.userNme || ''
+          username: apiResponse.username || userData.username || ''
         };
         
         console.log("Final userData to be stored:", updatedUserData);
@@ -242,8 +250,7 @@ const UserProfile = () => {
         // Verify the localStorage was updated correctly
         try {
           const storedData = JSON.parse(localStorage.getItem('userProfileData'));
-          console.log("Verification - stored username in localStorage:", storedData.userNme);
-          console.log("Verification - stored profile picture in localStorage:", storedData.profilePic);
+          console.log("Verification - stored username in localStorage:", storedData.username);
         } catch (e) {
           console.error("Failed to verify localStorage:", e);
         }
@@ -292,7 +299,7 @@ const UserProfile = () => {
     }
   };
 
-  // Function to handle file selection - enhancing the visual feedback
+  // Function to handle file selection
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -323,7 +330,7 @@ const UserProfile = () => {
     }
   };
   
-  // Improved profile picture click handler with better visual feedback
+  // Function to trigger file input click
   const handleProfilePicClick = () => {
     if (isEditing) {
       fileInputRef.current.click();
@@ -331,16 +338,16 @@ const UserProfile = () => {
   };
 
   // Username specific handler for better UX
-  const handleUserNmeChange = (e) => {
+  const handleUsernameChange = (e) => {
     const value = e.target.value;
-    console.log(`Updating userNme to: ${value}`);
+    console.log(`Updating username to: ${value}`);
     
     // Remove spaces and special characters
     const sanitizedValue = value.replace(/[^a-zA-Z0-9_]/g, '');
     
     setUserData(prev => ({
       ...prev,
-      userNme: sanitizedValue
+      username: sanitizedValue
     }));
   };
 
@@ -396,16 +403,6 @@ const UserProfile = () => {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 mt-20">
-        {isEditing && (
-          <div className="bg-[#4A2400] border border-[#ED5606] text-white p-4 mb-6 rounded-md flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-            </svg>
-            <span>You're in edit mode. Make your changes and click <strong>Save Profile</strong> when done.</span>
-          </div>
-        )}
-
         <div style={profileBoxStyle}>
           <h1 className="text-3xl font-medium text-center mb-10" style={{ color: '#C6935C', fontFamily: 'serif' }}>User Profile</h1>
           
@@ -413,7 +410,8 @@ const UserProfile = () => {
             {/* Left column - Profile pic and username */}
             <div className="flex flex-col items-center">
               <div 
-                className={`w-[200px] h-[200px] rounded overflow-hidden mb-6 relative ${isEditing ? 'cursor-pointer border-2 border-[#ED5606]' : 'border border-[#843D0C]'}`}
+                className={`w-[200px] h-[200px] rounded overflow-hidden mb-6 relative ${isEditing ? 'cursor-pointer' : ''}`}
+                style={{ border: '1px solid #843D0C' }}
                 onClick={handleProfilePicClick}
               >
                 <img 
@@ -423,14 +421,7 @@ const UserProfile = () => {
                 />
                 {isEditing && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <div className="text-white flex flex-col items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                      </svg>
-                      <span className="mt-2 font-medium">Upload Photo</span>
-                    </div>
+                    <span className="text-white">Change Photo</span>
                   </div>
                 )}
                 <input 
@@ -445,9 +436,9 @@ const UserProfile = () => {
               <div className="w-full relative mt-2">
                 <input
                   type="text"
-                  name="userNme"
-                  value={userData.userNme || ''}
-                  onChange={handleUserNmeChange}
+                  name="username"
+                  value={userData.username || ''}
+                  onChange={handleUsernameChange}
                   style={inputStyle}
                   disabled={!isEditing}
                 />
@@ -559,26 +550,13 @@ const UserProfile = () => {
                 <button
                   onClick={handleEditToggle}
                   style={saveButtonStyle}
-                  className={`hover:opacity-90 ${isEditing ? 'animate-pulse' : ''}`}
                 >
                   {loading ? (
                     <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
                   ) : (
                     <>
-                      {isEditing ? (
-                        <>
-                          <Save size={16} />
-                          Save Profile
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                          </svg>
-                          Edit Profile
-                        </>
-                      )}
+                      <Save size={16} />
+                      {isEditing ? "Save Profile" : "Edit Profile"}
                     </>
                   )}
                 </button>
