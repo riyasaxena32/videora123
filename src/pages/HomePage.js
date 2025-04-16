@@ -268,7 +268,7 @@ function HomePage() {
             <Menu className="w-5 h-5" />
           </button>
           <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-10" />
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-6" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
