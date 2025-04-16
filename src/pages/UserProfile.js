@@ -113,7 +113,7 @@ const UserProfile = () => {
           profilePic: profileData.profilePic || '',
           PhoneNumber: profileData.PhoneNumber || '',
           Address: profileData.Address || '',
-          username: profileData.userName || ''
+          userName: profileData.userName || ''
         });
         
         // Also update country selection if it's in the profile data
@@ -151,7 +151,7 @@ const UserProfile = () => {
         formData.append('name', userData.name);
         formData.append('PhoneNumber', userData.PhoneNumber);
         formData.append('Address', userData.Address);
-        formData.append('username', userData.userName);
+        formData.append('userName', userData.userName);
         updatedData = formData;
       } else {
         // Regular JSON data without file
@@ -159,7 +159,7 @@ const UserProfile = () => {
           name: userData.name,
           PhoneNumber: userData.PhoneNumber,
           Address: userData.Address,
-          username: userData.userName
+          userName: userData.userName
         };
       }
       
@@ -337,7 +337,7 @@ const UserProfile = () => {
               <div className="w-full relative mt-2">
                 <input
                   type="text"
-                  name="username"
+                  name="userName"
                   value={userData.userName || ''}
                   onChange={handleInputChange}
                   style={inputStyle}
@@ -424,10 +424,10 @@ const UserProfile = () => {
               <div>
                 <label className="block text-gray-400 text-sm mb-2">Address</label>
                 <input
-type="text"
+                  type="text"
                   name="Address"
                   value={userData.Address || ''}
-                  onChange                  ={handleInputChange}
+                  onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
                 />
