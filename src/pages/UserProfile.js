@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -19,6 +19,9 @@ const UserProfile = () => {
   const [error, setError] = useState(null);
   const [countries] = useState(['India', 'USA', 'UK', 'Canada', 'Australia']);
   const [selectedCountry, setSelectedCountry] = useState('India');
+  // For file upload
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -83,6 +86,30 @@ const UserProfile = () => {
     fetchUserProfile();
   }, []);
 
+  useEffect(() => {
+    if (userData.name || userData.username) {
+      console.log("userData state updated:", {
+        name: userData.name,
+        username: userData.username,
+        PhoneNumber: userData.PhoneNumber,
+        Address: userData.Address,
+        profilePic: userData.profilePic ? "Present" : "Not present"
+      });
+    }
+  }, [userData]);
+
+  // Add debug exposures in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      // Expose userData for debugging
+      window._debugUserData = userData;
+      window._updateUserState = (newValues) => {
+        console.log("Manual state update:", newValues);
+        setUserData({...userData, ...newValues});
+      };
+    }
+  }, [userData]);
+
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
@@ -138,39 +165,92 @@ const UserProfile = () => {
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
-      // Prepare the request payload with the updated fields
-      const updatedData = {
-        name: userData.name,
-        PhoneNumber: userData.PhoneNumber,
-        Address: userData.Address
+      // Create a FormData object if we have a file to upload
+      let updatedData;
+      let formData = null;
+      
+      if (selectedFile) {
+        formData = new FormData();
+        formData.append('profilePic', selectedFile);
+        formData.append('name', userData.name);
+        formData.append('PhoneNumber', userData.PhoneNumber);
+        formData.append('Address', userData.Address);
+        formData.append('username', userData.username);
+        updatedData = formData;
+      } else {
+        // Regular JSON data without file
+        updatedData = {
+          name: userData.name,
+          PhoneNumber: userData.PhoneNumber,
+          Address: userData.Address,
+          username: userData.username
+        };
+      }
+      
+      console.log("Sending update with data:", JSON.stringify(updatedData));
+      
+      // Set headers based on whether we're uploading a file
+      const headers = {
+        'Authorization': `Bearer ${token}`
       };
       
-      console.log("Sending update with data:", updatedData);
+      if (!formData) {
+        headers['Content-Type'] = 'application/json';
+      }
       
       const response = await axios.put(
         'https://videora-ai.onrender.com/user/profile/edit', 
         updatedData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers }
       );
       
-      console.log("API response:", response.data);
+      console.log("API response received:", response.data);
       
       if (response.data.user) {
-        // Update the user data with the response from the server
+        // Clear selected file after successful upload
+        setSelectedFile(null);
+        
+        // Save the response data first
+        const updatedUserData = response.data.user;
+        
+        // Force a complete update by creating a new object
         setUserData({
-          ...userData,
-          ...response.data.user
+          name: updatedUserData.name || userData.name || '',
+          email: updatedUserData.email || userData.email || '',
+          profilePic: updatedUserData.profilePic || userData.profilePic || '',
+          PhoneNumber: updatedUserData.PhoneNumber || userData.PhoneNumber || '',
+          Address: updatedUserData.Address || userData.Address || '',
+          username: updatedUserData.username || userData.username || ''
         });
         
-        // Update the user context if needed
+        // Log the expected state
+        console.log("UpdatedUserData to be set:", {
+          name: updatedUserData.name,
+          username: updatedUserData.username,
+          PhoneNumber: updatedUserData.PhoneNumber,
+          Address: updatedUserData.Address
+        });
+        
+        // Add a forced re-render trigger
+        setTimeout(() => {
+          console.log("Forcing re-render check with current userData:", userData);
+          // This empty setState forces a component update
+          setUserData(current => ({...current}));
+        }, 100);
+        
+        // Update the auth context to reflect changes across the app
         if (typeof user.fetchUserProfile === 'function') {
-          user.fetchUserProfile();
+          await user.fetchUserProfile();
         }
+        
+        // Directly update the state with server response
+        updateStateWithServerResponse(response.data);
+        
+        // After successful update, reload profile data from server to ensure we have latest data
+        setTimeout(() => {
+          // Directly fetch profile data again to ensure state is updated
+          fetchUserProfile();
+        }, 1000);
       }
       
       setIsEditing(false);
@@ -180,6 +260,35 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Direct state update function that doesn't rely on API
+  const updateStateWithServerResponse = (serverData) => {
+    if (!serverData || !serverData.user) {
+      console.error("Invalid server data for updateStateWithServerResponse");
+      return;
+    }
+    
+    console.log("Direct state update with:", serverData.user);
+    
+    // Create a brand new object
+    const updatedProfile = {
+      name: serverData.user.name || '',
+      email: serverData.user.email || '',
+      profilePic: serverData.user.profilePic || '',
+      PhoneNumber: serverData.user.PhoneNumber || '',
+      Address: serverData.user.Address || '',
+      username: serverData.user.username || ''
+    };
+    
+    // Force a complete state reset
+    setUserData(updatedProfile);
+    
+    // Update UI loading state
+    setLoading(false);
+    setIsEditing(false);
+    
+    console.log("State update complete, new values:", updatedProfile);
   };
 
   const handleInputChange = (e) => {
@@ -198,6 +307,27 @@ const UserProfile = () => {
     } else {
       // If not editing, enter edit mode
       setIsEditing(true);
+    }
+  };
+
+  // Function to handle file selection
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      // Create a preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setUserData(prev => ({
+        ...prev,
+        profilePic: previewUrl // Show preview immediately
+      }));
+    }
+  };
+
+  // Function to trigger file input click
+  const handleProfilePicClick = () => {
+    if (isEditing) {
+      fileInputRef.current.click();
     }
   };
 
@@ -259,11 +389,27 @@ const UserProfile = () => {
           <div className="grid md:grid-cols-[250px_1fr] gap-10">
             {/* Left column - Profile pic and username */}
             <div className="flex flex-col items-center">
-              <div className="w-[200px] h-[200px] rounded overflow-hidden mb-6" style={{ border: '1px solid #843D0C' }}>
+              <div 
+                className={`w-[200px] h-[200px] rounded overflow-hidden mb-6 relative ${isEditing ? 'cursor-pointer' : ''}`}
+                style={{ border: '1px solid #843D0C' }}
+                onClick={handleProfilePicClick}
+              >
                 <img 
                   src={userData.profilePic || '/user-avatar.png'} 
                   alt="Profile"
                   className="w-full h-full object-cover"
+                />
+                {isEditing && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <span className="text-white">Change Photo</span>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
                 />
               </div>
               
@@ -271,18 +417,20 @@ const UserProfile = () => {
                 <input
                   type="text"
                   name="username"
-                  value={userData.username || 'username'}
+                  value={userData.username || ''}
                   onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
                 />
-                <button 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                  style={{ color: '#C6935C' }}
-                  onClick={() => setIsEditing(true)}
-                >
-                  ✏️
-                </button>
+                {!isEditing && (
+                  <button 
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    style={{ color: '#C6935C' }}
+                    onClick={() => setIsEditing(true)}
+                  >
+                    ✏️
+                  </button>
+                )}
               </div>
             </div>
             
@@ -306,7 +454,7 @@ const UserProfile = () => {
                   <input
                     type="email"
                     name="email"
-                    value={userData.email || 'email@gmail.com'}
+                    value={userData.email || ''}
                     style={inputStyle}
                     disabled={true} // Email can't be edited
                   />
@@ -393,6 +541,21 @@ const UserProfile = () => {
                   )}
                 </button>
               </div>
+              
+              {/* Debug section */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-6 p-3 border border-[#843D0C] rounded">
+                  <h3 className="text-sm font-medium mb-2" style={{ color: '#C6935C' }}>Debug Info (Development Only)</h3>
+                  <div className="text-xs space-y-1">
+                    <div><strong>Name:</strong> {userData.name || 'Not set'}</div>
+                    <div><strong>Username:</strong> {userData.username || 'Not set'}</div>
+                    <div><strong>Phone:</strong> {userData.PhoneNumber || 'Not set'}</div>
+                    <div><strong>Address:</strong> {userData.Address || 'Not set'}</div>
+                    <div><strong>Is Editing:</strong> {isEditing ? 'Yes' : 'No'}</div>
+                    <div><strong>Last Update:</strong> {new Date().toLocaleTimeString()}</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
