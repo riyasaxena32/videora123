@@ -47,7 +47,7 @@ const UserProfile = () => {
     fontSize: '16px'
   };
   
-  // Save Profile button style
+  // Save and Edit Profile button styles
   const saveButtonStyle = {
     backgroundColor: '#6B2E0A',
     border: '1px solid #843D0C',
@@ -159,6 +159,16 @@ const UserProfile = () => {
       ...userData,
       [name]: value
     });
+  };
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // If already editing, save changes
+      handleSaveProfile();
+    } else {
+      // If not editing, enter edit mode
+      setIsEditing(true);
+    }
   };
 
   if (loading && !userData.name) {
@@ -340,7 +350,7 @@ const UserProfile = () => {
               
               <div className="flex justify-end mt-6">
                 <button
-                  onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
+                  onClick={handleEditToggle}
                   style={saveButtonStyle}
                 >
                   {loading ? (
@@ -348,7 +358,7 @@ const UserProfile = () => {
                   ) : (
                     <>
                       <Save size={16} />
-                      Save Profile
+                      {isEditing ? "Save Profile" : "Edit Profile"}
                     </>
                   )}
                 </button>
