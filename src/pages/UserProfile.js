@@ -83,6 +83,19 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
+    // Try to load from localStorage first for immediate display
+    const cachedData = localStorage.getItem('userProfileData');
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        setUserData(parsedData);
+        console.log("Loaded profile data from localStorage:", parsedData);
+      } catch (err) {
+        console.error("Failed to parse cached profile data:", err);
+      }
+    }
+    
+    // Then fetch from API
     fetchUserProfile();
   }, []);
 
@@ -97,24 +110,33 @@ const UserProfile = () => {
       
       console.log("Fetching profile with token:", token ? "Token present" : "No token");
       
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      
       const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      console.log("Profile data received:", response.data);
+      console.log("Profile data received from API:", response.data);
       
       if (response.data && response.data.user) {
         const profileData = response.data.user;
-        setUserData({
+        const updatedData = {
           name: profileData.name || '',
           email: profileData.email || '',
           profilePic: profileData.profilePic || '',
           PhoneNumber: profileData.PhoneNumber || '',
           Address: profileData.Address || '',
           username: profileData.username || ''
-        });
+        };
+        
+        setUserData(updatedData);
+        
+        // Store in localStorage for persistence
+        localStorage.setItem('userProfileData', JSON.stringify(updatedData));
         
         // Also update country selection if it's in the profile data
         if (profileData.country) {
@@ -123,11 +145,22 @@ const UserProfile = () => {
       } else {
         throw new Error("Invalid profile data received");
       }
-      
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching profile:', err);
       setError('Failed to load profile data: ' + (err.response?.data?.message || err.message));
+      
+      // If API fails, try to use localStorage data as fallback
+      const cachedData = localStorage.getItem('userProfileData');
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          setUserData(parsedData);
+          console.log("Using cached profile data as fallback:", parsedData);
+        } catch (parseErr) {
+          console.error("Failed to parse cached profile data:", parseErr);
+        }
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -148,22 +181,22 @@ const UserProfile = () => {
       if (selectedFile) {
         formData = new FormData();
         formData.append('profilePic', selectedFile);
-        formData.append('name', userData.name);
-        formData.append('PhoneNumber', userData.PhoneNumber);
-        formData.append('Address', userData.Address);
-        formData.append('username', userData.username);
+        formData.append('name', userData.name || '');
+        formData.append('PhoneNumber', userData.PhoneNumber || '');
+        formData.append('Address', userData.Address || '');
+        formData.append('username', userData.username || '');
         updatedData = formData;
       } else {
         // Regular JSON data without file
         updatedData = {
-          name: userData.name,
-          PhoneNumber: userData.PhoneNumber,
-          Address: userData.Address,
-          username: userData.username
+          name: userData.name || '',
+          PhoneNumber: userData.PhoneNumber || '',
+          Address: userData.Address || '',
+          username: userData.username || ''
         };
       }
       
-      console.log("Sending update with data:", updatedData);
+      console.log("Sending update with data:", formData ? "FormData with file" : updatedData);
       
       // Set headers based on whether we're uploading a file
       const headers = {
@@ -182,32 +215,43 @@ const UserProfile = () => {
       
       console.log("API response received:", response.data);
       
-      if (response.data.user) {
+      if (response.data && response.data.user) {
         // Clear selected file after successful upload
         setSelectedFile(null);
         
-        // Update the user data with the response from the server
-        setUserData({
+        // Ensure we use all fields from the server response
+        const updatedUserData = {
           ...userData,
-          ...response.data.user
-        });
-        
-        console.log("Updated userData state with new values:", {
           name: response.data.user.name,
-          username: response.data.user.username,
+          email: response.data.user.email,
+          profilePic: response.data.user.profilePic,
           PhoneNumber: response.data.user.PhoneNumber,
-          Address: response.data.user.Address
-        });
+          Address: response.data.user.Address,
+          username: response.data.user.username
+        };
+        
+        // Update the user data with the complete response from the server
+        setUserData(updatedUserData);
+        
+        console.log("Updated userData state with new values:", updatedUserData);
+        
+        // Store updated data in localStorage to persist across refreshes
+        localStorage.setItem('userProfileData', JSON.stringify(updatedUserData));
         
         // Update the auth context to reflect changes across the app
         if (typeof user.fetchUserProfile === 'function') {
-          await user.fetchUserProfile();
+          try {
+            await user.fetchUserProfile();
+          } catch (err) {
+            console.error("Failed to update auth context:", err);
+          }
         }
         
-        // After successful update, reload profile data to ensure we have latest data
-        setTimeout(() => {
-          verifyProfileUpdate();
-        }, 500);
+        // Immediate success notification
+        setError(null);
+        alert("Profile updated successfully!");
+      } else {
+        throw new Error("Invalid response data");
       }
       
       setIsEditing(false);
@@ -216,39 +260,6 @@ const UserProfile = () => {
       setError('Failed to update profile data: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const verifyProfileUpdate = async () => {
-    try {
-      console.log("Verifying profile update...");
-      
-      const token = user?.tokenType === 'jwt' ? 
-        localStorage.getItem('access_token') : 
-        localStorage.getItem('token');
-      
-      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.data && response.data.user) {
-        console.log("Verification data from server:", {
-          name: response.data.user.name,
-          username: response.data.user.username,
-          PhoneNumber: response.data.user.PhoneNumber,
-          Address: response.data.user.Address
-        });
-        
-        // Update the userData state with the verified data from server
-        setUserData({
-          ...userData,
-          ...response.data.user
-        });
-      }
-    } catch (err) {
-      console.error("Verification failed:", err);
     }
   };
 
@@ -275,21 +286,52 @@ const UserProfile = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+      console.log("File selected:", file.name, file.type, file.size);
+      
+      // Validate file type
+      if (!file.type.match('image.*')) {
+        setError('Please select an image file (JPG, PNG, etc.)');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image too large. Please select an image less than 5MB.');
+        return;
+      }
+      
       setSelectedFile(file);
-      // Create a preview URL
+      
+      // Create a preview URL and update state immediately for user feedback
       const previewUrl = URL.createObjectURL(file);
       setUserData(prev => ({
         ...prev,
         profilePic: previewUrl // Show preview immediately
       }));
+      
+      console.log("Profile picture preview created:", previewUrl);
     }
   };
-
+  
   // Function to trigger file input click
   const handleProfilePicClick = () => {
     if (isEditing) {
       fileInputRef.current.click();
     }
+  };
+
+  // Username specific handler for better UX
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    console.log(`Updating username to: ${value}`);
+    
+    // Remove spaces and special characters
+    const sanitizedValue = value.replace(/[^a-zA-Z0-9_]/g, '');
+    
+    setUserData(prev => ({
+      ...prev,
+      username: sanitizedValue
+    }));
   };
 
   if (loading && !userData.name) {
@@ -306,7 +348,7 @@ const UserProfile = () => {
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] mb-10 bg-black fixed top-0 w-full z-10">
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/Play.png" alt="VIDEORA x PLAYGROUND" className="h-12" />
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-6" />
           </Link>
         </div>
         
@@ -379,7 +421,7 @@ const UserProfile = () => {
                   type="text"
                   name="username"
                   value={userData.username || ''}
-                  onChange={handleInputChange}
+                  onChange={handleUsernameChange}
                   style={inputStyle}
                   disabled={!isEditing}
                 />
