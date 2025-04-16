@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Plus, LogOut, Bell } from 'lucide-react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { Edit2 } from 'lucide-react';
+import './UserProfile.css';
 
 const UserProfile = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
@@ -20,65 +20,6 @@ const UserProfile = () => {
   const [error, setError] = useState(null);
   const [countries] = useState(['India', 'USA', 'UK', 'Canada', 'Australia']);
   const [selectedCountry, setSelectedCountry] = useState('India');
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const profileDropdownRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('Generate Video');
-
-  // Custom button styles
-  const gradientButtonStyle = {
-    background: `
-      linear-gradient(0deg, #270E00, #270E00),
-      conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg),
-      linear-gradient(180deg, rgba(69, 24, 0, 0.3) 74.07%, rgba(217, 75, 0, 0.3) 100%),
-      linear-gradient(270deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%),
-      linear-gradient(90deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%)
-    `,
-    border: '1px solid #ED5606',
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
-    borderRadius: '9999px'
-  };
-
-  const profileContainerStyle = {
-    background: 'black',
-    borderColor: '#ED5606',
-    boxShadow: '0 0 20px rgba(237, 86, 6, 0.2)'
-  };
-  
-  const profileTitleStyle = {
-    color: '#FAE0C0'
-  };
-  
-  const saveButtonStyle = {
-    background: 'linear-gradient(180deg, #FAE0C0 0%, #EA8736 100%)',
-    color: '#270E00'
-  };
-  
-  const backgroundStyle = {
-    backgroundImage: 'url(/stars-bg.png)', 
-    backgroundSize: 'cover'
-  };
-
-  const toggleProfileDropdown = () => {
-    setProfileDropdownOpen(!profileDropdownOpen);
-  };
-
-  const handleLogout = () => {
-    logout();
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
-        setProfileDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   useEffect(() => {
     fetchUserProfile();
@@ -162,6 +103,20 @@ const UserProfile = () => {
     });
   };
 
+  // Gradient button style
+  const gradientButtonStyle = {
+    background: `
+      linear-gradient(0deg, #270E00, #270E00),
+      conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg),
+      linear-gradient(180deg, rgba(69, 24, 0, 0.3) 74.07%, rgba(217, 75, 0, 0.3) 100%),
+      linear-gradient(270deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%),
+      linear-gradient(90deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%)
+    `,
+    border: '1px solid #ED5606',
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
+    borderRadius: '9999px'
+  };
+
   if (loading && !userData.name) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -171,227 +126,172 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header - Same as in CreatePage */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a]">
-        <div className="flex items-center">
-          <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/Play.png" alt="VIDEORA x PLAYGROUND" className="h-12" />
-          </Link>
+    <div className="min-h-screen bg-black text-white py-6">
+      {/* Header with navigation */}
+      <header className="flex items-center justify-between px-6 py-3 mb-8">
+        <Link to="/" className="text-xl font-bold flex items-center">
+          <img src="/Logo.png" alt="VIDEORA" className="h-8" />
+          <span className="ml-2 text-[#ED5606]">PLAYGROUND</span>
+        </Link>
+        
+        <div className="hidden md:flex space-x-8 text-sm">
+          <Link to="/about" className="hover:text-[#ED5606]">Generate Video</Link>
+          <Link to="/playground" className="hover:text-[#ED5606]">AI Video Edit</Link>
+          <Link to="/community" className="hover:text-[#ED5606]">Video Narration</Link>
         </div>
         
-        {/* Center the navigation items */}
-        <div className="flex-1 flex justify-center">
-          <nav className="flex">
-            {['Generate Video', 'AI Video Edit', 'Video Narration'].map((tab) => (
-              <button
-                key={tab}
-                className={`px-4 py-2 text-sm transition-colors ${
-                  activeTab === tab ? 'text-[#ED5606]' : 'text-[#b0b0b0] hover:text-white'
-                }`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <button 
-            style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
-          >
-            Create
-            <Plus className="w-3.5 h-3.5 ml-0.5" />
-          </button>
-          
-          {/* Profile dropdown */}
-          <div className="relative" ref={profileDropdownRef}>
-            <button 
-              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
-              onClick={toggleProfileDropdown}
-            >
-              <img
-                src={userData.profilePic || user?.picture || user?.profilePic || "/user-avatar.png"}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </button>
-            
-            {/* Dropdown menu */}
-            {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
-                <div className="py-2">
-                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
-                    <div className="w-5 h-5 flex items-center justify-center">
-                      <User className="w-4 h-4" />
-                    </div>
-                    User Profile
-                  </Link>
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
-                  >
-                    <div className="w-5 h-5 flex items-center justify-center">
-                      <LogOut className="w-4 h-4" />
-                    </div>
-                    Log Out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <Link
+          to="/create"
+          style={gradientButtonStyle}
+          className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
+        >
+          Create
+          <span className="text-xl font-bold">+</span>
+        </Link>
       </header>
 
-      {/* Main Content - Profile Form */}
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]" style={backgroundStyle}>
-        <div className="max-w-4xl w-full mx-4 my-6">
-          <div className="border rounded-lg overflow-hidden" style={profileContainerStyle}>
-            <h1 className="text-2xl font-semibold text-center py-4 mb-6" style={profileTitleStyle}>User Profile</h1>
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="profile-container p-6">
+          <h1 className="profile-title text-xl text-center mb-8">User Profile</h1>
+          
+          <div className="grid md:grid-cols-[180px_1fr] gap-8">
+            {/* Left column - Profile pic and username */}
+            <div className="flex flex-col items-center">
+              <div className="profile-image-container w-[180px] h-[180px] mb-4">
+                <img 
+                  src={userData.profilePic || '/default-avatar.png'} 
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <div className="w-full relative">
+                <input
+                  type="text"
+                  name="username"
+                  value={userData.username}
+                  onChange={handleInputChange}
+                  className="username-input w-full"
+                  placeholder="Username"
+                  disabled={!isEditing}
+                />
+                <button 
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 edit-icon"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
             
-            <div className="px-8 pb-8 pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
-                {/* Left column - Profile pic and username */}
-                <div className="flex flex-col items-center">
-                  <div className="w-full max-w-[180px] h-[180px] rounded-lg overflow-hidden mb-4 bg-[#1A1A1A] border border-[#333]">
-                    <img 
-                      src={userData.profilePic || user?.picture || "/user-avatar.png"} 
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  
-                  <div className="w-full relative">
-                    <input
-                      type="text"
-                      name="username"
-                      value={userData.username || ''}
-                      onChange={handleInputChange}
-                      className="w-full bg-black border border-[#ED5606] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#FAE0C0]"
-                      placeholder="Username"
+            {/* Right column - User details */}
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={userData.name}
+                    onChange={handleInputChange}
+                    className="form-input"
+                    disabled={!isEditing}
+                  />
+                </div>
+                
+                <div>
+                  <label className="form-label">Email Id</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={userData.email}
+                    className="form-input"
+                    disabled={true} // Email can't be edited
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Country</label>
+                  <div className="relative">
+                    <select
+                      value={selectedCountry}
+                      onChange={(e) => setSelectedCountry(e.target.value)}
+                      className="country-select"
                       disabled={!isEditing}
-                    />
-                    <button 
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#ED5606]"
-                      onClick={() => setIsEditing(true)}
                     >
-                      ✏️
-                    </button>
+                      {countries.map(country => (
+                        <option key={country} value={country}>
+                          {country === 'India' ? '🇮🇳' : ''} {country}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Right column - User details */}
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[#FAE0C0] text-sm mb-1">Name</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={userData.name || ''}
-                        onChange={handleInputChange}
-                        className="w-full bg-black border border-[#ED5606] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#FAE0C0]"
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-[#FAE0C0] text-sm mb-1">Email Id</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={userData.email || ''}
-                        className="w-full bg-black border border-[#ED5606] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#FAE0C0]"
-                        disabled={true} // Email can't be edited
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[#FAE0C0] text-sm mb-1">Country</label>
-                      <div className="relative">
-                        <select
-                          value={selectedCountry}
-                          onChange={(e) => setSelectedCountry(e.target.value)}
-                          className="w-full bg-black border border-[#ED5606] rounded-md py-2 pl-3 pr-8 text-white focus:outline-none focus:border-[#FAE0C0] appearance-none"
-                          disabled={!isEditing}
-                        >
-                          <option value="India">🇮🇳 India</option>
-                          {countries.filter(c => c !== 'India').map(country => (
-                            <option key={country} value={country}>
-                              {country}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg className="h-5 w-5 text-[#ED5606]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-[#FAE0C0] text-sm mb-1">Phone Number</label>
-                      <div className="flex">
-                        <span className="inline-flex items-center px-3 text-sm text-white bg-black border border-r-0 border-[#ED5606] rounded-l-md">
-                          +91 🇮🇳
-                        </span>
-                        <input
-                          type="text"
-                          name="PhoneNumber"
-                          value={(userData.PhoneNumber || '').replace('+91', '')}
-                          onChange={(e) => handleInputChange({
-                            target: {
-                              name: 'PhoneNumber',
-                              value: '+91' + e.target.value
-                            }
-                          })}
-                          className="w-full bg-black border border-[#ED5606] rounded-r-md py-2 px-3 text-white focus:outline-none focus:border-[#FAE0C0]"
-                          placeholder="8880009991"
-                          disabled={!isEditing}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-[#FAE0C0] text-sm mb-1">Address</label>
+                <div>
+                  <label className="form-label">Phone Number</label>
+                  <div className="flex">
+                    <span className="phone-prefix">
+                      +91 🇮🇳
+                    </span>
                     <input
                       type="text"
-                      name="Address"
-                      value={userData.Address || ''}
-                      onChange={handleInputChange}
-                      className="w-full bg-black border border-[#ED5606] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#FAE0C0]"
-                      placeholder="Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore"
+                      name="PhoneNumber"
+                      value={userData.PhoneNumber?.replace('+91', '') || ''}
+                      onChange={(e) => handleInputChange({
+                        target: {
+                          name: 'PhoneNumber',
+                          value: '+91' + e.target.value
+                        }
+                      })}
+                      className="phone-input"
+                      placeholder="8880009991"
                       disabled={!isEditing}
                     />
                   </div>
-                  
-                  {error && (
-                    <div className="text-red-500 text-sm py-2">
-                      {error}
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-end">
-                    <button
-                      onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
-                      disabled={loading}
-                      style={saveButtonStyle}
-                      className="px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 transition-colors"
-                    >
-                      {loading ? (
-                        <span className="h-4 w-4 border-2 border-t-transparent border-[#270E00] rounded-full animate-spin"></span>
-                      ) : (
-                        isEditing ? 'Save Profile' : 'Edit Profile'
-                      )}
-                    </button>
-                  </div>
                 </div>
+              </div>
+              
+              <div>
+                <label className="form-label">Address</label>
+                <input
+                  type="text"
+                  name="Address"
+                  value={userData.Address}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore"
+                  disabled={!isEditing}
+                />
+              </div>
+              
+              {error && (
+                <div className="text-red-500 text-sm py-2">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={loading || !isEditing}
+                  className="save-button"
+                >
+                  {loading ? (
+                    <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                  ) : (
+                    <>
+                      Save Profile
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

@@ -1,0 +1,126 @@
+/* UserProfile.css */
+.profile-container {
+  background-color: #0A0A0A;
+  border: 1px solid #1A1A1A;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.profile-title {
+  color: #ED5606;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.profile-image-container {
+  background-color: #0E0E0E;
+  border: 1px solid #1A1A1A;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.username-input {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #1A1A1A;
+  color: white;
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 14px;
+}
+
+.username-input:focus {
+  outline: none;
+  border-bottom-color: #ED5606;
+}
+
+.form-label {
+  color: #777;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.form-input {
+  background-color: #0A0A0A;
+  border: 1px solid #1A1A1A;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 12px;
+  width: 100%;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #ED5606;
+}
+
+.form-input:disabled {
+  opacity: 0.8;
+}
+
+.save-button {
+  background-color: #270E00;
+  border: 1px solid #ED5606;
+  color: white;
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button:hover {
+  background-color: #3A1500;
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.country-select {
+  appearance: none;
+  background-color: #0A0A0A;
+  border: 1px solid #1A1A1A;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 12px;
+  width: 100%;
+  font-size: 14px;
+}
+
+.phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  background-color: #0A0A0A;
+  border: 1px solid #1A1A1A;
+  border-right: 0;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+  color: #ccc;
+  font-size: 14px;
+}
+
+.phone-input {
+  background-color: #0A0A0A;
+  border: 1px solid #1A1A1A;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  color: white;
+  padding: 8px 12px;
+  width: 100%;
+  font-size: 14px;
+}
+
+.edit-icon {
+  color: #ED5606;
+  cursor: pointer;
+} 
