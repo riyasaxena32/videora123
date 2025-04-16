@@ -7,6 +7,8 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
 
   // Check for authentication on initial load
@@ -114,6 +116,80 @@ export const AuthProvider = ({ children }) => {
     } finally {
       clearAuthData();
       navigate('/login');
+    }
+  };
+
+  // Modify the checkJwtToken function to fetch profile data after JWT validation
+  const checkJwtToken = () => {
+    const token = sessionStorage.getItem('jwt');
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        
+        if (decoded.exp < currentTime) {
+          // Token expired
+          sessionStorage.removeItem('jwt');
+          setUser(null);
+          setIsAuthenticated(false);
+          setAuthChecked(true);
+          return false;
+        } else {
+          // Valid token - fetch user details from API
+          fetchUserProfile(decoded.id, token);
+          return true;
+        }
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        sessionStorage.removeItem('jwt');
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+        return false;
+      }
+    }
+    setAuthChecked(true);
+    return false;
+  };
+
+  // Add a new function to fetch user profile
+  const fetchUserProfile = async (userId, token) => {
+    try {
+      // Fetch user details from API
+      const response = await fetch(`https://videora-ai.onrender.com/auth/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        // Set user data including profile picture
+        setUser({
+          ...userData.user,
+          profilePic: userData.user.profilePic || null
+        });
+        setIsAuthenticated(true);
+      } else {
+        // API call failed but token is valid
+        const decoded = jwtDecode(token);
+        setUser({
+          id: decoded.id,
+          email: decoded.email
+        });
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      // Fallback to token data
+      const decoded = jwtDecode(token);
+      setUser({
+        id: decoded.id,
+        email: decoded.email
+      });
+      setIsAuthenticated(true);
+    } finally {
+      setAuthChecked(true);
     }
   };
 
