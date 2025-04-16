@@ -341,13 +341,7 @@ const UserProfile = () => {
                   style={inputStyle}
                   disabled={!isEditing}
                 />
-                <button 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                  style={{ color: '#C6935C' }}
-                  onClick={() => setIsEditing(true)}
-                >
-                  ✏️
-                </button>
+                
               </div>
             </div>
             
