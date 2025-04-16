@@ -160,45 +160,51 @@ function VideoPage() {
     <div className="min-h-screen bg-black text-white">
       {/* Top Navigation Bar */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center">
           <button 
-            className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
+            className="mr-5 p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
             onClick={toggleSidebar}
             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-6" />
+          <Link to="/" className="mr-12 text-xl font-bold flex items-center">
+            <span className="text-white mr-1">VI</span>
+            <span className="text-[#ED5606]">DEORA</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            {["Home", "Trending", "Genre", "Browse"].map((item) => (
-              <a
-                key={item}
-                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                className={`text-sm font-medium transition-colors ${
-                  item === "Home" ? "text-white" : "text-[#b0b0b0] hover:text-white"
-                }`}
-              >
-                {item}
-              </a>
-            ))}
+          <nav className="hidden md:flex items-center space-x-10">
+            <Link to="/" className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white">
+              Home
+            </Link>
+            <Link to="/trending" className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white">
+              Trending
+            </Link>
+            <Link to="/genre" className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white">
+              Genre
+            </Link>
+            <Link to="/browse" className="text-sm font-medium transition-colors text-[#b0b0b0] hover:text-white">
+              Browse
+            </Link>
           </nav>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center space-x-4">
           <button 
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
+            className="flex items-center gap-2 text-white px-5 py-2 text-sm transition-colors font-medium"
             onClick={() => navigate('/create')}
           >
             Create <Plus className="w-4 h-4" />
           </button>
           
+          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors border border-[#3A1500]">
+            <Bell className="w-4 h-4" />
+          </button>
+          
           {/* Profile dropdown */}
           <div className="relative" ref={profileDropdownRef}>
             <button 
-              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              className="w-9 h-9 rounded-full overflow-hidden border border-[#3A1500] hover:border-[#ED5606] transition-colors focus:outline-none"
               onClick={toggleProfileDropdown}
             >
               <img
@@ -231,10 +237,6 @@ function VideoPage() {
               </div>
             )}
           </div>
-          
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
-            <Bell className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
