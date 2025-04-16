@@ -1,6 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+
+// Mock data for creators
+const creatorsData = [
+  { 
+    id: "sparsh", 
+    name: "Sparsh", 
+    image: "/user-avatar.png", 
+    subscribers: "1.2M", 
+    videos: 100, 
+    bio: "A breathtaking cinematic anime scene set in a futuristic cyberpunk city at night. Neon lights reflect off the rain-soaked streets as a lone warrior in a sleek black trench coat and a glowing cybernetic eye walks forward, katana in hand."
+  },
+  { 
+    id: "mrwhostheboss", 
+    name: "MrWhosTheBoss", 
+    image: "/user-avatar.png", 
+    subscribers: "2.4M", 
+    videos: 230, 
+    bio: "Tech reviewer focusing on smartphones, gadgets and the latest technological innovations."
+  },
+  { 
+    id: "mkbhd", 
+    name: "MKBHD", 
+    image: "/user-avatar.png", 
+    subscribers: "5.8M", 
+    videos: 187, 
+    bio: "High quality tech videos with a focus on the smartphone experience."
+  },
+  { 
+    id: "t-series", 
+    name: "T-SERIES", 
+    image: "/user-avatar.png", 
+    subscribers: "150M", 
+    videos: 1500, 
+    bio: "India's largest Music Label & Movie Studio. Home to the greatest artists and musicians."
+  }
+];
 
 function CreatorPage() {
   const { creatorId } = useParams();
@@ -8,6 +45,9 @@ function CreatorPage() {
   const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  const { logout, user } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -26,6 +66,28 @@ function CreatorPage() {
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
+  
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     // Simulate fetching creator data
@@ -189,11 +251,46 @@ function CreatorPage() {
           >
             Create <Plus className="w-4 h-4" />
           </button>
+          
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              onClick={toggleProfileDropdown}
+            >
+              <img
+                src={user?.picture || user?.profilePic || "/user-avatar.png"}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </button>
+            
+            {/* Dropdown menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="py-2">
+                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    User Profile
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <LogOut className="w-4 h-4" />
+                    </div>
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
             <Bell className="w-4 h-4" />
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
-            <User className="w-4 h-4" />
           </button>
         </div>
       </header>
@@ -341,16 +438,5 @@ function VideoCard({ title, image, theme }) {
     </div>
   );
 }
-
-// Sample creator data
-const creatorsData = [
-  { id: "sparsh", name: "Sparsh", image: "/user-avatar.png", subscribers: "1.2M", videos: 100, bio: "A breathtaking cinematic anime scene set in a futuristic cyberpunk city at night. Neon lights reflect off the rain-soaked streets as a lone warrior in a sleek black trench coat and a glowing cybernetic eye walks forward, katana in hand." },
-  { id: "mrwhostheboss", name: "MrWhosTheBoss", image: "/user-avatar.png", subscribers: "12.5M", videos: 524, bio: "Tech reviewer and creator focusing on the latest smartphone and gadget reviews. Join me for honest, in-depth analysis of the newest technology." },
-  { id: "mkbhd", name: "MKBHD", image: "/user-avatar.png", subscribers: "18.2M", videos: 810, bio: "Quality Tech Videos | YouTuber | Geek | Consumer Electronics | MKBHD" },
-  { id: "t-series", name: "T-SERIES", image: "/user-avatar.png", subscribers: "245M", videos: 1432, bio: "Music can change the world. T-Series is India's largest Music Label & Movie Studio." },
-  { id: "casey-neistat", name: "Casey Neistat", image: "/user-avatar.png", subscribers: "10.1M", videos: 682, bio: "Filmmaker, entrepreneur, and vlogger known for daily vlogs and innovative storytelling techniques." },
-  { id: "pewdiepie", name: "PewDiePie", image: "/user-avatar.png", subscribers: "111M", videos: 2840, bio: "I make videos." },
-  { id: "linus-tech-tips", name: "Linus Tech Tips", image: "/user-avatar.png", subscribers: "15.3M", videos: 1215, bio: "Tech reviews, news, and tutorials with a comedic twist. Hardware enthusiasts welcome!" },
-];
 
 export default CreatorPage; 
