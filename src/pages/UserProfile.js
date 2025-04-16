@@ -151,7 +151,7 @@ const UserProfile = () => {
         formData.append('name', userData.name);
         formData.append('PhoneNumber', userData.PhoneNumber);
         formData.append('Address', userData.Address);
-        formData.append('userName', userData.userName);
+        formData.append('username', userData.userName);
         updatedData = formData;
       } else {
         // Regular JSON data without file
@@ -159,7 +159,7 @@ const UserProfile = () => {
           name: userData.name,
           PhoneNumber: userData.PhoneNumber,
           Address: userData.Address,
-          userName: userData.userName
+          username: userData.userName
         };
       }
       
