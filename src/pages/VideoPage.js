@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 function VideoPage() {
   const { videoId } = useParams();
@@ -11,6 +12,9 @@ function VideoPage() {
   const [error, setError] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  const { logout, user } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -29,6 +33,28 @@ function VideoPage() {
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
+
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Format date to show how long ago
   const formatDateAgo = (dateString) => {
@@ -168,11 +194,46 @@ function VideoPage() {
           >
             Create <Plus className="w-4 h-4" />
           </button>
+          
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              onClick={toggleProfileDropdown}
+            >
+              <img
+                src={user?.picture || user?.profilePic || "/user-avatar.png"}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </button>
+            
+            {/* Dropdown menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="py-2">
+                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    User Profile
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <LogOut className="w-4 h-4" />
+                    </div>
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
             <Bell className="w-4 h-4" />
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
-            <User className="w-4 h-4" />
           </button>
         </div>
       </header>

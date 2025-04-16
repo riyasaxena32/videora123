@@ -6,7 +6,7 @@ import LoginPage from './pages/LoginPage';
 import AuthCallback from './pages/AuthCallback';
 import CreatorPage from './pages/CreatorPage';
 import VideoPage from './pages/VideoPage';
-import ProfilePage from './pages/ProfilePage';
+import UserProfile from './pages/UserProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -28,11 +28,6 @@ function App() {
             <CreatePage />
           </ProtectedRoute>
         } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        } />
         <Route path="/creator/:creatorId" element={
           <ProtectedRoute>
             <CreatorPage />
@@ -41,6 +36,11 @@ function App() {
         <Route path="/video/:videoId" element={
           <ProtectedRoute>
             <VideoPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <UserProfile />
           </ProtectedRoute>
         } />
         
