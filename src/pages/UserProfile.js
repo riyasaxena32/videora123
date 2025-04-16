@@ -86,30 +86,6 @@ const UserProfile = () => {
     fetchUserProfile();
   }, []);
 
-  useEffect(() => {
-    if (userData.name || userData.username) {
-      console.log("userData state updated:", {
-        name: userData.name,
-        username: userData.username,
-        PhoneNumber: userData.PhoneNumber,
-        Address: userData.Address,
-        profilePic: userData.profilePic ? "Present" : "Not present"
-      });
-    }
-  }, [userData]);
-
-  // Add debug exposures in development mode
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      // Expose userData for debugging
-      window._debugUserData = userData;
-      window._updateUserState = (newValues) => {
-        console.log("Manual state update:", newValues);
-        setUserData({...userData, ...newValues});
-      };
-    }
-  }, [userData]);
-
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
@@ -187,7 +163,7 @@ const UserProfile = () => {
         };
       }
       
-      console.log("Sending update with data:", JSON.stringify(updatedData));
+      console.log("Sending update with data:", updatedData);
       
       // Set headers based on whether we're uploading a file
       const headers = {
@@ -210,47 +186,28 @@ const UserProfile = () => {
         // Clear selected file after successful upload
         setSelectedFile(null);
         
-        // Save the response data first
-        const updatedUserData = response.data.user;
-        
-        // Force a complete update by creating a new object
+        // Update the user data with the response from the server
         setUserData({
-          name: updatedUserData.name || userData.name || '',
-          email: updatedUserData.email || userData.email || '',
-          profilePic: updatedUserData.profilePic || userData.profilePic || '',
-          PhoneNumber: updatedUserData.PhoneNumber || userData.PhoneNumber || '',
-          Address: updatedUserData.Address || userData.Address || '',
-          username: updatedUserData.username || userData.username || ''
+          ...userData,
+          ...response.data.user
         });
         
-        // Log the expected state
-        console.log("UpdatedUserData to be set:", {
-          name: updatedUserData.name,
-          username: updatedUserData.username,
-          PhoneNumber: updatedUserData.PhoneNumber,
-          Address: updatedUserData.Address
+        console.log("Updated userData state with new values:", {
+          name: response.data.user.name,
+          username: response.data.user.username,
+          PhoneNumber: response.data.user.PhoneNumber,
+          Address: response.data.user.Address
         });
-        
-        // Add a forced re-render trigger
-        setTimeout(() => {
-          console.log("Forcing re-render check with current userData:", userData);
-          // This empty setState forces a component update
-          setUserData(current => ({...current}));
-        }, 100);
         
         // Update the auth context to reflect changes across the app
         if (typeof user.fetchUserProfile === 'function') {
           await user.fetchUserProfile();
         }
         
-        // Directly update the state with server response
-        updateStateWithServerResponse(response.data);
-        
-        // After successful update, reload profile data from server to ensure we have latest data
+        // After successful update, reload profile data to ensure we have latest data
         setTimeout(() => {
-          // Directly fetch profile data again to ensure state is updated
-          fetchUserProfile();
-        }, 1000);
+          verifyProfileUpdate();
+        }, 500);
       }
       
       setIsEditing(false);
@@ -262,33 +219,37 @@ const UserProfile = () => {
     }
   };
 
-  // Direct state update function that doesn't rely on API
-  const updateStateWithServerResponse = (serverData) => {
-    if (!serverData || !serverData.user) {
-      console.error("Invalid server data for updateStateWithServerResponse");
-      return;
+  const verifyProfileUpdate = async () => {
+    try {
+      console.log("Verifying profile update...");
+      
+      const token = user?.tokenType === 'jwt' ? 
+        localStorage.getItem('access_token') : 
+        localStorage.getItem('token');
+      
+      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.data && response.data.user) {
+        console.log("Verification data from server:", {
+          name: response.data.user.name,
+          username: response.data.user.username,
+          PhoneNumber: response.data.user.PhoneNumber,
+          Address: response.data.user.Address
+        });
+        
+        // Update the userData state with the verified data from server
+        setUserData({
+          ...userData,
+          ...response.data.user
+        });
+      }
+    } catch (err) {
+      console.error("Verification failed:", err);
     }
-    
-    console.log("Direct state update with:", serverData.user);
-    
-    // Create a brand new object
-    const updatedProfile = {
-      name: serverData.user.name || '',
-      email: serverData.user.email || '',
-      profilePic: serverData.user.profilePic || '',
-      PhoneNumber: serverData.user.PhoneNumber || '',
-      Address: serverData.user.Address || '',
-      username: serverData.user.username || ''
-    };
-    
-    // Force a complete state reset
-    setUserData(updatedProfile);
-    
-    // Update UI loading state
-    setLoading(false);
-    setIsEditing(false);
-    
-    console.log("State update complete, new values:", updatedProfile);
   };
 
   const handleInputChange = (e) => {
@@ -541,21 +502,6 @@ const UserProfile = () => {
                   )}
                 </button>
               </div>
-              
-              {/* Debug section */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-6 p-3 border border-[#843D0C] rounded">
-                  <h3 className="text-sm font-medium mb-2" style={{ color: '#C6935C' }}>Debug Info (Development Only)</h3>
-                  <div className="text-xs space-y-1">
-                    <div><strong>Name:</strong> {userData.name || 'Not set'}</div>
-                    <div><strong>Username:</strong> {userData.username || 'Not set'}</div>
-                    <div><strong>Phone:</strong> {userData.PhoneNumber || 'Not set'}</div>
-                    <div><strong>Address:</strong> {userData.Address || 'Not set'}</div>
-                    <div><strong>Is Editing:</strong> {isEditing ? 'Yes' : 'No'}</div>
-                    <div><strong>Last Update:</strong> {new Date().toLocaleTimeString()}</div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
