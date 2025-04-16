@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Plus, LogOut, Bell } from 'lucide-react';
+import { User, Plus, LogOut, Bell, Save } from 'lucide-react';
 import axios from 'axios';
 
 const UserProfile = () => {
@@ -22,6 +22,7 @@ const UserProfile = () => {
   const [selectedCountry, setSelectedCountry] = useState('India');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('Generate Video');
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -35,6 +36,15 @@ const UserProfile = () => {
     border: '1px solid #ED5606',
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
     borderRadius: '9999px'
+  };
+
+  // Update the button style with the new gradient
+  const saveButtonStyle = {
+    background: 'linear-gradient(180deg, #FAE0C0 0%, #EA8736 100%)',
+    borderRadius: '4px',
+    color: '#000',
+    border: 'none',
+    fontWeight: '500'
   };
 
   const toggleProfileDropdown = () => {
@@ -151,36 +161,38 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header - Same as in VideoPage and CreatePage */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-8">
+      {/* Header - Same as in CreatePage */}
+      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a]">
+        <div className="flex items-center">
           <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/Logo.png" alt="VIDEORA" className="h-8" />
-            <span className="ml-2 text-[#ED5606]">x PLAYGROUND</span>
+            <img src="/Play.png" alt="VIDEORA x PLAYGROUND" className="h-12" />
           </Link>
         </div>
         
+        {/* Center the navigation items */}
         <div className="flex-1 flex justify-center">
           <nav className="flex">
             {['Generate Video', 'AI Video Edit', 'Video Narration'].map((tab) => (
-              <Link
+              <button
                 key={tab}
-                to={tab === 'Generate Video' ? '/create' : '/create'}
-                className="px-4 py-2 text-sm transition-colors text-[#b0b0b0] hover:text-white"
+                className={`px-4 py-2 text-sm transition-colors ${
+                  activeTab === tab ? 'text-[#ED5606]' : 'text-[#b0b0b0] hover:text-white'
+                }`}
+                onClick={() => setActiveTab(tab)}
               >
                 {tab}
-              </Link>
+              </button>
             ))}
           </nav>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button 
             style={gradientButtonStyle}
             className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
-            onClick={() => navigate('/create')}
           >
-            Create <Plus className="w-4 h-4" />
+            Create
+            <Plus className="w-3.5 h-3.5 ml-0.5" />
           </button>
           
           {/* Profile dropdown */}
@@ -219,22 +231,18 @@ const UserProfile = () => {
               </div>
             )}
           </div>
-          
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
-            <Bell className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
       {/* Main Content - Profile Form */}
       <div className="max-w-4xl mx-auto px-4 py-10">
-        <div className="bg-[#0e0e0e] border border-[#1A1A1A] rounded-lg p-8">
-          <h1 className="text-2xl font-semibold text-center mb-10 text-[#ED5606]">User Profile</h1>
+        <div className="bg-[#000000] border border-[#3a3a3a] rounded-lg p-8" style={{ background: 'rgba(10, 10, 10, 0.8)' }}>
+          <h1 className="text-2xl font-semibold text-center mb-10" style={{ color: '#EA8736' }}>User Profile</h1>
           
           <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
             {/* Left column - Profile pic and username */}
             <div className="flex flex-col items-center">
-              <div className="w-full max-w-[220px] h-[220px] rounded-lg overflow-hidden mb-4 bg-[#1A1A1A] border border-[#333]">
+              <div className="w-full max-w-[180px] h-[180px] rounded-lg overflow-hidden mb-4 bg-[#1A1A1A] border border-[#333]">
                 <img 
                   src={userData.profilePic || user?.picture || "/user-avatar.png"} 
                   alt="Profile"
@@ -242,18 +250,18 @@ const UserProfile = () => {
                 />
               </div>
               
-              <div className="w-full max-w-[220px] relative">
+              <div className="w-full max-w-[180px] relative">
                 <input
                   type="text"
                   name="username"
                   value={userData.username || ''}
                   onChange={handleInputChange}
-                  className="w-full bg-black border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                  className="w-full bg-black border border-[#EA8736] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#EA8736]"
                   placeholder="Username"
                   disabled={!isEditing}
                 />
                 <button 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#ED5606]"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#EA8736]"
                   onClick={() => setIsEditing(true)}
                 >
                   ✏️
@@ -271,7 +279,7 @@ const UserProfile = () => {
                     name="name"
                     value={userData.name || ''}
                     onChange={handleInputChange}
-                    className="w-full bg-black border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                    className="w-full bg-black border border-[#EA8736] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#EA8736]"
                     disabled={!isEditing}
                   />
                 </div>
@@ -282,7 +290,7 @@ const UserProfile = () => {
                     type="email"
                     name="email"
                     value={userData.email || ''}
-                    className="w-full bg-black border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                    className="w-full bg-black border border-[#EA8736] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#EA8736]"
                     disabled={true} // Email can't be edited
                   />
                 </div>
@@ -295,7 +303,7 @@ const UserProfile = () => {
                     <select
                       value={selectedCountry}
                       onChange={(e) => setSelectedCountry(e.target.value)}
-                      className="w-full bg-black border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606] appearance-none"
+                      className="w-full bg-black border border-[#EA8736] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#EA8736] appearance-none"
                       disabled={!isEditing}
                     >
                       <option value="India">🇮🇳 India</option>
@@ -316,7 +324,7 @@ const UserProfile = () => {
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">Phone Number</label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-black border border-r-0 border-[#333] rounded-l-md">
+                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-black border border-r-0 border-[#EA8736] rounded-l-md">
                       +91 🇮🇳
                     </span>
                     <input
@@ -329,7 +337,7 @@ const UserProfile = () => {
                           value: '+91' + e.target.value
                         }
                       })}
-                      className="w-full bg-black border border-[#333] rounded-r-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                      className="w-full bg-black border border-[#EA8736] rounded-r-md py-2 px-3 text-white focus:outline-none focus:border-[#EA8736]"
                       placeholder="8880009991"
                       disabled={!isEditing}
                     />
@@ -344,7 +352,7 @@ const UserProfile = () => {
                   name="Address"
                   value={userData.Address || ''}
                   onChange={handleInputChange}
-                  className="w-full bg-black border border-[#333] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#ED5606]"
+                  className="w-full bg-black border border-[#EA8736] rounded-md py-2 px-3 text-white focus:outline-none focus:border-[#EA8736]"
                   placeholder="Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore"
                   disabled={!isEditing}
                 />
@@ -356,16 +364,18 @@ const UserProfile = () => {
                 </div>
               )}
               
-              <div className="flex justify-end">
+              <div className="flex justify-end mt-6">
                 <button
                   onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
                   disabled={loading}
-                  className="bg-[#270E00] hover:bg-[#3A1500] text-white px-4 py-2 rounded-md border border-[#ED5606] flex items-center justify-center gap-2 transition-colors"
+                  style={saveButtonStyle}
+                  className="px-4 py-2 flex items-center justify-center gap-2"
                 >
                   {loading ? (
-                    <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                    <span className="h-4 w-4 border-2 border-t-transparent border-black rounded-full animate-spin"></span>
                   ) : (
                     <>
+                      <Save size={16} />
                       {isEditing ? 'Save Profile' : 'Edit Profile'}
                     </>
                   )}
