@@ -238,8 +238,9 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       console.log('Upload payload:', payload);
       
+      // Use the correct API endpoint from the curl command
       const response = await axios.post(
-        'https://videora-ai.onrender.com/upload-videos', 
+        'https://videora-ai.onrender.com/videos/upload-videos', 
         payload,
         {
           headers: {
@@ -259,7 +260,27 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
     } catch (error) {
       console.error('Error uploading to API:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to upload video. Please try again.');
+      let errorMessage = 'Failed to upload video. Please try again.';
+      
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
+        
+        errorMessage = `Server error (${error.response.status}): ${error.response.data?.message || error.message}`;
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('Error request:', error.request);
+        errorMessage = 'No response from server. Please check your network connection.';
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', error.message);
+        errorMessage = error.message;
+      }
+      
+      setErrorMessage(errorMessage);
     } finally {
       setUploading(false);
     }
