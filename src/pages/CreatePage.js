@@ -164,67 +164,70 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
 
-  const handleVideoSelect = (e) => {
+  const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setVideoFile(file);
+      setUploading(true);
+      setErrorMessage('');
       
-      // Create temporary URL for the video
-      const videoURL = URL.createObjectURL(file);
-      
-      // Load video to get duration
-      const videoElement = document.createElement('video');
-      videoElement.src = videoURL;
-      videoElement.onloadedmetadata = () => {
+      try {
+        // Create temporary URL for the video
+        const videoURL = URL.createObjectURL(file);
+        
+        // Load video to get duration
+        const videoElement = document.createElement('video');
+        videoElement.src = videoURL;
+        
+        // Wait for metadata to load to get duration
+        await new Promise((resolve) => {
+          videoElement.onloadedmetadata = () => {
+            resolve();
+          };
+        });
+        
         // Duration in seconds
         const durationInSeconds = Math.floor(videoElement.duration);
+        
+        // Update state with video info
         setVideoData({
           ...videoData,
           duration: durationInSeconds,
-          videoUrl: videoURL // Temporary URL for preview
+          videoUrl: videoURL, // Temporary URL for preview
+          name: file.name.split('.')[0] // Use filename as the video name
         });
-      };
+        
+        // Call the upload API
+        await uploadVideoToAPI(videoURL, durationInSeconds, file.name.split('.')[0]);
+      } catch (error) {
+        console.error('Error processing video:', error);
+        setErrorMessage('Failed to process video. Please try again.');
+        setUploading(false);
+      }
     }
   };
 
-  const handlePromptChange = (e) => {
-    setCreativePrompt(e.target.value);
-    // Also store in video data description
-    setVideoData({
-      ...videoData,
-      description: e.target.value
-    });
-  };
-
-  const triggerVideoInput = () => {
-    videoInputRef.current.click();
-  };
-
-  const handleUpload = async () => {
-    if (!videoFile) {
-      setErrorMessage('Please upload a video first');
-      return;
-    }
-    
-    setUploading(true);
-    setErrorMessage('');
-    
+  // Separate function to upload to API
+  const uploadVideoToAPI = async (videoURL, duration, name) => {
     try {
-      // In production, you'd upload the video and thumbnail files to a storage service
-      // and get back URLs to use in your API call. For now, we'll use temporary URLs
-      
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
+      console.log('Uploading video to API...');
+      
       const payload = {
-        name: videoData.name || 'Untitled Video',
+        name: name || 'Untitled Video',
         description: creativePrompt || 'No description provided',
         category: 'Education',
         tags: ['ai-generated'],
         thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
-        videoUrl: videoData.videoUrl,
-        duration: videoData.duration,
+        videoUrl: videoURL,
+        duration: duration,
         uploadedBy: user?.name || 'Anonymous',
         views: 0,
         likes: 0,
@@ -232,6 +235,8 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         comments: [],
         isPublic: true
       };
+      
+      console.log('Upload payload:', payload);
       
       const response = await axios.post(
         'https://videora-ai.onrender.com/upload-videos', 
@@ -247,30 +252,58 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       console.log('Upload response:', response.data);
       setUploadSuccess(true);
       
-      // Reset form after 3 seconds
+      // Reset success message after 3 seconds
       setTimeout(() => {
-        setVideoFile(null);
-        setThumbnailFile(null);
-        setCreativePrompt('');
-        setVideoData({
-          name: '',
-          description: '',
-          category: 'Education',
-          tags: [],
-          thumbnailLogoUrl: '',
-          videoUrl: '',
-          duration: 0,
-          isPublic: true
-        });
         setUploadSuccess(false);
       }, 3000);
       
     } catch (error) {
-      console.error('Error uploading video:', error);
+      console.error('Error uploading to API:', error);
       setErrorMessage(error.response?.data?.message || 'Failed to upload video. Please try again.');
     } finally {
       setUploading(false);
     }
+  };
+
+  // Update handlePromptChange to also trigger API update with new description
+  const handlePromptChange = async (e) => {
+    const newPrompt = e.target.value;
+    setCreativePrompt(newPrompt);
+    
+    // Also store in video data description
+    setVideoData(prevData => ({
+      ...prevData,
+      description: newPrompt
+    }));
+    
+    // If we already have a video uploaded, update its description
+    if (videoFile && videoData.videoUrl) {
+      try {
+        await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+      } catch (error) {
+        console.error('Error updating video description:', error);
+      }
+    }
+  };
+
+  // Keep the handleUpload function, but now it'll be used for retrying uploads
+  const handleUpload = async () => {
+    if (!videoFile) {
+      setErrorMessage('Please upload a video first');
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      setErrorMessage('');
+      await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+    } catch (error) {
+      setErrorMessage('Failed to upload video. Please try again.');
+    }
+  };
+
+  const triggerVideoInput = () => {
+    videoInputRef.current.click();
   };
 
   return (
