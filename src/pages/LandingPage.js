@@ -58,25 +58,45 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center py-28 px-6 text-center">
-        <div className="absolute top-0 left-0 right-0 bottom-0 z-0">
-          {/* Use the first image (grid pattern) as background */}
-          <div className="w-full h-full bg-repeat" style={{ 
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100%25\' height=\'100%25\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'smallGrid\' width=\'100\' height=\'100\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 100 0 L 0 0 0 100\' fill=\'none\' stroke=\'%23333333\' stroke-width=\'1\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'url(%23smallGrid)\'/%3E%3C/svg%3E")', 
-            opacity: 0.15
-          }}></div>
+      <section className="relative flex flex-col items-center justify-center py-20 md:py-28 px-6 text-center min-h-[90vh]">
+        <div className="absolute top-0 left-0 right-0 bottom-0 grid grid-cols-14 grid-rows-8 z-0 opacity-30">
+          {Array.from({ length: 112 }).map((_, index) => {
+            // Create a checkerboard pattern where specific cells are filled
+            const col = index % 14;
+            const row = Math.floor(index / 14);
+            
+            // These positions match the pattern in the second image
+            const filledPositions = [
+              {row: 1, col: 3}, {row: 1, col: 10},
+              {row: 3, col: 1}, {row: 3, col: 12},
+              {row: 6, col: 3}, {row: 6, col: 10},
+            ];
+            
+            const isFilled = filledPositions.some(pos => pos.row === row && pos.col === col);
+            
+            return (
+              <div 
+                key={index} 
+                className={`border border-[#333] ${isFilled ? 'bg-[#6B5D4D] bg-opacity-40' : ''}`}
+              ></div>
+            );
+          })}
         </div>
         
+        {/* Radial gradient for glow effect */}
+        <div className="absolute inset-0 opacity-10 z-0" style={{
+          background: 'radial-gradient(circle at center, rgba(237,86,6,0.4) 0%, rgba(0,0,0,0) 70%)'
+        }}></div>
+        
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">VIDEORA</h1>
+          <h1 className="text-5xl md:text-7xl font-bold mb-4 text-white bg-clip-text">VIDEORA</h1>
           <p className="text-xl text-gray-400 mb-10">Where AI Meets Creativity</p>
           
-          <div className="relative w-72 h-72 mx-auto mb-10">
-            {/* Use the second image (anime girl with orange hoodie) */}
+          <div className="relative w-80 md:w-96 mx-auto">
             <img 
-              src={user?.profilePic || "/image 66.png"} 
-              alt="AI Creator" 
-              className="w-full h-full object-contain"
+              src="/Group-191.png" 
+              alt="AI Creator - Anime girl in orange hoodie" 
+              className="w-full h-full object-contain drop-shadow-[0_0_25px_rgba(237,86,6,0.3)]"
             />
           </div>
         </div>
