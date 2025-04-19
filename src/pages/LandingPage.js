@@ -86,67 +86,52 @@ const LandingPage = () => {
       </section>
 
       {/* Make the Story Section */}
-      <section className="py-20 px-6">
-        <h2 className="text-3xl font-bold mb-16 max-w-7xl mx-auto">Make the Story Truly Yours</h2>
+      <section className="py-16 px-6 bg-black">
+        <h2 className="text-4xl font-bold mb-10 max-w-7xl mx-auto text-[#E0A87D]">Make the Story Truly Yours</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {/* AI Video Playground Card */}
-          <div className="bg-[#0C0500] rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border border-[#222] group">
-            <div className="h-40 bg-[#161616] relative">
-              <img src="/playground-card.png" alt="AI Video Playground" className="absolute inset-0 w-full h-full object-cover opacity-70" />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0C0500] opacity-60"></div>
-              <div className="absolute bottom-4 left-4">
-                <h3 className="text-lg font-bold">AI Video Playground</h3>
+          <div className="bg-[#0A0500] rounded-lg overflow-hidden border border-[#222] shadow-lg">
+            <div className="p-6 flex flex-col h-full">
+              <div className="text-center mb-4">
+                <span className="inline-block px-4 py-1 bg-[#281000] rounded-full text-xs text-[#E07A44] mb-3">Playground</span>
+                <h3 className="text-xl font-bold mb-1 text-white">AI Video Playground</h3>
+                <p className="text-xs text-[#E07A44] font-medium">Edit, Transform, and Create Videos</p>
               </div>
-            </div>
-            <div className="p-6">
-              <p className="text-sm text-gray-400 mb-6">
-                Turn your creative ideas into stunning videos with our AI tools. 
-                Get started in minutes without any prior experience.
+              
+              <p className="text-sm text-gray-400 mb-3">
+                Dive into a <span className="text-[#E07A44]">creative space</span> where you can craft videos, add voice-overs using prompts, and change the vibe of your content with AI-powered tools.
               </p>
-              <Link to="/playground" className="text-[#ED5606] text-sm font-medium flex items-center gap-1 hover:underline">
-                Try it now <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
           
           {/* Video Streaming Card */}
-          <div className="bg-[#0C0500] rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border border-[#222] group">
-            <div className="h-40 bg-[#161616] relative">
-              <img src="/streaming-card.png" alt="Video Streaming" className="absolute inset-0 w-full h-full object-cover opacity-70" />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0C0500] opacity-60"></div>
-              <div className="absolute bottom-4 left-4">
-                <h3 className="text-lg font-bold">Video Streaming</h3>
+          <div className="bg-[#0A0500] rounded-lg overflow-hidden border border-[#222] shadow-lg">
+            <div className="p-6 flex flex-col h-full">
+              <div className="text-center mb-4">
+                <span className="inline-block px-4 py-1 bg-[#281000] rounded-full text-xs text-[#E07A44] mb-3">Studio</span>
+                <h3 className="text-xl font-bold mb-1 text-white">Video Streaming</h3>
+                <p className="text-xs text-[#E07A44] font-medium">Watch, Discuss, and Interact</p>
               </div>
-            </div>
-            <div className="p-6">
-              <p className="text-sm text-gray-400 mb-6">
-                Watch and share AI-generated videos. Discover new content
-                creators and innovative ways to tell your story.
+              
+              <p className="text-sm text-gray-400 mb-3">
+                Stream AI-generated videos in real-time, interact with creators through in-video chat, and explore a world of innovative content.
               </p>
-              <Link to="/streaming" className="text-[#ED5606] text-sm font-medium flex items-center gap-1 hover:underline">
-                Start watching <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
           
           {/* Creators Community Card */}
-          <div className="bg-[#0C0500] rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border border-[#222] group">
-            <div className="h-40 bg-[#161616] relative">
-              <img src="/community-card.png" alt="Creators Community" className="absolute inset-0 w-full h-full object-cover opacity-70" />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0C0500] opacity-60"></div>
-              <div className="absolute bottom-4 left-4">
-                <h3 className="text-lg font-bold">Creators Community</h3>
+          <div className="bg-[#0A0500] rounded-lg overflow-hidden border border-[#222] shadow-lg">
+            <div className="p-6 flex flex-col h-full">
+              <div className="text-center mb-4">
+                <span className="inline-block px-4 py-1 bg-[#281000] rounded-full text-xs text-[#E07A44] mb-3">Community</span>
+                <h3 className="text-xl font-bold mb-1 text-white">Creators Community</h3>
+                <p className="text-xs text-[#E07A44] font-medium">Connect, Collaborate, and Grow</p>
               </div>
-            </div>
-            <div className="p-6">
-              <p className="text-sm text-gray-400 mb-6">
-                Join a thriving community of AI video creators. Share your work,
-                get feedback, and collaborate on exciting projects.
+              
+              <p className="text-sm text-gray-400 mb-3">
+                Join a vibrant <span className="text-[#E07A44]">community</span> of creators, share your work, get feedback, and explore endless possibilities with AI-driven video content.
               </p>
-              <Link to="/community" className="text-[#ED5606] text-sm font-medium flex items-center gap-1 hover:underline">
-                Join community <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
         </div>
