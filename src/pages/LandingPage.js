@@ -58,45 +58,27 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center py-20 md:py-28 px-6 text-center min-h-[90vh]">
-        <div className="absolute top-0 left-0 right-0 bottom-0 grid grid-cols-14 grid-rows-8 z-0 opacity-30">
-          {Array.from({ length: 112 }).map((_, index) => {
-            // Create a checkerboard pattern where specific cells are filled
-            const col = index % 14;
-            const row = Math.floor(index / 14);
-            
-            // These positions match the pattern in the second image
-            const filledPositions = [
-              {row: 1, col: 3}, {row: 1, col: 10},
-              {row: 3, col: 1}, {row: 3, col: 12},
-              {row: 6, col: 3}, {row: 6, col: 10},
-            ];
-            
-            const isFilled = filledPositions.some(pos => pos.row === row && pos.col === col);
-            
-            return (
-              <div 
-                key={index} 
-                className={`border border-[#333] ${isFilled ? 'bg-[#6B5D4D] bg-opacity-40' : ''}`}
-              ></div>
-            );
-          })}
+      <section className="relative flex flex-col items-center justify-center px-6 text-center py-10 md:py-16">
+        {/* Background - blurred and dimmed version of the image */}
+        <div className="absolute inset-0 overflow-hidden bg-black z-0">
+          <div className="absolute inset-0 bg-black opacity-80"></div>
+          <img 
+            src="/Group-191.png" 
+            alt=""
+            className="w-full h-full object-cover opacity-20 scale-110 blur-sm"
+          />
         </div>
         
-        {/* Radial gradient for glow effect */}
-        <div className="absolute inset-0 opacity-10 z-0" style={{
-          background: 'radial-gradient(circle at center, rgba(237,86,6,0.4) 0%, rgba(0,0,0,0) 70%)'
-        }}></div>
-        
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 text-white bg-clip-text">VIDEORA</h1>
-          <p className="text-xl text-gray-400 mb-10">Where AI Meets Creativity</p>
+        <div className="relative z-10 max-w-4xl mx-auto pt-6 md:pt-12">
+          <h1 className="text-5xl md:text-7xl font-bold mb-0 text-white tracking-wider uppercase">VIDEORA</h1>
+          <p className="text-sm text-gray-400 mb-4 md:mb-6 tracking-wide">Where AI Meets Creativity</p>
           
-          <div className="relative w-80 md:w-96 mx-auto">
+          {/* Anime girl image - clear and focused */}
+          <div className="relative mx-auto h-60 sm:h-72 md:h-80 flex items-center justify-center">
             <img 
               src="/Group-191.png" 
-              alt="AI Creator - Anime girl in orange hoodie" 
-              className="w-full h-full object-contain drop-shadow-[0_0_25px_rgba(237,86,6,0.3)]"
+              alt="AI Creator" 
+              className="h-full object-contain drop-shadow-[0_0_15px_rgba(237,86,6,0.25)]"
             />
           </div>
         </div>
