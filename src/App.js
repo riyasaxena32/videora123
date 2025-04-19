@@ -7,6 +7,7 @@ import AuthCallback from './pages/AuthCallback';
 import CreatorPage from './pages/CreatorPage';
 import VideoPage from './pages/VideoPage';
 import UserProfile from './pages/UserProfile';
+import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -19,6 +20,11 @@ function App() {
         
         {/* Protected Routes */}
         <Route path="/" element={
+          <ProtectedRoute>
+            <LandingPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/home" element={
           <ProtectedRoute>
             <HomePage />
           </ProtectedRoute>
