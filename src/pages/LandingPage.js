@@ -60,10 +60,11 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center py-28 px-6 text-center">
         <div className="absolute top-0 left-0 right-0 bottom-0 z-0">
-          {/* Use the grid pattern image */}
-          <div className="w-full h-full bg-repeat" style={{ 
+          {/* Use the Group 191.png image as background */}
+          <div className="w-full h-full" style={{ 
             backgroundImage: 'url("/Group 191.png")', 
-            backgroundSize: 'auto',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             opacity: 0.2
           }}></div>
         </div>
@@ -75,7 +76,7 @@ const LandingPage = () => {
           <div className="relative w-72 h-72 mx-auto mb-10">
             {/* Use the anime girl with orange hoodie */}
             <img 
-              src="/image 66.png" 
+              src={user?.profilePic || "/image 66.png"} 
               alt="AI Creator" 
               className="w-full h-full object-contain"
             />
