@@ -58,27 +58,28 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center px-6 text-center py-10 md:py-16">
-        {/* Background - blurred and dimmed version of the image */}
-        <div className="absolute inset-0 overflow-hidden bg-black z-0">
-          <div className="absolute inset-0 bg-black opacity-80"></div>
+      <section className="relative flex flex-col items-center justify-center px-6 text-center py-12 md:py-16">
+        {/* Checkered background pattern */}
+        <div className="absolute inset-0 overflow-hidden z-0">
           <img 
-            src="/Group-191.png" 
+            src="/Group 191.png" 
             alt=""
-            className="w-full h-full object-cover opacity-20 scale-110 blur-sm"
+            className="w-full h-full object-cover opacity-90"
           />
+          {/* Subtle dark overlay to improve text readability */}
+          <div className="absolute inset-0 bg-black opacity-50"></div>
         </div>
         
         <div className="relative z-10 max-w-4xl mx-auto pt-6 md:pt-12">
-          <h1 className="text-5xl md:text-7xl font-bold mb-0 text-white tracking-wider uppercase">VIDEORA</h1>
-          <p className="text-sm text-gray-400 mb-4 md:mb-6 tracking-wide">Where AI Meets Creativity</p>
+          <h1 className="text-5xl md:text-7xl font-bold mb-0 text-white tracking-wider uppercase drop-shadow-md">VIDEORA</h1>
+          <p className="text-sm text-gray-200 mb-6 md:mb-8 tracking-wide drop-shadow-md">Where AI Meets Creativity</p>
           
-          {/* Anime girl image - clear and focused */}
-          <div className="relative mx-auto h-60 sm:h-72 md:h-80 flex items-center justify-center">
+          {/* Anime girl image */}
+          <div className="relative mx-auto h-64 sm:h-72 md:h-96 flex items-center justify-center">
             <img 
-              src="/Group-191.png" 
+              src="/image 66.png" 
               alt="AI Creator" 
-              className="h-full object-contain drop-shadow-[0_0_15px_rgba(237,86,6,0.25)]"
+              className="h-full object-contain drop-shadow-[0_0_20px_rgba(237,86,6,0.35)]"
             />
           </div>
         </div>
