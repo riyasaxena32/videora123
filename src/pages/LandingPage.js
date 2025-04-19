@@ -60,12 +60,10 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center py-28 px-6 text-center">
         <div className="absolute top-0 left-0 right-0 bottom-0 z-0">
-          {/* Use the Group 191.png image as background */}
-          <div className="w-full h-full" style={{ 
-            backgroundImage: 'url("/Group 191.png")', 
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.2
+          {/* Use the first image (grid pattern) as background */}
+          <div className="w-full h-full bg-repeat" style={{ 
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100%25\' height=\'100%25\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'smallGrid\' width=\'100\' height=\'100\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 100 0 L 0 0 0 100\' fill=\'none\' stroke=\'%23333333\' stroke-width=\'1\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'url(%23smallGrid)\'/%3E%3C/svg%3E")', 
+            opacity: 0.15
           }}></div>
         </div>
         
@@ -74,7 +72,7 @@ const LandingPage = () => {
           <p className="text-xl text-gray-400 mb-10">Where AI Meets Creativity</p>
           
           <div className="relative w-72 h-72 mx-auto mb-10">
-            {/* Use the anime girl with orange hoodie */}
+            {/* Use the second image (anime girl with orange hoodie) */}
             <img 
               src={user?.profilePic || "/image 66.png"} 
               alt="AI Creator" 
