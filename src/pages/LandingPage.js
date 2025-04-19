@@ -59,19 +59,23 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center py-28 px-6 text-center">
-        <div className="absolute top-0 left-0 right-0 bottom-0 grid grid-cols-3 grid-rows-3 z-0 opacity-30">
-          {Array.from({ length: 9 }).map((_, index) => (
-            <div key={index} className="border border-[#333]"></div>
-          ))}
+        <div className="absolute top-0 left-0 right-0 bottom-0 z-0">
+          {/* Use the grid pattern image */}
+          <div className="w-full h-full bg-repeat" style={{ 
+            backgroundImage: 'url("/Group 191.png")', 
+            backgroundSize: 'auto',
+            opacity: 0.2
+          }}></div>
         </div>
         
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4">VIDEORA</h1>
+          <h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">VIDEORA</h1>
           <p className="text-xl text-gray-400 mb-10">Where AI Meets Creativity</p>
           
-          <div className="relative w-64 h-64 mx-auto mb-10">
+          <div className="relative w-72 h-72 mx-auto mb-10">
+            {/* Use the anime girl with orange hoodie */}
             <img 
-              src="/hero-image.png" 
+              src="/image 66.png" 
               alt="AI Creator" 
               className="w-full h-full object-contain"
             />
