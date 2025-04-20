@@ -8,7 +8,6 @@ import CreatorPage from './pages/CreatorPage';
 import VideoPage from './pages/VideoPage';
 import UserProfile from './pages/UserProfile';
 import LandingPage from './pages/LandingPage';
-import VideoProcessingPage from './pages/VideoProcessingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -48,11 +47,6 @@ function App() {
         <Route path="/profile" element={
           <ProtectedRoute>
             <UserProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/video-processing" element={
-          <ProtectedRoute>
-            <VideoProcessingPage />
           </ProtectedRoute>
         } />
         

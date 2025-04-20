@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import VideoPlayer from '../components/VideoPlayer';
-import VideoCustomizationForm from '../components/VideoCustomizationForm';
 
 function VideoPage() {
   const { videoId } = useParams();
@@ -17,12 +15,6 @@ function VideoPage() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
-  const [videoSettings, setVideoSettings] = useState({
-    style: 'original',
-    prompt: '',
-    caption: '',
-    voiceUrl: ''
-  });
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -290,16 +282,12 @@ function VideoPage() {
           {/* Video Player */}
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
             {video.videoUrl ? (
-              <VideoPlayer
-                videoUrl={video.videoUrl}
-                style={videoSettings.style}
-                prompt={videoSettings.prompt}
-                caption={videoSettings.caption}
-                voiceUrl={videoSettings.voiceUrl}
-                onVideoProcessed={(url) => {
-                  console.log('Video processed:', url);
-                  // You can update the video object if needed
-                }}
+              <video
+                src={video.videoUrl}
+                poster={video.thumbnailLogoUrl || "/image 28.png"}
+                controls
+                className="w-full h-full object-contain"
+                style={{ maxHeight: '70vh' }}
               />
             ) : (
               <img 
@@ -320,14 +308,6 @@ function VideoPage() {
 
           {/* Video Info */}
           <div className="p-6 max-w-[1200px] mx-auto">
-            {/* Video Customization Form */}
-            {video.videoUrl && (
-              <VideoCustomizationForm 
-                initialValues={videoSettings}
-                onApplyChanges={(newSettings) => setVideoSettings(newSettings)}
-              />
-            )}
-            
             {/* Days ago indicator */}
             <div className="text-xs text-gray-400 mb-2">
               {formatDateAgo(video.uploadDate)}

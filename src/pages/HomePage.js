@@ -290,12 +290,6 @@ function HomePage() {
                 {item}
               </a>
             ))}
-            <Link 
-              to="/video-processing" 
-              className="text-sm text-[#b0b0b0] hover:text-white transition-colors"
-            >
-              Video Lab
-            </Link>
           </nav>
         </div>
         
@@ -440,19 +434,6 @@ function HomePage() {
                     <span className="sidebar-text">{item.name}</span>
                   </a>
                 ))}
-                <Link
-                  to="/video-processing"
-                  className="flex items-center gap-3 py-2 text-sm transition-colors sidebar-item text-[#b0b0b0] hover:text-white px-2"
-                  title="Video Lab"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9.95459 16.1096L15.0454 13.1096C15.6169 12.7789 15.6169 11.9632 15.0454 11.6325L9.95459 8.63254C9.34382 8.27859 8.59459 8.72811 8.59459 9.41254V15.3296C8.59459 16.014 9.34382 16.4635 9.95459 16.1096Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="sidebar-text">Video Lab</span>
-                </Link>
               </nav>
             </div>
 
