@@ -31,6 +31,9 @@ const LandingPage = () => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
+          <Link to="/home" className="text-sm text-gray-400 hover:text-white transition-colors">
+            Home
+          </Link>
           <Link to="/about" className="text-sm text-gray-400 hover:text-white transition-colors">
             About
           </Link>
@@ -45,7 +48,13 @@ const LandingPage = () => {
           </Link>
         </nav>
         
-        <div>
+        <div className="flex items-center gap-2">
+          <Link 
+            to="/home" 
+            className="text-sm text-white px-4 py-2 transition-colors hover:bg-[#1a1a1a] rounded-md"
+          >
+            Home
+          </Link>
           <Link 
             to="/create"
             style={gradientButtonStyle}
@@ -73,6 +82,24 @@ const LandingPage = () => {
         <div className="relative z-10 max-w-4xl mx-auto pt-6 md:pt-12">
           <h1 className="text-5xl md:text-7xl font-bold mb-0 text-white tracking-wider uppercase drop-shadow-md">VIDEORA</h1>
           <p className="text-sm text-gray-200 mb-6 md:mb-8 tracking-wide drop-shadow-md">Where AI Meets Creativity</p>
+          
+          {/* Call to action buttons */}
+          <div className="flex justify-center gap-4 mb-8">
+            <Link 
+              to="/home"
+              className="px-6 py-2 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-colors"
+            >
+              Go to Home
+            </Link>
+            <Link 
+              to="/create"
+              style={gradientButtonStyle}
+              className="flex items-center gap-2 text-white px-6 py-2 transition-colors font-medium"
+            >
+              Create Now
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           
           {/* Anime girl image */}
           <div className="relative mx-auto h-64 sm:h-72 md:h-96 flex items-center justify-center">
@@ -256,14 +283,24 @@ const LandingPage = () => {
         <h2 className="text-3xl font-bold mb-2">Start Creating with Videora Today</h2>
         <p className="text-gray-400 mb-10 max-w-2xl mx-auto">Experience the future of AI-powered video generation.</p>
         
-        <Link 
-          to="/create"
-          style={gradientButtonStyle}
-          className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
-        >
-          Generate Your First Video
-          <ArrowUpRight className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center justify-center gap-4">
+          <Link 
+            to="/home"
+            className="inline-flex items-center gap-2 text-white px-6 py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded-full text-sm font-medium transition-colors"
+          >
+            Go to Home
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          
+          <Link 
+            to="/create"
+            style={gradientButtonStyle}
+            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
+          >
+            Generate Your First Video
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
       </section>
 
       {/* Footer */}
