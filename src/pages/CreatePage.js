@@ -218,32 +218,61 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      console.log('Uploading video to API...');
+      console.log('Uploading video file...');
       
-      // Create FormData object to send file data
+      // Step 1: Upload video file to storage service to get a URL
+      // Replace this with your actual storage upload endpoint
       const formData = new FormData();
-      formData.append('video', videoFile);
-      formData.append('name', name || 'Untitled Video');
-      formData.append('description', creativePrompt || 'No description provided');
-      formData.append('category', 'Education');
-      formData.append('tags', JSON.stringify(['ai-generated']));
-      formData.append('duration', duration);
-      formData.append('uploadedBy', user?.name || 'Anonymous');
-      formData.append('isPublic', true);
+      formData.append('file', videoFile);
       
-      if (videoData.thumbnailLogoUrl) {
-        formData.append('thumbnailLogoUrl', videoData.thumbnailLogoUrl);
-      }
-      
-      console.log('Uploading file:', videoFile.name);
-      
-      // Use the correct API endpoint from the curl command
-      const response = await axios.post(
-        'https://videora-ai.onrender.com/videos/upload-videos', 
+      // You need to replace this URL with your actual file upload endpoint
+      const uploadResponse = await axios.post(
+        'https://videora-ai.onrender.com/upload', 
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Extract the video URL from the upload response
+      // Adjust this according to your actual API response structure
+      const publicVideoUrl = uploadResponse.data.fileUrl;
+      
+      if (!publicVideoUrl) {
+        throw new Error('Failed to get video URL from upload service');
+      }
+      
+      console.log('File uploaded successfully. Got URL:', publicVideoUrl);
+      
+      // Step 2: Send the video information with the public URL to create the video entry
+      const payload = {
+        name: name || 'Untitled Video',
+        description: creativePrompt || 'No description provided',
+        category: 'Education',
+        tags: ['ai-generated'],
+        thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
+        videoUrl: publicVideoUrl, // Use the public URL from the upload service
+        duration: duration,
+        uploadedBy: user?.name || 'Anonymous',
+        views: 0,
+        likes: 0,
+        dislikes: 0,
+        comments: [],
+        isPublic: true
+      };
+      
+      console.log('Sending video metadata with URL:', payload);
+      
+      // Use the correct API endpoint for creating the video entry
+      const response = await axios.post(
+        'https://videora-ai.onrender.com/videos/upload-videos', 
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         }
