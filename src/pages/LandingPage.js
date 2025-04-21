@@ -253,26 +253,28 @@ const LandingPage = () => {
           <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
-        <div className="relative z-10 flex flex-col md:flex-row-reverse max-w-7xl mx-auto">
-          <div className="md:w-[45%] mb-10 md:mb-0 md:pl-10 pt-8">
-            <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Discover & Watch AI-Created Content</h2>
-            <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="flex items-start justify-between">
+            <div className="w-[55%]">
+              <div className="rounded-lg overflow-hidden shadow-xl">
+                <img 
+                  src="/91605 1.png" 
+                  alt="Video Player Interface" 
+                  className="w-full h-auto"
+                />
+              </div>
+            </div>
             
-            <Link 
-              to="/videos"
-              className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
-            >
-              Stream Now
-            </Link>
-          </div>
-          
-          <div className="md:w-[55%]">
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img 
-                src="/91605 1.png" 
-                alt="Video Player Interface" 
-                className="w-full h-auto"
-              />
+            <div className="w-[40%] pt-8">
+              <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Discover & Watch<br />AI-Created Content</h2>
+              <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
+              
+              <Link 
+                to="/videos"
+                className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+              >
+                Stream Now
+              </Link>
             </div>
           </div>
         </div>
