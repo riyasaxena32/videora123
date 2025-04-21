@@ -281,57 +281,84 @@ const LandingPage = () => {
       </section>
 
       {/* Join Community Section */}
-      <section className="py-20 px-6 flex flex-col md:flex-row max-w-7xl mx-auto">
-        <div className="md:w-1/2 mb-10 md:mb-0">
-          <h2 className="text-3xl font-bold mb-4">Join a Thriving Creator Community</h2>
-          <p className="text-gray-400 mb-6">Create, share, and get feedback from like-minded creators.</p>
-          
-          <Link 
-            to="/join"
-            className="inline-block px-5 py-2 border border-[#6B2E0A] bg-[#270E00] rounded-md text-sm text-white hover:bg-[#3A1500] transition-colors"
-          >
-            Join Now
-          </Link>
+      <section className="py-20 px-6 relative">
+        {/* Background pattern */}
+        <div className="absolute inset-0 overflow-hidden z-0">
+          <img 
+            src="/Group 192 (1).png" 
+            alt=""
+            className="w-full h-full object-cover opacity-90"
+          />
+          {/* Subtle dark overlay to improve text readability */}
+          <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
-        <div className="md:w-1/2 md:pl-10">
-          <div className="bg-[#111] rounded-lg overflow-hidden shadow-lg border border-[#333]">
-            <div className="p-4 border-b border-[#333]">
-              <h3 className="text-xl font-bold">Sparsh</h3>
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="flex items-start flex-col md:flex-row">
+            <div className="md:w-[45%] mb-10 md:mb-0 pt-8">
+              <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Join a Thriving<br />Creator Community</h2>
+              <p className="text-gray-300 mb-8">Create, share, and get feedback from like-minded creators.</p>
+              
+              <Link 
+                to="/join"
+                className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+              >
+                Join Now
+              </Link>
             </div>
             
-            <div className="bg-black p-4">
-              <img 
-                src="/creator-preview.png" 
-                alt="Creator Preview" 
-                className="w-full rounded-md"
-              />
-            </div>
-            
-            <div className="p-4 grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-black h-16 rounded-md overflow-hidden">
-                  <img src={`/creator-thumb-${i}.png`} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
+            <div className="md:w-[55%] md:pl-10">
+              <div className="bg-[#111] rounded-lg overflow-hidden shadow-xl border border-[#333]">
+                <div className="p-4 border-b border-[#333]">
+                  <h3 className="text-xl font-bold">Sparsh</h3>
                 </div>
-              ))}
+                
+                <div className="bg-black p-4">
+                  <img 
+                    src="/creator-preview.png" 
+                    alt="Creator Preview" 
+                    className="w-full rounded-md"
+                  />
+                </div>
+                
+                <div className="p-4 grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-black h-16 rounded-md overflow-hidden">
+                      <img src={`/creator-thumb-${i}.png`} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 px-6 text-center border-t border-[#222]">
-        <h2 className="text-3xl font-bold mb-2">Start Creating with Videora Today</h2>
-        <p className="text-gray-400 mb-10 max-w-2xl mx-auto">Experience the future of AI-powered video generation.</p>
+      <section className="py-20 px-6 text-center border-t border-[#222] relative">
+        {/* Background pattern */}
+        <div className="absolute inset-0 overflow-hidden z-0">
+          <img 
+            src="/Group 193 (1).png" 
+            alt=""
+            className="w-full h-full object-cover opacity-90"
+          />
+          {/* Subtle dark overlay to improve text readability */}
+          <div className="absolute inset-0 bg-black opacity-80"></div>
+        </div>
         
-        <Link 
-          to="/create"
-          style={gradientButtonStyle}
-          className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
-        >
-          Generate Your First Video
-          <ArrowUpRight className="w-4 h-4" />
-        </Link>
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold mb-2 text-[#E5B992]">Start Creating with Videora Today</h2>
+          <p className="text-gray-300 mb-10 max-w-2xl mx-auto">Experience the future of AI-powered video generation.</p>
+          
+          <Link 
+            to="/create"
+            className="inline-block px-6 py-3 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+          >
+            Generate Your First Video
+            <ArrowUpRight className="inline-block ml-2 w-4 h-4" />
+          </Link>
+        </div>
       </section>
 
       {/* Footer */}
