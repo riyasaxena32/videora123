@@ -215,8 +215,8 @@ const LandingPage = () => {
           <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
-        <div className="relative z-10 flex flex-col md:flex-row max-w-7xl mx-auto">
-          <div className="md:w-1/2 mb-10 md:mb-0">
+        <div className="relative z-10 flex items-center justify-between max-w-7xl mx-auto">
+          <div className="w-5/12">
             <h2 className="text-3xl font-bold mb-4 text-[#E5B992]">Smart Captions & Seamless<br />Voice Integration</h2>
             <p className="text-gray-300 mb-6">Edit captions without affecting voice continuity.</p>
             
@@ -228,8 +228,8 @@ const LandingPage = () => {
             </Link>
           </div>
           
-          <div className="md:w-1/2">
-            <div className="bg-[#111] rounded-lg overflow-hidden border border-[#333]">
+          <div className="w-6/12">
+            <div className="bg-transparent rounded-lg overflow-hidden">
               <img 
                 src="/Frame 182.png" 
                 alt="Live Caption Interface" 
