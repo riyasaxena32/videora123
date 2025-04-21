@@ -148,7 +148,9 @@ const LandingPage = () => {
 
       {/* Infinite Styles Section */}
       <section className="py-16 px-6 bg-black">
-        <h2 className="text-3xl font-bold mb-10 max-w-7xl mx-auto text-[#E5B992]">Infinite Styles, Endless Creativity</h2>
+        <h2 className="text-3xl font-bold mb-10 max-w-7xl mx-auto text-[#E5B992]">
+          <span className="inline-block text-left">Infinite Styles, Endless Creativity</span>
+        </h2>
         
         <div className="grid grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
           {/* Left column */}
@@ -201,11 +203,11 @@ const LandingPage = () => {
             />
           </div>
 
-          {/* Corner dots */}
-          <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#5A4837] rounded-full"></div>
-          <div className="absolute right-0 top-0 w-2 h-2 translate-x-1 -translate-y-1 bg-[#5A4837] rounded-full"></div>
-          <div className="absolute left-0 bottom-0 w-2 h-2 -translate-x-1 translate-y-1 bg-[#5A4837] rounded-full"></div>
-          <div className="absolute right-0 bottom-0 w-2 h-2 translate-x-1 translate-y-1 bg-[#5A4837] rounded-full"></div>
+          {/* Corner dots - larger and positioned outside the grid */}
+          <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
+          <div className="absolute right-0 top-0 w-2 h-2 translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
+          <div className="absolute left-0 bottom-0 w-2 h-2 -translate-x-1 translate-y-1 bg-[#E5B992] rounded-full"></div>
+          <div className="absolute right-0 bottom-0 w-2 h-2 translate-x-1 translate-y-1 bg-[#E5B992] rounded-full"></div>
         </div>
       </section>
 
