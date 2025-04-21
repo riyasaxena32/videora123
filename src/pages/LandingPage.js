@@ -153,55 +153,45 @@ const LandingPage = () => {
         </h2>
         
         <div className="grid grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
-          {/* Left column */}
-          <div className="col-span-1 space-y-[2px]">
-            <StyleTile 
-              name="Animated" 
-              imageSrc="/style-animated.png" 
-              large={true} 
-            />
-            <StyleTile 
-              name="Cinematic" 
-              imageSrc="/style-cinematic.png" 
-              large={false} 
-            />
+          {/* Top row */}
+          <StyleTile 
+            name="Animated" 
+            imageSrc="/style-animated.png" 
+            large={false} 
+          />
+          <div className="bg-black flex items-center justify-center p-6 text-center text-xs text-gray-400">
+            <p>Customize the look and feel of your videos with AI-powered styles.</p>
           </div>
+          <StyleTile 
+            name="Retro" 
+            imageSrc="/style-retro.png" 
+            large={false} 
+          />
 
-          {/* Middle column */}
-          <div className="col-span-1 space-y-[2px] flex flex-col">
-            <div className="h-full flex bg-black items-center justify-center p-6 text-center text-xs text-gray-400">
-              <p>Customize the look and feel of your videos with AI-powered styles.</p>
-            </div>
-            <StyleTile 
-              name="Sketch" 
-              imageSrc="/style-sketch.png" 
-              large={false} 
-            />
-          </div>
+          {/* Middle row */}
+          <StyleTile 
+            name="Cinematic" 
+            imageSrc="/style-cinematic.png" 
+            large={false} 
+          />
+          <StyleTile 
+            name="Sketch" 
+            imageSrc="/style-sketch.png" 
+            large={false} 
+          />
+          <StyleTile 
+            name="Cyberpunk" 
+            imageSrc="/style-cyberpunk.png" 
+            large={false} 
+          />
 
-          {/* Right column */}
-          <div className="col-span-1 space-y-[2px]">
-            <StyleTile 
-              name="Retro" 
-              imageSrc="/style-retro.png" 
-              large={false} 
-            />
-            <StyleTile 
-              name="Cyberpunk" 
-              imageSrc="/style-cyberpunk.png" 
-              large={false} 
-            />
-          </div>
-
-          {/* Bottom row - spans all columns */}
-          <div className="col-span-3">
-            <StyleTile 
-              name="Custom" 
-              imageSrc="/style-custom.png" 
-              large={false} 
-              wide={true}
-            />
-          </div>
+          {/* Bottom row */}
+          <StyleTile 
+            name="Custom" 
+            imageSrc="/style-custom.png" 
+            large={false} 
+            wide={true}
+          />
 
           {/* Corner dots - larger and positioned outside the grid */}
           <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
