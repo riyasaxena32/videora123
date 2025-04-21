@@ -109,8 +109,16 @@ const LandingPage = () => {
           </div>
           
           {/* Video Streaming Card */}
-          <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors">
-            <div className="p-6">
+          <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors relative">
+            <div className="absolute inset-0 z-0">
+              <img 
+                src="/Group 192 (1).png" 
+                alt=""
+                className="w-full h-full object-cover opacity-50"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+            </div>
+            <div className="p-6 relative z-10">
               <div className="flex justify-center mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Studio</span>
               </div>
