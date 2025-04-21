@@ -262,6 +262,30 @@ function VideoPage() {
         {/* Left Sidebar - Related Videos List */}
         <div className="w-[120px] md:w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
           <div className="p-3">
+            {/* User Profile Section */}
+            <div className="flex flex-col items-center pb-4 pt-2 mb-4 border-b border-[#333]">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ED5606] mb-2">
+                <img
+                  src={user?.profilePic || "/user-avatar.png"}
+                  alt={user?.name || "Your Profile"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/user-avatar.png";
+                  }}
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
+                <button 
+                  className="text-xs text-[#ED5606] hover:text-[#ff6a1a] mt-1"
+                  onClick={() => navigate(`/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`)}
+                >
+                  View Your Videos
+                </button>
+              </div>
+            </div>
+            
             <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mb-2">Creators</h3>
             {creators.map((creator) => (
               <div 
