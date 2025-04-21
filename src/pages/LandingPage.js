@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -275,8 +276,8 @@ const LandingPage = () => {
               <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Discover & Watch<br />AI-Created Content</h2>
               <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
               
-              <Link 
-                to="/"
+              <button 
+                onClick={() => navigate('/')}
                 style={{
                   ...gradientButtonStyle,
                   borderRadius: '4px',
@@ -286,7 +287,7 @@ const LandingPage = () => {
               >
                 Stream Now
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </div>
