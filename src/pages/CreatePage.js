@@ -157,12 +157,28 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [creativePrompt, setCreativePrompt] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState('cartoon');
+  const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [uploadResponse, setUploadResponse] = useState(null);
   const { user } = useAuth();
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
+
+  // Available video styles
+  const videoStyles = [
+    { name: 'cartoon', label: 'Cartoon' },
+    { name: 'realistic', label: 'Realistic' },
+    { name: 'anime', label: 'Anime' },
+    { name: '3d', label: '3D Animation' },
+    { name: 'pixar', label: 'Pixar Style' }
+  ];
+
+  const handleStyleChange = (e) => {
+    setSelectedStyle(e.target.value);
+  };
 
   const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
@@ -207,6 +223,10 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     }
   };
 
+  const handleCaptionChange = (e) => {
+    setCaption(e.target.value);
+  };
+
   // Separate function to upload to API
   const uploadVideoToAPI = async (videoURL, duration, name) => {
     try {
@@ -220,43 +240,51 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       console.log('Uploading video to API...');
       
-      const payload = {
-        name: name || 'Untitled Video',
-        description: creativePrompt || 'No description provided',
-        category: 'Education',
-        tags: ['ai-generated'],
-        thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
-        videoUrl: videoURL,
-        duration: duration,
-        uploadedBy: user?.name || 'Anonymous',
-        views: 0,
-        likes: 0,
-        dislikes: 0,
-        comments: [],
-        isPublic: true
-      };
+      // Create FormData object for multipart/form-data upload
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      formData.append('style', selectedStyle);
+      formData.append('prompt', creativePrompt || 'No description provided');
+      formData.append('caption', caption || videoData.name || 'Untitled Video');
       
-      console.log('Upload payload:', payload);
+      console.log('Upload payload:', {
+        video: videoFile?.name,
+        style: selectedStyle,
+        prompt: creativePrompt || 'No description provided',
+        caption: caption || videoData.name || 'Untitled Video'
+      });
       
-      // Use the correct API endpoint from the curl command
+      // Use the correct API endpoint and FormData approach from the curl command
       const response = await axios.post(
         'https://videora-ai.onrender.com/videos/upload-videos', 
-        payload,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${token}`
           }
         }
       );
       
       console.log('Upload response:', response.data);
-      setUploadSuccess(true);
+      // Store the full response data
+      setUploadResponse(response.data);
       
-      // Reset success message after 3 seconds
+      // Update videoData with the response URL
+      if (response.data && response.data.videoUrl) {
+        setVideoData(prevData => ({
+          ...prevData,
+          videoUrl: response.data.videoUrl
+        }));
+      }
+      
+      setUploadSuccess(true);
+      setErrorMessage('');
+      
+      // Reset success message after 5 seconds
       setTimeout(() => {
         setUploadSuccess(false);
-      }, 3000);
+      }, 5000);
       
     } catch (error) {
       console.error('Error uploading to API:', error);
@@ -284,6 +312,26 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Reset form to create a new video
+  const handleResetForm = () => {
+    setVideoFile(null);
+    setCreativePrompt('');
+    setCaption('');
+    setUploadResponse(null);
+    setErrorMessage('');
+    setUploadSuccess(false);
+    setVideoData({
+      name: '',
+      description: '',
+      category: 'Education',
+      tags: [],
+      thumbnailLogoUrl: '',
+      videoUrl: '',
+      duration: 0,
+      isPublic: true
+    });
   };
 
   // Update handlePromptChange to also trigger API update with new description
@@ -390,11 +438,21 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       <div className="flex flex-col space-y-6">
         <h2 className="text-sm font-medium">Pick Your Style</h2>
         <div className="border border-[#333] bg-[#111] rounded-md p-4">
-          <div className="flex items-center justify-between mb-2">
-            <ChevronDown className="w-4 h-4" />
-            <span className="text-sm">Select a vibe that matches your version</span>
+          <div className="flex flex-col space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm">Select a style for your video</span>
+            </div>
+            <select 
+              value={selectedStyle}
+              onChange={handleStyleChange}
+              className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+            >
+              {videoStyles.map(style => (
+                <option key={style.name} value={style.name}>{style.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-[#777] pl-1">Choose a style that matches your video's desired look and feel</p>
           </div>
-          <p className="text-xs text-[#777] pl-4">Lorem ipsum description text</p>
         </div>
         
         <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
@@ -416,7 +474,25 @@ For example, 'Make it look like a sunny day at the beach.'"
         <div className="border border-[#333] bg-[#111] rounded-md p-4">
           <h3 className="text-sm font-medium mb-2">Caption</h3>
           <div className="h-40 border border-[#222] bg-[#0a0a0a] rounded p-3 text-xs text-[#777]">
-            Your live caption will appear here after the file is uploaded and processed.
+            {uploadResponse ? (
+              <div className="h-full overflow-y-auto">
+                <p className="mb-2 text-green-400">Upload Successful!</p>
+                <p className="mb-1">Caption: {uploadResponse.video?.caption || 'None'}</p>
+                <p className="mb-1">Style: {uploadResponse.video?.style || 'None'}</p>
+                <p className="mb-1">ID: {uploadResponse.video?._id || 'Unknown'}</p>
+                <p className="mb-1">Upload Date: {uploadResponse.video?.uploadDate ? new Date(uploadResponse.video.uploadDate).toLocaleString() : 'Unknown'}</p>
+                <p className="mb-1 break-all">Video URL: {uploadResponse.videoUrl || 'Not available'}</p>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  className="w-full h-full bg-transparent border-none resize-none text-white focus:outline-none"
+                  placeholder="Enter a caption for your video"
+                  value={caption}
+                  onChange={handleCaptionChange}
+                ></textarea>
+              </>
+            )}
           </div>
           
           <div className="flex justify-end mt-4 gap-2">
@@ -438,24 +514,35 @@ For example, 'Make it look like a sunny day at the beach.'"
         {/* Error message */}
         {errorMessage && (
           <div className="mt-4 p-3 bg-red-900 bg-opacity-30 border border-red-800 rounded-md text-red-200 text-xs">
+            <div className="font-medium mb-1">Error uploading video:</div>
             {errorMessage}
           </div>
         )}
         
         {/* Success message */}
-        {uploadSuccess && (
+        {uploadSuccess && !errorMessage && (
           <div className="mt-4 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
-            Video uploaded successfully!
+            <div className="font-medium mb-1">Success!</div>
+            Video uploaded successfully! You can view the details in the caption box.
           </div>
         )}
         
         {/* Generate Button */}
-        <div className="flex justify-end mt-auto pt-4">
+        <div className="flex justify-end mt-auto pt-4 gap-2">
+          {uploadResponse && (
+            <button 
+              onClick={handleResetForm}
+              className="flex items-center gap-2 text-white bg-[#333] px-4 py-2 rounded-full text-sm font-medium hover:bg-[#444] transition-colors"
+            >
+              Upload New Video
+            </button>
+          )}
+          
           <button 
             onClick={handleUpload}
-            disabled={uploading || !videoFile}
+            disabled={uploading || !videoFile || uploadResponse}
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
+            className={`flex items-center gap-2 text-white px-6 py-2 text-sm font-medium ${(uploading || !videoFile || uploadResponse) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {uploading ? (
               <>
@@ -464,8 +551,8 @@ For example, 'Make it look like a sunny day at the beach.'"
               </>
             ) : (
               <>
-                Get Started
-                <ArrowUpRight className="w-4 h-4" />
+                {uploadResponse ? 'Uploaded' : 'Get Started'}
+                {!uploadResponse && <ArrowUpRight className="w-4 h-4" />}
               </>
             )}
           </button>
