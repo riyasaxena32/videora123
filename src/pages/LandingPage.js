@@ -216,96 +216,34 @@ const LandingPage = () => {
       </section>
 
       {/* Smart Captions Section */}
-      <section className="py-20 relative overflow-hidden">
-        {/* Checkered background pattern */}
-        <div className="absolute inset-0 overflow-hidden z-0">
-          <img 
-            src="/Group 191.png" 
-            alt=""
-            className="w-full h-full object-cover opacity-50"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+      <section className="py-20 px-6 flex flex-col md:flex-row max-w-7xl mx-auto">
+        <div className="md:w-1/2 mb-10 md:mb-0">
+          <h2 className="text-3xl font-bold mb-4">Smart Captions & Seamless Voice Integration</h2>
+          <p className="text-gray-400 mb-6">Edit captions without affecting voice continuity.</p>
+          
+          <Link 
+            to="/playground"
+            className="inline-block px-5 py-2 border border-[#6B2E0A] bg-[#270E00] rounded-md text-sm text-white hover:bg-[#3A1500] transition-colors"
+          >
+            Try the Playground
+          </Link>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 mb-10 md:mb-0">
-            <h2 className="text-4xl font-bold mb-4 text-[#E5B992]">Smart Captions & Seamless Voice Integration</h2>
-            <p className="text-gray-300 mb-8">Edit captions without affecting voice continuity.</p>
+        <div className="md:w-1/2 bg-[#111] rounded-lg overflow-hidden">
+          <div className="p-4">
+            <div className="text-xs text-gray-500 mb-2">Live Caption</div>
             
-            <Link 
-              to="/playground"
-              className="inline-flex items-center px-6 py-2 bg-[#ED5606] text-white rounded-md text-sm font-medium hover:bg-[#d04e05] transition-colors"
-            >
-              Try the Playground <ArrowRight className="ml-2 w-4 h-4" />
-            </Link>
-          </div>
-          
-          <div className="md:w-1/2 md:pl-8">
-            <div className="w-full bg-black rounded-lg overflow-hidden border border-[#333]">
-              <div className="bg-[#0F0F0F] py-1 px-2 border-b border-[#222]">
-                <p className="text-xs text-white">Live Caption</p>
-              </div>
-              <div className="p-3 text-gray-300 space-y-2 text-xs">
-                <p>This scene perfectly captures the essence of a classic shonen rivalry.</p>
-                <p>The cherry blossoms falling symbolize a bittersweet farewell.</p>
-                <p className="font-bold text-white">The protagonist awakens their hidden powers in the final battle!</p>
-                <p>"Her transformation sequence is so beautifully animated!"</p>
-                <p>"That plot twist was straight out of a psychological thriller anime!"</p>
-                <p>The art style is so unique, blending traditional and modern anime aesthetics.</p>
-                <p>The cherry blossoms falling symbolize a bittersweet farewell.</p>
-                <p>"Her transformation sequence is so beautifully animated!"</p>
-              </div>
-              <div className="flex items-center px-3 py-3 gap-3">
-                <button className="w-8 h-8 rounded-full bg-[#ED5606] flex items-center justify-center text-white">
-                  <span className="transform translate-x-[1px]">▶</span>
-                </button>
-                <div className="flex-1 h-8 bg-[#1A1A1A] rounded-full overflow-hidden flex items-center">
-                  <div className="h-full w-1/2 bg-[#ED5606]"></div>
-                  <div className="h-6 flex-1 flex items-center px-1">
-                    <div className="w-full flex space-x-[2px]">
-                      {Array(25).fill(0).map((_, i) => (
-                        <div 
-                          key={i} 
-                          className="bg-white" 
-                          style={{
-                            width: '2px',
-                            height: `${Math.random() * 100}%`,
-                            opacity: i < 12 ? 0.8 : 0.4
-                          }}
-                        ></div>
-                      ))}
-                    </div>
-                  </div>
+            <div className="h-80 bg-black rounded border border-[#333] p-4 flex flex-col justify-end">
+              <div className="mb-2 text-sm">The protagonist ventures into the mysterious forest, searching for answers.</div>
+              
+              <div className="flex items-center gap-4 mt-10">
+                <div className="w-full bg-[#111] h-2 rounded-full overflow-hidden">
+                  <div className="bg-[#ED5606] h-full" style={{ width: '70%' }}></div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#222] px-3 py-2">
-                <button className="text-xs text-white flex items-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-                    <path d="M11 5H6C4.89543 5 4 5.89543 4 7V18C4 19.1046 4.89543 20 6 20H17C18.1046 20 19 19.1046 19 18V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M17 3V9M14 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Edit Text
-                </button>
-                <button className="text-xs text-white flex items-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 4V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 17V20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M4 12H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M17 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Upload Voice
-                </button>
-                <button className="text-xs text-white flex items-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-                    <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M19 14C19.5523 14 20 13.5523 20 13V11C20 10.4477 19.5523 10 19 10C18.4477 10 18 10.4477 18 11V13C18 13.5523 18.4477 14 19 14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M5 14C5.55228 14 6 13.5523 6 13V11C6 10.4477 5.55228 10 5 10C4.44772 10 4 10.4477 4 11V13C4 13.5523 4.44772 14 5 14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 19C15.866 19 19 15.866 19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 19C8.13401 19 5 15.866 5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Record Voice
-                </button>
+                
+                <svg viewBox="0 0 100 30" width="100" height="30">
+                  <path d="M 0,15 Q 10,5 20,15 Q 30,25 40,15 Q 50,5 60,15 Q 70,25 80,15 Q 90,5 100,15" stroke="#ED5606" fill="none" strokeWidth="2" />
+                </svg>
               </div>
             </div>
           </div>
