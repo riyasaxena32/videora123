@@ -203,7 +203,7 @@ const LandingPage = () => {
       </section>
 
       {/* Smart Captions Section */}
-      <section className="py-16 px-6 relative">
+      <section className="py-20 px-6 relative">
         {/* Checkered background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
@@ -215,76 +215,77 @@ const LandingPage = () => {
           <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row relative z-10">
+        <div className="relative z-10 flex flex-col md:flex-row max-w-7xl mx-auto">
           <div className="md:w-1/2 mb-10 md:mb-0">
-            <h2 className="text-3xl font-bold mb-2 text-[#E5B992]">Smart Captions & Seamless Voice Integration</h2>
-            <p className="text-gray-400 mb-6">Edit captions without affecting voice continuity.</p>
+            <h2 className="text-3xl font-bold mb-4 text-[#E5B992]">Smart Captions & Seamless<br />Voice Integration</h2>
+            <p className="text-gray-300 mb-6">Edit captions without affecting voice continuity.</p>
             
             <Link 
               to="/playground"
-              className="inline-block px-5 py-2 bg-[#270E00] rounded-md text-sm text-white hover:bg-[#3A1500] transition-colors border border-[#ED5606]"
+              className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
             >
               Try the Playground
             </Link>
           </div>
           
-          <div className="md:w-1/2 md:pl-10">
-            <div className="bg-[#111]/80 rounded-lg overflow-hidden border border-[#333]">
+          <div className="md:w-1/2">
+            <div className="bg-[#111] rounded-lg overflow-hidden border border-[#333]">
               <div className="p-4">
-                <div className="text-xs text-gray-400 mb-2">Live Caption</div>
+                <div className="text-xs text-gray-500 mb-2">Live Caption</div>
                 
-                <div className="bg-black/70 rounded border border-[#333] p-4 flex flex-col">
-                  <div className="mb-4 text-sm">
-                    The voice perfectly captures the essence of a modern storyteller.
+                <div className="bg-black rounded border border-[#333] p-4 flex flex-col">
+                  <div className="mb-6 text-xs text-gray-400">
+                    <span className="text-white">The protagonist ventures</span> into the unknown of a hidden world.
                   </div>
                   
                   <div className="mb-4 text-xs text-gray-400">
-                    This dialogue feels authentic; I'll maintain this tone in the final video.
+                    The director adds visual elements to emphasize the ethereal atmosphere.
                   </div>
-                  
-                  <div className="mb-4 text-sm">
-                    The protagonist watches their hidden powers in the final battle.
-                  </div>
-                  
+
                   <div className="mb-4 text-xs text-gray-400">
-                    This part needs work - wanting to maintain the emotional impact but improve clarity.
+                    The protagonist searches for hidden powers in the lost forest.
+                  </div>
+
+                  <div className="mb-4 text-xs text-gray-400">
+                    The camera <span className="text-white">focusing, having analytical & informational</span> perspective on the hidden world.
+                  </div>
+
+                  <div className="mb-8 text-xs text-gray-400">
+                    The scene <span className="text-white">slowly transitions, becoming mysterious and fantastical.</span>
                   </div>
                   
-                  <div className="mb-4 text-sm">
-                    "I never thought I'd make it, but here I am," he whispers, looking at the horizon.
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mt-6">
-                    <div className="flex-1 flex gap-1 items-center">
-                      {Array(10).fill(0).map((_, i) => (
-                        <div key={i} 
-                          className={`h-3 w-1 rounded-full ${i < 8 ? 'bg-[#ED5606]' : 'bg-[#ED5606]/30'}`}
-                          style={{ height: `${Math.min(12, Math.max(6, Math.random() * 10 + 6))}px` }}
-                        ></div>
+                  <div className="flex items-center gap-2 justify-center mt-4">
+                    <div className="flex space-x-1">
+                      {[...Array(20)].map((_, i) => (
+                        <div key={i} className={`h-6 w-1 rounded-full ${i < 10 ? 'bg-[#ED5606]' : 'bg-[#ED5606] opacity-30'}`}></div>
                       ))}
                     </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <button className="flex items-center text-xs text-gray-400">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                        <polygon points="22 19 13 12 22 5 22 19"></polygon>
+                      </svg>
+                      <span className="ml-1">Edit Text</span>
+                    </button>
                     
-                    <div className="flex gap-4">
-                      <button className="p-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                      </button>
-                      <button className="p-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M3 15v4c0 1.1.9 2 2 2h4"></path>
-                          <path d="M21 9V5c0-1.1-.9-2-2-2h-4"></path>
-                          <rect x="8" y="8" width="8" height="8" rx="1"></rect>
-                        </svg>
-                      </button>
-                      <button className="p-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                        </svg>
-                      </button>
-                    </div>
+                    <button className="flex items-center text-xs text-gray-400">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      <span className="ml-1">Upload Voice</span>
+                    </button>
+                    
+                    <button className="flex items-center text-xs text-gray-400">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                      <span className="ml-1">Record Voice</span>
+                    </button>
                   </div>
                 </div>
               </div>
