@@ -156,6 +156,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   });
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [voiceFile, setVoiceFile] = useState(null);
   const [creativePrompt, setCreativePrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('cartoon');
   const [caption, setCaption] = useState('');
@@ -164,9 +165,20 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [uploadResponse, setUploadResponse] = useState(null);
+  
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioURL, setAudioURL] = useState('');
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [recordingError, setRecordingError] = useState('');
+  
   const { user } = useAuth();
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
+  const voiceInputRef = useRef(null);
+  const audioRef = useRef(null);
+  const timerRef = useRef(null);
 
   // Available video styles
   const videoStyles = [
@@ -246,9 +258,122 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     }
   };
 
+  // Handle voice file upload
+  const handleVoiceSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file type
+      const validTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/x-m4a', 'audio/ogg'];
+      if (!validTypes.includes(file.type)) {
+        setErrorMessage(`Invalid audio file type. Please upload a valid audio format (MP3, WAV, M4A, OGG)`);
+        return;
+      }
+      
+      // Check file size (limit to 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        setErrorMessage(`Audio file too large. Maximum size is 10MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+        return;
+      }
+      
+      setVoiceFile(file);
+      setErrorMessage('');
+      
+      // Update caption with the voice file name
+      if (!caption) {
+        setCaption(file.name.split('.')[0]);
+      }
+    }
+  };
+
   const handleCaptionChange = (e) => {
     setCaption(e.target.value);
   };
+
+  // Voice recording functionality
+  const startRecording = async () => {
+    try {
+      setRecordingError('');
+      
+      // Reset previous recording if any
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+        setAudioURL('');
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const audioChunks = [];
+      
+      recorder.addEventListener('dataavailable', (event) => {
+        audioChunks.push(event.data);
+      });
+      
+      recorder.addEventListener('stop', () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioURL(url);
+        
+        // Convert Blob to File object for upload
+        const audioFile = new File([audioBlob], `recording-${Date.now()}.mp3`, { 
+          type: 'audio/mpeg',
+          lastModified: new Date().getTime()
+        });
+        
+        setVoiceFile(audioFile);
+        
+        // Update caption with recording name if empty
+        if (!caption) {
+          setCaption(`Voice Recording ${new Date().toLocaleTimeString()}`);
+        }
+        
+        // Stop all tracks on the stream
+        stream.getTracks().forEach(track => track.stop());
+      });
+      
+      // Start recording
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      
+      // Start timer
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setRecordingError('Could not access microphone. Please check permissions.');
+    }
+  };
+  
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      clearInterval(timerRef.current);
+      setIsRecording(false);
+    }
+  };
+  
+  // Format recording time as MM:SS
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+      }
+    };
+  }, [audioURL]);
 
   // Modified handleUpload function to call API only on button click
   const handleUpload = async () => {
@@ -281,6 +406,11 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       formData.append('prompt', creativePrompt || '');
       formData.append('caption', caption || videoData.name || '');
       
+      // Add voice file if available
+      if (voiceFile) {
+        formData.append('voice', voiceFile);
+      }
+      
       // Debug logging for FormData
       console.log('FormData entries:');
       for (let [key, value] of formData.entries()) {
@@ -289,6 +419,12 @@ function GenerateVideoContent({ gradientButtonStyle }) {
             name: videoFile.name,
             type: videoFile.type,
             size: videoFile.size
+          });
+        } else if (key === 'voice') {
+          console.log('voice file details:', {
+            name: voiceFile.name,
+            type: voiceFile.type,
+            size: voiceFile.size
           });
         } else {
           console.log(`${key}: ${value}`);
@@ -383,6 +519,11 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   // Reset form to create a new video
   const handleResetForm = () => {
     setVideoFile(null);
+    setVoiceFile(null);
+    if (audioURL) {
+      URL.revokeObjectURL(audioURL);
+      setAudioURL('');
+    }
     setCreativePrompt('');
     setCaption('');
     setUploadResponse(null);
@@ -402,6 +543,10 @@ function GenerateVideoContent({ gradientButtonStyle }) {
 
   const triggerVideoInput = () => {
     videoInputRef.current.click();
+  };
+
+  const triggerVoiceInput = () => {
+    voiceInputRef.current.click();
   };
 
   return (
@@ -524,18 +669,46 @@ For example, 'Make it look like a sunny day at the beach.'"
             )}
           </div>
           
+          {/* Voice recording controls */}
+          {audioURL && (
+            <div className="mt-3 border border-[#222] bg-[#111] rounded p-2">
+              <audio ref={audioRef} src={audioURL} className="w-full h-8 mt-1" controls />
+            </div>
+          )}
+          
+          {recordingError && (
+            <div className="mt-2 text-red-400 text-xs">
+              {recordingError}
+            </div>
+          )}
+          
           <div className="flex justify-end mt-4 gap-2">
             <button type="button" className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
               <Edit3 className="w-3 h-3" />
               Edit Text
             </button>
-            <button type="button" className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
+            <button 
+              type="button" 
+              className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs"
+              onClick={triggerVoiceInput}
+            >
               <UploadIcon className="w-3 h-3" />
-              Upload Voice
+              {voiceFile && !isRecording && !audioURL ? voiceFile.name.substring(0, 15) + '...' : 'Upload Voice'}
             </button>
-            <button type="button" className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
-              <Mic className="w-3 h-3" />
-              Record Voice
+            <input 
+              ref={voiceInputRef}
+              type="file" 
+              accept="audio/*" 
+              className="hidden"
+              onChange={handleVoiceSelect}
+            />
+            <button 
+              type="button" 
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`flex items-center gap-1 ${isRecording ? 'bg-red-700 hover:bg-red-800' : 'bg-[#222] hover:bg-[#333]'} text-white py-1 px-3 rounded text-xs`}
+            >
+              <Mic className={`w-3 h-3 ${isRecording ? 'animate-pulse' : ''}`} />
+              {isRecording ? `Recording ${formatTime(recordingTime)}...` : 'Record Voice'}
             </button>
           </div>
         </div>
