@@ -10,7 +10,7 @@ function VideoCard({ video, onClick }) {
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
           src={video.thumbnailLogoUrl || "/image 28.png"} 
-          alt={video.name} 
+          alt={video.name || video.caption} 
           className="w-full h-full object-cover transition-transform group-hover:scale-105" 
           onError={(e) => {
             e.target.onerror = null;
@@ -19,13 +19,34 @@ function VideoCard({ video, onClick }) {
         />
         {/* Category tag */}
         <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
-          {video.category || "Unknown"}
+          {video.style || video.category || "Unknown"}
         </div>
+        
+        {/* Video indicator */}
+        {(video.videoURL || video.videoUrl) && (
+          <div className="absolute top-2 left-2 bg-[#ED5606] px-2 py-0.5 rounded text-xs text-white flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 3L19 12L5 21V3Z" fill="white"/>
+            </svg>
+            Video
+          </div>
+        )}
+        
+        {/* Audio indicator */}
+        {video.voiceURL && (
+          <div className="absolute top-9 left-2 bg-[#333] px-2 py-0.5 rounded text-xs text-white flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3V21M3 12H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Audio
+          </div>
+        )}
+        
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
       <div className="mt-2">
-        <h3 className="text-sm font-medium">{video.name}</h3>
+        <h3 className="text-sm font-medium">{video.name || video.caption || 'Untitled'}</h3>
         <p className="text-xs text-[#b0b0b0]">{video.views || 0} views • {formatDateAgo(video.uploadDate)}</p>
       </div>
     </div>
@@ -147,53 +168,65 @@ function CreatorPage() {
         const data = await response.json();
         const videos = data.video || [];
         setAllVideos(videos);
-      
-        // Extract unique creators from videos
-        const uniqueCreators = Array.from(new Set(videos.map(v => v.uploadedBy)))
-          .filter(Boolean)
-          .map(creator => {
-            // Find the first video by this creator
-            const creatorVideo = videos.find(v => v.uploadedBy === creator);
-            return {
-              name: creator,
-              id: creator.toLowerCase().replace(/\s+/g, '-'),
-              videoCount: videos.filter(v => v.uploadedBy === creator).length,
-              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png'
-            };
-          });
+        
+        console.log('API response videos:', videos);
+        
+        // Extract unique creators from videos based on uploadedBy field
+        const uniqueCreators = Array.from(new Set(
+          videos
+            .filter(v => v.uploadedBy) // Filter out videos without uploadedBy
+            .map(v => v.uploadedBy)
+        ))
+        .map(creatorName => {
+          // Find all videos by this creator
+          const creatorVideos = videos.filter(v => v.uploadedBy === creatorName);
+          // Use the first video for thumbnail
+          const firstVideo = creatorVideos[0];
+          
+          return {
+            name: creatorName,
+            id: creatorName.toLowerCase().replace(/\s+/g, '-'),
+            videoCount: creatorVideos.length,
+            thumbnailUrl: firstVideo?.thumbnailLogoUrl || '/user-avatar.png'
+          };
+        });
         
         setCreators(uniqueCreators);
-      
+        
         // Find the creator based on the URL parameter
         const normalizedCreatorId = creatorId.toLowerCase();
-        const foundCreator = uniqueCreators.find(c => 
-          c.id === normalizedCreatorId || 
-          c.name.toLowerCase().replace(/\s+/g, '-') === normalizedCreatorId
-        );
         
-        // If creator found, set creator data and their videos
-        if (foundCreator) {
-          setCreator(foundCreator);
-          const creatorVids = videos.filter(v => 
-            v.uploadedBy && v.uploadedBy.toLowerCase() === foundCreator.name.toLowerCase()
-          );
-          setCreatorVideos(creatorVids);
-        } else if (normalizedCreatorId === 'profile' || normalizedCreatorId === user?.name?.toLowerCase().replace(/\s+/g, '-')) {
+        // Try to find by ID first
+        let foundCreator = uniqueCreators.find(c => c.id === normalizedCreatorId);
+        
+        // If not found, use profile for current user
+        if (!foundCreator && (normalizedCreatorId === 'profile' || normalizedCreatorId === user?.name?.toLowerCase().replace(/\s+/g, '-'))) {
           // Current user's profile
-          const currentUserCreator = {
-            name: user?.name || 'Your Profile',
+          const userName = user?.name || 'Your Profile';
+          foundCreator = {
+            name: userName,
             id: normalizedCreatorId,
-            videoCount: videos.filter(v => v.uploadedBy && v.uploadedBy.toLowerCase() === (user?.name || '').toLowerCase()).length,
+            videoCount: videos.filter(v => v.uploadedBy === userName).length,
             thumbnailUrl: user?.profilePic || '/user-avatar.png',
             isCurrentUser: true
           };
           
-          setCreator(currentUserCreator);
-          const userVideos = videos.filter(v => 
-            v.uploadedBy && v.uploadedBy.toLowerCase() === (user?.name || '').toLowerCase()
-          );
+          setCreator(foundCreator);
+          
+          // Find videos uploaded by current user
+          const userVideos = videos.filter(v => v.uploadedBy === userName);
+          console.log(`Found ${userVideos.length} videos for user: ${userName}`);
           setCreatorVideos(userVideos);
-        } else {
+        } 
+        // Regular creator profile
+        else if (foundCreator) {
+          setCreator(foundCreator);
+          const creatorVids = videos.filter(v => v.uploadedBy === foundCreator.name);
+          console.log(`Found ${creatorVids.length} videos for creator: ${foundCreator.name}`);
+          setCreatorVideos(creatorVids);
+        } 
+        // Creator not found
+        else {
           setError('Creator not found');
         }
         
