@@ -211,8 +211,8 @@ const LandingPage = () => {
             alt=""
             className="w-full h-full object-cover opacity-90"
           />
-          {/* Subtle dark overlay to improve text readability */}
-          <div className="absolute inset-0 bg-black opacity-70"></div>
+          {/* Subtle dark overlay with highlight color */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#270E00] to-black opacity-80"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto">
