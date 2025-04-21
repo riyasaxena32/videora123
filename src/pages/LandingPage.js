@@ -277,7 +277,10 @@ const LandingPage = () => {
               <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
               
               <button 
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  navigate('/home');
+                  window.location.href = '/home';
+                }}
                 style={{
                   ...gradientButtonStyle,
                   borderRadius: '4px',
