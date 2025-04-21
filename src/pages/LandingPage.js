@@ -207,7 +207,7 @@ const LandingPage = () => {
         {/* Checkered background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
-            src="/Group 192.png" 
+            src="/Group 192 (1).png" 
             alt=""
             className="w-full h-full object-cover opacity-90"
           />
@@ -230,65 +230,11 @@ const LandingPage = () => {
           
           <div className="md:w-1/2">
             <div className="bg-[#111] rounded-lg overflow-hidden border border-[#333]">
-              <div className="p-4">
-                <div className="text-xs text-gray-500 mb-2">Live Caption</div>
-                
-                <div className="bg-black rounded border border-[#333] p-4 flex flex-col">
-                  <div className="mb-6 text-xs text-gray-400">
-                    <span className="text-white">The protagonist ventures</span> into the unknown of a hidden world.
-                  </div>
-                  
-                  <div className="mb-4 text-xs text-gray-400">
-                    The director adds visual elements to emphasize the ethereal atmosphere.
-                  </div>
-
-                  <div className="mb-4 text-xs text-gray-400">
-                    The protagonist searches for hidden powers in the lost forest.
-                  </div>
-
-                  <div className="mb-4 text-xs text-gray-400">
-                    The camera <span className="text-white">focusing, having analytical & informational</span> perspective on the hidden world.
-                  </div>
-
-                  <div className="mb-8 text-xs text-gray-400">
-                    The scene <span className="text-white">slowly transitions, becoming mysterious and fantastical.</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 justify-center mt-4">
-                    <div className="flex space-x-1">
-                      {[...Array(20)].map((_, i) => (
-                        <div key={i} className={`h-6 w-1 rounded-full ${i < 10 ? 'bg-[#ED5606]' : 'bg-[#ED5606] opacity-30'}`}></div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-4">
-                    <button className="flex items-center text-xs text-gray-400">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polygon points="11 19 2 12 11 5 11 19"></polygon>
-                        <polygon points="22 19 13 12 22 5 22 19"></polygon>
-                      </svg>
-                      <span className="ml-1">Edit Text</span>
-                    </button>
-                    
-                    <button className="flex items-center text-xs text-gray-400">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                      </svg>
-                      <span className="ml-1">Upload Voice</span>
-                    </button>
-                    
-                    <button className="flex items-center text-xs text-gray-400">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                      <span className="ml-1">Record Voice</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <img 
+                src="/Frame 182.png" 
+                alt="Live Caption Interface" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </div>
