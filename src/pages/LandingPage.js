@@ -225,9 +225,10 @@ const LandingPage = () => {
                 to="/playground"
                 style={{
                   ...gradientButtonStyle,
-                  borderRadius: '4px' 
+                  borderRadius: '4px',
+                  display: 'inline-flex'
                 }}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+                className="items-center gap-2 text-white py-2 px-3 text-sm transition-colors font-medium"
               >
                 Try the Playground
                 <ArrowRight className="w-4 h-4" />
@@ -278,9 +279,10 @@ const LandingPage = () => {
                 to="/"
                 style={{
                   ...gradientButtonStyle,
-                  borderRadius: '4px'
+                  borderRadius: '4px',
+                  display: 'inline-flex'
                 }}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+                className="items-center gap-2 text-white py-2 px-3 text-sm transition-colors font-medium"
               >
                 Stream Now
                 <ArrowRight className="w-4 h-4" />
@@ -313,9 +315,10 @@ const LandingPage = () => {
                 to="/join"
                 style={{
                   ...gradientButtonStyle,
-                  borderRadius: '4px'
+                  borderRadius: '4px',
+                  display: 'inline-flex'
                 }}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+                className="items-center gap-2 text-white py-2 px-3 text-sm transition-colors font-medium"
               >
                 Join Now
                 <ArrowRight className="w-4 h-4" />
@@ -370,9 +373,10 @@ const LandingPage = () => {
             to="/create"
             style={{
               ...gradientButtonStyle,
-              borderRadius: '4px'
+              borderRadius: '4px',
+              display: 'inline-flex'
             }}
-            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
+            className="items-center gap-2 text-white py-2 px-4 text-sm font-medium"
           >
             Generate Your First Video
             <ArrowUpRight className="w-4 h-4" />
