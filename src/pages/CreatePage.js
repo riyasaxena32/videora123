@@ -160,6 +160,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { user } = useAuth();
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
@@ -172,7 +173,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       setErrorMessage('');
       
       try {
-        // Create temporary URL for the video
+        // Create temporary URL for the video preview
         const videoURL = URL.createObjectURL(file);
         
         // Load video to get duration
@@ -189,7 +190,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         // Duration in seconds
         const durationInSeconds = Math.floor(videoElement.duration);
         
-        // Update state with video info
+        // Update state with video info for preview
         setVideoData({
           ...videoData,
           duration: durationInSeconds,
@@ -197,13 +198,44 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           name: file.name.split('.')[0] // Use filename as the video name
         });
         
-        // Call the upload API
-        await uploadVideoToAPI(videoURL, durationInSeconds, file.name.split('.')[0]);
+        // Upload to Cloudinary
+        await uploadToCloudinary(file, durationInSeconds, file.name.split('.')[0]);
       } catch (error) {
         console.error('Error processing video:', error);
         setErrorMessage('Failed to process video. Please try again.');
         setUploading(false);
       }
+    }
+  };
+
+  // Upload to Cloudinary first
+  const uploadToCloudinary = async (file, duration, name) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'videora_uploads'); // Replace with your Cloudinary upload preset
+      
+      const response = await axios.post(
+        'https://api.cloudinary.com/v1_1/your-cloud-name/video/upload', // Replace with your cloud name
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
+      );
+      
+      console.log('Cloudinary upload response:', response.data);
+      
+      // After successful upload to Cloudinary, update the API
+      const cloudinaryUrl = response.data.secure_url;
+      await uploadVideoToAPI(cloudinaryUrl, duration, name);
+      
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      setErrorMessage('Failed to upload to Cloudinary. Please try again.');
+      setUploading(false);
     }
   };
 
@@ -226,7 +258,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         category: 'Education',
         tags: ['ai-generated'],
         thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
-        videoUrl: videoURL,
+        videoUrl: videoURL, // Now this will be the Cloudinary URL
         duration: duration,
         uploadedBy: user?.name || 'Anonymous',
         views: 0,
@@ -240,7 +272,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       // Use the correct API endpoint from the curl command
       const response = await axios.post(
-        'https://videora-ai.onrender.com/videos/upload-videos', 
+        'http://videora.ai-onrender.com/videos/upload-videos', 
         payload,
         {
           headers: {
@@ -283,6 +315,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       setErrorMessage(errorMessage);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -446,6 +479,22 @@ For example, 'Make it look like a sunny day at the beach.'"
         {uploadSuccess && (
           <div className="mt-4 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
             Video uploaded successfully!
+          </div>
+        )}
+        
+        {/* Upload Progress */}
+        {uploading && uploadProgress > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-400">Uploading video to Cloudinary</span>
+              <span className="text-xs text-gray-400">{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-[#222] rounded-full h-2.5">
+              <div 
+                className="bg-[#ED5606] h-2.5 rounded-full" 
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
           </div>
         )}
         
