@@ -1,51 +1,73 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, LogOut } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, LogOut, Clock, MessageSquareShare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-// Mock data for creators
-const creatorsData = [
-  { 
-    id: "sparsh", 
-    name: "Sparsh", 
-    image: "/user-avatar.png", 
-    subscribers: "1.2M", 
-    videos: 100, 
-    bio: "A breathtaking cinematic anime scene set in a futuristic cyberpunk city at night. Neon lights reflect off the rain-soaked streets as a lone warrior in a sleek black trench coat and a glowing cybernetic eye walks forward, katana in hand."
-  },
-  { 
-    id: "mrwhostheboss", 
-    name: "MrWhosTheBoss", 
-    image: "/user-avatar.png", 
-    subscribers: "2.4M", 
-    videos: 230, 
-    bio: "Tech reviewer focusing on smartphones, gadgets and the latest technological innovations."
-  },
-  { 
-    id: "mkbhd", 
-    name: "MKBHD", 
-    image: "/user-avatar.png", 
-    subscribers: "5.8M", 
-    videos: 187, 
-    bio: "High quality tech videos with a focus on the smartphone experience."
-  },
-  { 
-    id: "t-series", 
-    name: "T-SERIES", 
-    image: "/user-avatar.png", 
-    subscribers: "150M", 
-    videos: 1500, 
-    bio: "India's largest Music Label & Movie Studio. Home to the greatest artists and musicians."
+// Components for consistency with other pages
+function VideoCard({ video, onClick }) {
+  return (
+    <div className="relative group cursor-pointer" onClick={onClick}>
+      <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
+        <img 
+          src={video.thumbnailLogoUrl || "/image 28.png"} 
+          alt={video.name} 
+          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/image 28.png";
+          }}
+        />
+        {/* Category tag */}
+        <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
+          {video.category || "Unknown"}
+        </div>
+        {/* Gradient overlay */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
+      </div>
+      <div className="mt-2">
+        <h3 className="text-sm font-medium">{video.name}</h3>
+        <p className="text-xs text-[#b0b0b0]">{video.views || 0} views • {formatDateAgo(video.uploadDate)}</p>
+      </div>
+    </div>
+  );
+}
+
+// Format date to show how long ago
+const formatDateAgo = (dateString) => {
+  if (!dateString) return 'Unknown date';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays === 0) {
+    return 'Today';
+  } else if (diffInDays === 1) {
+    return 'Yesterday';
+  } else if (diffInDays < 30) {
+    return `${diffInDays} days ago`;
+  } else if (diffInDays < 365) {
+    const months = Math.floor(diffInDays / 30);
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+  } else {
+    const years = Math.floor(diffInDays / 365);
+    return `${years} ${years === 1 ? 'year' : 'years'} ago`;
   }
-];
+};
 
 function CreatorPage() {
   const { creatorId } = useParams();
   const navigate = useNavigate();
   const [creator, setCreator] = useState(null);
+  const [creatorVideos, setCreatorVideos] = useState([]);
+  const [allVideos, setAllVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeSidebarItem, setActiveSidebarItem] = useState('Your Videos');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [creators, setCreators] = useState([]);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
 
@@ -89,89 +111,121 @@ function CreatorPage() {
     };
   }, []);
 
+  // Add an event listener for window resize to auto-collapse sidebar on small screens
   useEffect(() => {
-    // Simulate fetching creator data
-    // In a real app, you would fetch from an API based on creatorId
-    const fetchCreator = () => {
-      setLoading(true);
-      
-      // Find creator in our mock data
-      const foundCreator = creatorsData.find(c => c.id === creatorId) || 
-                          creatorsData.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === creatorId);
-      
-      if (foundCreator) {
-        setCreator(foundCreator);
-      } else {
-        // If no ID match, just use the first creator for demo
-        setCreator({
-          id: "sparsh",
-          name: "Sparsh", 
-          image: "/user-avatar.png", 
-          subscribers: "1.2M", 
-          videos: 100, 
-          bio: "A breathtaking cinematic anime scene set in a futuristic cyberpunk city at night. Neon lights reflect off the rain-soaked streets as a lone warrior in a sleek black trench coat and a glowing cybernetic eye walks forward, katana in hand."
-        });
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setSidebarCollapsed(true);
       }
-      
-      setLoading(false);
     };
-    
-    fetchCreator();
-  }, [creatorId]);
 
-  // Set up scroll button visibility and behavior
-  useEffect(() => {
-    const handleScrollButtonVisibility = (scrollId, leftBtnId, rightBtnId) => {
-      const scrollContainer = document.getElementById(scrollId);
-      const leftBtn = document.getElementById(leftBtnId);
-      const rightBtn = document.getElementById(rightBtnId);
-      
-      if (!scrollContainer || !leftBtn || !rightBtn) return;
-      
-      // Initially hide left button as we're at the start
-      leftBtn.style.display = scrollContainer.scrollLeft <= 10 ? 'none' : 'flex';
-      
-      // Check if we're at the end already
-      rightBtn.style.display = 
-        Math.ceil(scrollContainer.scrollLeft + scrollContainer.clientWidth) >= scrollContainer.scrollWidth - 10 
-          ? 'none' : 'flex';
-      
-      // Add scroll event listener
-      const handleScroll = () => {
-        // Hide/show left button based on scroll position
-        leftBtn.style.display = scrollContainer.scrollLeft <= 10 ? 'none' : 'flex';
-        
-        // Hide/show right button based on if we reached the end
-        rightBtn.style.display = 
-          Math.ceil(scrollContainer.scrollLeft + scrollContainer.clientWidth) >= scrollContainer.scrollWidth - 10
-            ? 'none' : 'flex';
-      };
-      
-      scrollContainer.addEventListener('scroll', handleScroll);
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    };
+    // Initial check on component mount
+    handleResize();
     
-    // Set up scroll button visibility for each section
-    const sections = [
-      { scrollId: 'featuredVideosScroll', leftBtnId: 'featuredVideosLeftBtn', rightBtnId: 'featuredVideosRightBtn' },
-      { scrollId: 'recentUploadsScroll', leftBtnId: 'recentUploadsLeftBtn', rightBtnId: 'recentUploadsRightBtn' }
-    ];
+    window.addEventListener('resize', handleResize);
     
-    // Set up listeners for each section
-    const cleanupFunctions = sections.map(({ scrollId, leftBtnId, rightBtnId }) => 
-      handleScrollButtonVisibility(scrollId, leftBtnId, rightBtnId)
-    ).filter(Boolean);
-    
-    // Clean up all event listeners
     return () => {
-      cleanupFunctions.forEach(cleanup => cleanup && cleanup());
+      window.removeEventListener('resize', handleResize);
     };
-  }, [loading]);
+  }, []);
+
+  useEffect(() => {
+    // Fetch all videos from API
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch videos');
+        }
+        
+        const data = await response.json();
+        const videos = data.video || [];
+        setAllVideos(videos);
+        
+        // Extract unique creators from videos
+        const uniqueCreators = Array.from(new Set(videos.map(v => v.uploadedBy)))
+          .filter(Boolean)
+          .map(creator => {
+            // Find the first video by this creator
+            const creatorVideo = videos.find(v => v.uploadedBy === creator);
+            return {
+              name: creator,
+              id: creator.toLowerCase().replace(/\s+/g, '-'),
+              videoCount: videos.filter(v => v.uploadedBy === creator).length,
+              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png'
+            };
+          });
+        
+        setCreators(uniqueCreators);
+        
+        // Find the creator based on the URL parameter
+        const normalizedCreatorId = creatorId.toLowerCase();
+        const foundCreator = uniqueCreators.find(c => 
+          c.id === normalizedCreatorId || 
+          c.name.toLowerCase().replace(/\s+/g, '-') === normalizedCreatorId
+        );
+        
+        // If creator found, set creator data and their videos
+        if (foundCreator) {
+          setCreator(foundCreator);
+          const creatorVids = videos.filter(v => 
+            v.uploadedBy && v.uploadedBy.toLowerCase() === foundCreator.name.toLowerCase()
+          );
+          setCreatorVideos(creatorVids);
+        } else if (normalizedCreatorId === 'profile' || normalizedCreatorId === user?.name?.toLowerCase().replace(/\s+/g, '-')) {
+          // Current user's profile
+          const currentUserCreator = {
+            name: user?.name || 'Your Profile',
+            id: normalizedCreatorId,
+            videoCount: videos.filter(v => v.uploadedBy && v.uploadedBy.toLowerCase() === (user?.name || '').toLowerCase()).length,
+            thumbnailUrl: user?.profilePic || '/user-avatar.png',
+            isCurrentUser: true
+          };
+          
+          setCreator(currentUserCreator);
+          const userVideos = videos.filter(v => 
+            v.uploadedBy && v.uploadedBy.toLowerCase() === (user?.name || '').toLowerCase()
+          );
+          setCreatorVideos(userVideos);
+        } else {
+          setError('Creator not found');
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    
+    fetchVideos();
+  }, [creatorId, user?.name]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
+        <h1 className="text-2xl font-bold mb-4">Error: {error}</h1>
+        <button 
+          onClick={() => navigate('/')}
+          className="bg-[#2f2f2f] hover:bg-[#414141] px-6 py-2 rounded-full"
+        >
+          Back to Home
+        </button>
       </div>
     );
   }
@@ -190,35 +244,14 @@ function CreatorPage() {
     );
   }
 
-  // Featured videos data
-  const featuredVideos = [
-    { title: "S Charming", image: "/image 28.png", theme: "City Vibes" },
-    { title: "Theory of everything", image: "/image 28.png", theme: "Retro Themed" },
-    { title: "Openhiemer", image: "/image 28.png", theme: "Retro Themed" },
-    { title: "New Delhi", image: "/image 28.png", theme: "Retro Themed" },
-    { title: "Bumblebee", image: "/image 28.png", theme: "Sci-Fi" },
-    { title: "Avatar", image: "/image 28.png", theme: "Fantasy" },
-    { title: "Matrix", image: "/image 28.png", theme: "Sci-Fi" },
-    { title: "Interstellar", image: "/image 28.png", theme: "Space" }
-  ];
-  
-  // Recent uploads data
-  const recentUploads = [
-    { title: "Openhiemer", image: "/image 28.png", theme: "Retro Themed" },
-    { title: "New Delhi", image: "/image 28.png", theme: "Retro Themed" },
-    { title: "S Charming", image: "/image 28.png", theme: "City Vibes" },
-    { title: "Theory of everything", image: "/image 28.png", theme: "Retro Themed" },
-    { title: "John Wick", image: "/image 28.png", theme: "Action" },
-    { title: "Inception", image: "/image 28.png", theme: "Mind-bending" },
-    { title: "The Batman", image: "/image 28.png", theme: "Dark" },
-    { title: "Dune", image: "/image 28.png", theme: "Sci-Fi" }
-  ];
+  const isCurrentUserProfile = creator.isCurrentUser || 
+    (user && creator.name.toLowerCase() === user.name?.toLowerCase());
 
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Top Navigation Bar */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-3">
           <button 
             className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
             onClick={toggleSidebar}
@@ -226,10 +259,14 @@ function CreatorPage() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/Logo.png" alt="VIDEORA" className="h-8" />
+          <Link to="/" className="flex items-center">
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-4" />
           </Link>
-          <nav className="hidden md:flex items-center gap-8">
+        </div>
+        
+        {/* Center navigation links */}
+        <div className="hidden md:flex items-center justify-center flex-1">
+          <nav className="flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
               <a
                 key={item}
@@ -248,6 +285,7 @@ function CreatorPage() {
           <button 
             style={gradientButtonStyle}
             className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
+            onClick={() => navigate('/create')}
           >
             Create <Plus className="w-4 h-4" />
           </button>
@@ -295,144 +333,213 @@ function CreatorPage() {
         </div>
       </header>
 
-      {/* Creator Cover Image - Full width cinematic photo */}
-      <div className="relative w-full h-[100vh] overflow-hidden">
-        <img 
-          src="/image 28.png" 
-          alt={`${creator.name} cover`}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-        
-        {/* Minimalist Creator Info Overlay */}
-        <div className="absolute bottom-20 left-12 w-full">
-          <h1 className="text-6xl font-bold mb-4">{creator.name}</h1>
-          
-          <div className="flex items-center gap-4 mb-6">
-            <div className="bg-[#ED5606] px-4 py-1 rounded text-sm font-medium">
-              Total Videos <span className="font-bold">{creator.videos}</span>
-            </div>
-          </div>
-          
-          <p className="text-lg max-w-2xl mb-8 text-gray-200">
-            {creator.bio}
-          </p>
-          
-          <div className="flex gap-4">
-            <button className="w-10 h-10 flex items-center justify-center bg-[#222] rounded-full text-white hover:bg-[#333] transition-colors">
-              <User className="w-5 h-5" />
-            </button>
-            <button className="bg-transparent hover:bg-white/10 border border-white text-white px-6 py-2 rounded-full transition-colors flex items-center gap-2">
-              <span className="text-sm font-medium">Follow</span>
-            </button>
-            <button className="bg-transparent hover:bg-white/10 border border-white text-white px-6 py-2 rounded-full transition-colors flex items-center gap-2">
-              <span className="text-sm font-medium">About</span>
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="w-full max-w-[1800px] mx-auto px-4 md:px-8 py-12">
-        {/* Featured Videos Section */}
-        <div className="py-6 relative">
-          <div className="flex items-center mb-4">
-            <h2 className="text-xl font-bold">Featured Video</h2>
-            <ChevronRight className="w-5 h-5 ml-2" />
-            <div className="ml-auto flex gap-2">
-              <button 
-                id="featuredVideosLeftBtn"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                onClick={() => document.getElementById('featuredVideosScroll').scrollBy({left: -500, behavior: 'smooth'})}>
-                <ChevronRight className="w-4 h-4 rotate-180" />
-              </button>
-              <button 
-                id="featuredVideosRightBtn"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                onClick={() => document.getElementById('featuredVideosScroll').scrollBy({left: 500, behavior: 'smooth'})}>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          
-          <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth px-2" id="featuredVideosScroll">
-            <div className="flex gap-6 snap-x" style={{ minWidth: 'max-content' }}>
-              {featuredVideos.map((video, index) => (
-                <Link key={index} to={`/video/${index + 1}`} className="snap-start" style={{ width: '340px', flexShrink: 0 }}>
-                  <VideoCard {...video} />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Recent Uploads Section */}
-        <div className="py-6 relative">
-          <div className="flex items-center mb-4">
-            <h2 className="text-xl font-bold">Recent Uploads</h2>
-            <ChevronRight className="w-5 h-5 ml-2" />
-            <div className="ml-auto flex gap-2">
-              <button 
-                id="recentUploadsLeftBtn"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                onClick={() => document.getElementById('recentUploadsScroll').scrollBy({left: -500, behavior: 'smooth'})}>
-                <ChevronRight className="w-4 h-4 rotate-180" />
-              </button>
-              <button 
-                id="recentUploadsRightBtn"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                onClick={() => document.getElementById('recentUploadsScroll').scrollBy({left: 500, behavior: 'smooth'})}>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          
-          <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth px-2" id="recentUploadsScroll">
-            <div className="flex gap-6 snap-x" style={{ minWidth: 'max-content' }}>
-              {recentUploads.map((video, index) => (
-                <Link key={index} to={`/video/${index + 10}`} className="snap-start" style={{ width: '340px', flexShrink: 0 }}>
-                  <VideoCard {...video} />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+      {/* Main Content Area with Sidebar and Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Sidebar Overlay */}
+        {!sidebarCollapsed && (
+          <div 
+            className={`sidebar-overlay ${isMobile ? 'block' : 'hidden'}`}
+            onClick={toggleSidebar}
+          ></div>
+        )}
 
-// Add CSS for hiding scrollbars while maintaining functionality
-const hideScrollbarStyles = `
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
-}
-`;
+        {/* Left Sidebar - Full on desktop, collapsible on mobile */}
+        <aside 
+          className={`${
+            sidebarCollapsed 
+              ? 'w-0 opacity-0 invisible' 
+              : 'w-[80%] md:w-[190px] opacity-100 visible'
+          } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile`}
+        >
+          <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
+            <div className="space-y-4">
+              <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
+              <nav className="space-y-1">
+                {[
+                  { name: "Recent", icon: <Clock className="w-4 h-4" /> },
+                  { name: "Shared", icon: <MessageSquareShare className="w-4 h-4" /> },
+                  { 
+                    name: "Your Videos", 
+                    icon: <User className="w-4 h-4" />,
+                    action: () => navigate(`/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`)
+                  },
+                  { name: "Watch Later", icon: <Clock className="w-4 h-4" /> },
+                ].map((item) => (
+                  <a
+                    key={item.name}
+                    href="#"
+                    className={`flex items-center gap-3 py-2 text-sm transition-colors sidebar-item ${
+                      activeSidebarItem === item.name
+                        ? "text-white bg-[#270E00] rounded-md px-2 font-medium sidebar-item-active"
+                        : "text-[#b0b0b0] hover:text-white px-2"
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveSidebarItem(item.name);
+                      if (item.action) {
+                        item.action();
+                      }
+                      if (isMobile) {
+                        setSidebarCollapsed(true);
+                      }
+                    }}
+                    title={item.name}
+                  >
+                    <div className={`w-5 h-5 flex items-center justify-center ${
+                      activeSidebarItem === item.name ? "text-[#ED5606]" : ""
+                    }`}>
+                      {item.icon}
+                    </div>
+                    <span className="sidebar-text">{item.name}</span>
+                  </a>
+                ))}
+              </nav>
+            </div>
 
-// Insert the styles into the document head
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement("style");
-  styleSheet.textContent = hideScrollbarStyles;
-  document.head.appendChild(styleSheet);
-}
-
-function VideoCard({ title, image, theme }) {
-  return (
-    <div className="relative group cursor-pointer">
-      <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
-        <img 
-          src={image} 
-          alt={title} 
-          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-        />
-        <div className="absolute bottom-3 left-3 right-3 text-white">
-          <div className="bg-black/70 px-2 py-0.5 rounded text-[10px] text-white inline-block mb-1">
-            {theme}
+            <div className="space-y-4">
+              <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">Creators</h3>
+              <nav className="space-y-1">
+                {creators.length > 0 ? creators.slice(0, 5).map((creator) => (
+                  <a
+                    key={creator.id}
+                    href="#"
+                    className={`flex items-center gap-3 py-2 text-sm transition-colors sidebar-item ${
+                      activeSidebarItem === creator.name
+                        ? "text-white bg-[#270E00] rounded-md px-2 font-medium sidebar-item-active"
+                        : "text-[#b0b0b0] hover:text-white px-2"
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveSidebarItem(creator.name);
+                      navigate(`/creator/${creator.id}`);
+                      if (isMobile) {
+                        setSidebarCollapsed(true);
+                      }
+                    }}
+                    title={creator.name}
+                  >
+                    <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
+                      <img 
+                        src={creator.thumbnailUrl} 
+                        alt={`${creator.name} avatar`} 
+                        width={20} 
+                        height={20} 
+                        className="rounded-full" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "/user-avatar.png";
+                        }}
+                      />
+                    </div>
+                    <span className="sidebar-text">{creator.name}</span>
+                  </a>
+                )) : (
+                  <div className="text-xs text-[#777] px-2 py-1">No creators found</div>
+                )}
+                
+                {creators.length > 5 && (
+                  <a
+                    href="#"
+                    className="flex items-center gap-3 py-2 text-sm text-[#ED5606] hover:text-[#ff6a1a] px-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Show all creators
+                    }}
+                  >
+                    <span className="sidebar-text">View All Creators</span>
+                  </a>
+                )}
+              </nav>
+            </div>
           </div>
-          <h3 className="text-sm font-medium">{title}</h3>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Creator Cover Section */}
+          <div className="relative w-full h-[40vh] overflow-hidden">
+            <img 
+              src="/image 28.png" 
+              alt={`${creator.name} cover`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+            
+            {/* Creator Info Overlay */}
+            <div className="absolute bottom-8 left-8 right-8">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a]">
+                  <img 
+                    src={creator.thumbnailUrl || "/user-avatar.png"} 
+                    alt={creator.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/user-avatar.png";
+                    }}
+                  />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">{creator.name}</h1>
+                  <p className="text-sm text-gray-300">{creator.videoCount} videos</p>
+                </div>
+                
+                {!isCurrentUserProfile && (
+                  <button 
+                    className="ml-auto bg-[#ED5606] hover:bg-[#ff6a1a] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+                  >
+                    Subscribe
+                  </button>
+                )}
+                
+                {isCurrentUserProfile && (
+                  <button 
+                    className="ml-auto bg-[#222] hover:bg-[#333] px-4 py-1.5 rounded-full text-sm transition-colors"
+                    onClick={() => navigate('/create')}
+                  >
+                    Upload New Video
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Creator Videos Section */}
+          <div className="p-6 md:p-8">
+            <h2 className="text-xl font-bold mb-4">
+              {isCurrentUserProfile ? 'Your Videos' : `${creator.name}'s Videos`}
+            </h2>
+            
+            {creatorVideos.length === 0 ? (
+              <div className="p-8 text-center border border-[#333] rounded-lg bg-[#111]">
+                <h3 className="text-lg font-medium mb-2">No videos found</h3>
+                <p className="text-gray-400 mb-4">
+                  {isCurrentUserProfile 
+                    ? "You haven't uploaded any videos yet." 
+                    : `${creator.name} hasn't uploaded any videos yet.`}
+                </p>
+                
+                {isCurrentUserProfile && (
+                  <button 
+                    onClick={() => navigate('/create')}
+                    className="bg-[#ED5606] hover:bg-[#ff6a1a] px-6 py-2 rounded-full text-sm font-medium transition-colors"
+                  >
+                    Upload Your First Video
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {creatorVideos.map((video) => (
+                  <VideoCard 
+                    key={video._id} 
+                    video={video} 
+                    onClick={() => navigate(`/video/${video._id}`)} 
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

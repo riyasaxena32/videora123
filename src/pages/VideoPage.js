@@ -13,6 +13,7 @@ function VideoPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [creators, setCreators] = useState([]);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
 
@@ -107,6 +108,21 @@ function VideoPage() {
         // Set related videos (all other videos)
         setRelatedVideos(videos.filter(v => v._id !== videoId));
         
+        // Extract unique creators from videos
+        const uniqueCreators = Array.from(new Set(videos.map(v => v.uploadedBy)))
+          .filter(Boolean)
+          .map(creator => {
+            // Find the first video by this creator
+            const creatorVideo = videos.find(v => v.uploadedBy === creator);
+            return {
+              name: creator,
+              id: creator.toLowerCase().replace(/\s+/g, '-'),
+              videoCount: videos.filter(v => v.uploadedBy === creator).length,
+              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png'
+            };
+          });
+        
+        setCreators(uniqueCreators);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching video:', err);
@@ -245,7 +261,33 @@ function VideoPage() {
       <div className="flex h-[calc(100vh-60px)]">
         {/* Left Sidebar - Related Videos List */}
         <div className="w-[120px] md:w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
-          <div className="py-1">
+          <div className="p-3">
+            <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mb-2">Creators</h3>
+            {creators.map((creator) => (
+              <div 
+                key={creator.id}
+                className="flex items-center gap-2 py-2 px-2 hover:bg-[#111] rounded cursor-pointer"
+                onClick={() => navigate(`/creator/${creator.id}`)}
+              >
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                  <img 
+                    src={creator.thumbnailUrl}
+                    alt={creator.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/user-avatar.png";
+                    }}
+                  />
+                </div>
+                <div className="truncate">
+                  <p className="text-xs text-white truncate">{creator.name}</p>
+                  <p className="text-[9px] text-gray-400">{creator.videoCount} videos</p>
+                </div>
+              </div>
+            ))}
+            
+            <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mt-4 mb-2">Related Videos</h3>
             {relatedVideos.map((relVideo) => (
               <div 
                 key={relVideo._id}

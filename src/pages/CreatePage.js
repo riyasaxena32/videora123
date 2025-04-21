@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, HelpCircle, ArrowUpRight, ArrowLeft, ChevronRight, User, LogOut, Plus, Video, Users, Settings, Clock, X } from 'lucide-react';
+import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, HelpCircle, ArrowUpRight, ArrowLeft, ChevronRight, User, LogOut, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
@@ -9,12 +9,7 @@ function CreatePage() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userVideos, setUserVideos] = useState([]);
-  const [creators, setCreators] = useState([]);
-  const [loading, setLoading] = useState(false);
   const profileDropdownRef = useRef(null);
-  const sidebarRef = useRef(null);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -34,57 +29,9 @@ function CreatePage() {
     setProfileDropdownOpen(!profileDropdownOpen);
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   const handleLogout = () => {
     logout();
   };
-
-  // Fetch user videos and creators on component mount
-  useEffect(() => {
-    const fetchUserVideos = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-        
-        if (!token) {
-          console.error('No authentication token found');
-          return;
-        }
-        
-        // Fetch videos uploaded by current user
-        const response = await axios.get(
-          'https://videora-ai.onrender.com/videos/get-videos',
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
-        
-        if (response.data && Array.isArray(response.data)) {
-          // Filter to only show videos uploaded by current user
-          const userVideosList = response.data.filter(video => 
-            video.uploadedBy === user?.name || video.uploadedBy === user?.email
-          );
-          setUserVideos(userVideosList);
-          
-          // Extract unique creators from all videos
-          const uniqueCreators = [...new Set(response.data.map(video => video.uploadedBy))];
-          setCreators(uniqueCreators.filter(creator => creator)); // Remove null/undefined
-        }
-        
-      } catch (error) {
-        console.error('Error fetching videos:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserVideos();
-  }, [user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -92,20 +39,13 @@ function CreatePage() {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
         setProfileDropdownOpen(false);
       }
-      
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target) && sidebarOpen) {
-        // Only close if clicking outside when sidebar is open
-        if (!event.target.closest('[data-sidebar-toggle]')) {
-          setSidebarOpen(false);
-        }
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [sidebarOpen]);
+  }, []);
 
   // Content to display based on active tab
   const renderContent = () => {
@@ -120,38 +60,6 @@ function CreatePage() {
         return <GenerateVideoContent gradientButtonStyle={gradientButtonStyle} />;
     }
   };
-
-  // Render video card
-  const VideoCard = ({ video }) => (
-    <div className="bg-[#111] border border-[#333] rounded-md overflow-hidden">
-      <div className="aspect-video bg-black relative">
-        {video.videoUrl ? (
-          <video 
-            src={video.videoUrl} 
-            className="w-full h-full object-cover"
-            poster={video.thumbnailLogoUrl || '/thumbnail-placeholder.png'}
-          />
-        ) : (
-          <div className="w-full h-full bg-[#0a0a0a] flex items-center justify-center">
-            <Video className="w-8 h-8 text-[#444]" />
-          </div>
-        )}
-      </div>
-      <div className="p-3">
-        <h3 className="text-sm font-medium text-white truncate">{video.name || 'Untitled Video'}</h3>
-        <p className="text-xs text-[#777] mt-1 line-clamp-1">{video.description || 'No description'}</p>
-        <div className="flex justify-between items-center mt-2">
-          <div className="flex items-center gap-1 text-xs text-[#999]">
-            <Clock className="w-3 h-3" />
-            <span>{new Date(video.uploadDate).toLocaleDateString()}</span>
-          </div>
-          <div className="text-xs text-[#ED5606]">
-            {video.style || 'Default Style'}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -181,14 +89,6 @@ function CreatePage() {
         </div>
         
         <div className="flex items-center gap-4">
-          <button 
-            data-sidebar-toggle
-            onClick={toggleSidebar}
-            className="text-[#999] hover:text-white focus:outline-none transition-colors"
-          >
-            <Users className="w-5 h-5" />
-          </button>
-          
           <button 
             style={gradientButtonStyle}
             className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
@@ -236,79 +136,8 @@ function CreatePage() {
         </div>
       </header>
 
-      {/* Main Content with Sidebar */}
-      <div className="flex flex-1 relative">
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto">
-          {renderContent()}
-          
-          {/* My Videos Section */}
-          <div className="p-6 border-t border-[#222]">
-            <h2 className="text-lg font-medium mb-4">My Videos</h2>
-            
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ED5606]"></div>
-              </div>
-            ) : userVideos.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {userVideos.map((video) => (
-                  <VideoCard key={video._id} video={video} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-[#777]">
-                <Video className="w-12 h-12 mx-auto mb-4 text-[#444]" />
-                <p>You haven't uploaded any videos yet</p>
-                <p className="text-sm mt-2">Create your first video to get started</p>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Sidebar - Creators */}
-        <div 
-          ref={sidebarRef}
-          className={`fixed inset-y-0 right-0 w-64 bg-[#0A0A0A] border-l border-[#222] transition-transform transform z-10 overflow-y-auto
-            ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
-        >
-          <div className="p-4 border-b border-[#222] flex justify-between items-center">
-            <h2 className="font-medium">Video Creators</h2>
-            <button 
-              onClick={toggleSidebar}
-              className="text-[#999] hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div className="p-2">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#ED5606]"></div>
-              </div>
-            ) : creators.length > 0 ? (
-              <div className="space-y-1">
-                {creators.map((creator, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center gap-2 p-2 hover:bg-[#1a1a1a] rounded-md transition-colors cursor-pointer"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center">
-                      <User className="w-4 h-4 text-[#999]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{creator}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center py-4 text-[#777] text-sm">No creators found</p>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Main Content */}
+      {renderContent()}
     </div>
   );
 }
@@ -784,7 +613,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         <h2 className="text-sm font-medium">Pick Your Style</h2>
         <div className="border border-[#333] bg-[#111] rounded-md p-4">
           <div className="flex flex-col space-y-3">
-            <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2">
               <span className="text-sm">Select a style for your video</span>
             </div>
             <select 

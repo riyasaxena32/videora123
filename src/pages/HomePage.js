@@ -13,6 +13,7 @@ function HomePage() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [creators, setCreators] = useState([]);
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
@@ -43,7 +44,24 @@ function HomePage() {
         }
         
         const data = await response.json();
-        setVideos(data.video || []);
+        const videoData = data.video || [];
+        setVideos(videoData);
+        
+        // Extract unique creators from videos
+        const uniqueCreators = Array.from(new Set(videoData.map(v => v.uploadedBy)))
+          .filter(Boolean)
+          .map(creator => {
+            // Find the first video by this creator
+            const creatorVideo = videoData.find(v => v.uploadedBy === creator);
+            return {
+              name: creator,
+              id: creator.toLowerCase().replace(/\s+/g, '-'),
+              videoCount: videoData.filter(v => v.uploadedBy === creator).length,
+              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png'
+            };
+          });
+        
+        setCreators(uniqueCreators);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching videos:', err);
@@ -371,7 +389,11 @@ function HomePage() {
                 {[
                   { name: "Recent", icon: <Clock className="w-4 h-4" /> },
                   { name: "Shared", icon: <MessageSquareShare className="w-4 h-4" /> },
-                  { name: "Your Video", icon: <User className="w-4 h-4" /> },
+                  { 
+                    name: "Your Videos", 
+                    icon: <User className="w-4 h-4" />,
+                    action: () => navigate(`/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`)
+                  },
                   { name: "Watch Later", icon: <Clock className="w-4 h-4" /> },
                 ].map((item) => (
                   <a
@@ -385,6 +407,9 @@ function HomePage() {
                     onClick={(e) => {
                       e.preventDefault();
                       setActiveSidebarItem(item.name);
+                      if (item.action) {
+                        item.action();
+                      }
                       if (isMobile) {
                         setSidebarCollapsed(true);
                       }
@@ -440,44 +465,56 @@ function HomePage() {
             <div className="space-y-4">
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">Creators</h3>
               <nav className="space-y-1">
-                {[
-                  { name: "MrWhosTheBoss", image: "/user-avatar.png" },
-                  { name: "MKBHD", image: "/user-avatar.png" },
-                  { name: "T-SERIES", image: "/user-avatar.png" },
-                ].map((item) => (
+                {creators.length > 0 ? creators.slice(0, 5).map((creator) => (
                   <a
-                    key={item.name}
+                    key={creator.id}
                     href="#"
                     className={`flex items-center gap-3 py-2 text-sm transition-colors sidebar-item ${
-                      activeSidebarItem === item.name
+                      activeSidebarItem === creator.name
                         ? "text-white bg-[#270E00] rounded-md px-2 font-medium sidebar-item-active"
                         : "text-[#b0b0b0] hover:text-white px-2"
                     }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      setActiveSidebarItem(item.name);
+                      setActiveSidebarItem(creator.name);
+                      navigate(`/creator/${creator.id}`);
                       if (isMobile) {
                         setSidebarCollapsed(true);
                       }
                     }}
-                    title={item.name}
+                    title={creator.name}
                   >
                     <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
                       <img 
-                        src={item.image} 
-                        alt={`${item.name} avatar`} 
+                        src={creator.thumbnailUrl} 
+                        alt={`${creator.name} avatar`} 
                         width={20} 
                         height={20} 
                         className="rounded-full" 
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.style.display = 'none';
+                          e.target.src = "/user-avatar.png";
                         }}
                       />
                     </div>
-                    <span className="sidebar-text">{item.name}</span>
+                    <span className="sidebar-text">{creator.name}</span>
                   </a>
-                ))}
+                )) : (
+                  <div className="text-xs text-[#777] px-2 py-1">No creators found</div>
+                )}
+                
+                {creators.length > 5 && (
+                  <a
+                    href="#"
+                    className="flex items-center gap-3 py-2 text-sm text-[#ED5606] hover:text-[#ff6a1a] px-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Show all creators
+                    }}
+                  >
+                    <span className="sidebar-text">View All Creators</span>
+                  </a>
+                )}
               </nav>
             </div>
 
