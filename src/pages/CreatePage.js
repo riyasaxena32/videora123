@@ -160,6 +160,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const [selectedStyle, setSelectedStyle] = useState('cartoon');
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [uploadResponse, setUploadResponse] = useState(null);
@@ -196,6 +197,20 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file type
+      const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
+      if (!validTypes.includes(file.type)) {
+        setErrorMessage(`Invalid file type. Please upload a valid video format (${validTypes.join(', ')})`);
+        return;
+      }
+      
+      // Check file size (limit to 100MB)
+      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+      if (file.size > maxSize) {
+        setErrorMessage(`File too large. Maximum size is 100MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+        return;
+      }
+      
       setVideoFile(file);
       setErrorMessage('');
       
@@ -244,12 +259,13 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     
     try {
       setUploading(true);
+      setUploadProgress(0);
       setErrorMessage('');
       
-      const token = user?.tokenType === 'jwt' ? 
-        localStorage.getItem('access_token') : 
-        localStorage.getItem('token');
+      // Get the token from local storage - use exact format from curl
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       
+      console.log('Token found:', !!token); // Log if token exists
       if (!token) {
         throw new Error('Authentication token not found. Please log in again.');
       }
@@ -258,74 +274,108 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       // Create FormData object for multipart/form-data upload
       const formData = new FormData();
+      
+      // Append values in the exact same order as the curl request
       formData.append('video', videoFile);
       formData.append('style', selectedStyle);
-      formData.append('prompt', creativePrompt || 'No description provided');
-      formData.append('caption', caption || videoData.name || 'Untitled Video');
+      formData.append('prompt', creativePrompt || '');
+      formData.append('caption', caption || videoData.name || '');
       
-      console.log('Upload payload:', {
-        video: videoFile?.name,
-        style: selectedStyle,
-        prompt: creativePrompt || 'No description provided',
-        caption: caption || videoData.name || 'Untitled Video'
-      });
-      
-      // Use the correct API endpoint and FormData approach from the curl command
-      const response = await axios.post(
-        'https://videora-ai.onrender.com/videos/upload-videos', 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${token}`
-          }
+      // Debug logging for FormData
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        if (key === 'video') {
+          console.log('video file details:', {
+            name: videoFile.name,
+            type: videoFile.type,
+            size: videoFile.size
+          });
+        } else {
+          console.log(`${key}: ${value}`);
         }
-      );
-      
-      console.log('Upload response:', response.data);
-      // Store the full response data
-      setUploadResponse(response.data);
-      
-      // Update videoData with the response URL
-      if (response.data && response.data.videoUrl) {
-        setVideoData(prevData => ({
-          ...prevData,
-          videoUrl: response.data.videoUrl
-        }));
       }
       
-      setUploadSuccess(true);
-      setErrorMessage('');
+      // Try using fetch instead of axios as an alternative
+      const fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // Don't set Content-Type here, the browser will set it with the correct boundary
+        },
+        body: formData,
+        mode: 'cors',
+        credentials: 'omit'
+      };
       
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setUploadSuccess(false);
-      }, 5000);
+      // Track upload progress with XMLHttpRequest if needed
+      const xhr = new XMLHttpRequest();
+      const url = 'https://videora-ai.onrender.com/videos/upload-videos';
+      
+      // Set up progress tracking
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentCompleted = Math.round((event.loaded * 100) / event.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+          setUploadProgress(percentCompleted);
+        }
+      };
+      
+      // Set up completion handlers
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const responseData = JSON.parse(xhr.responseText);
+          console.log('Upload response:', responseData);
+          
+          // Store the full response data
+          setUploadResponse(responseData);
+          
+          // Update videoData with the response URL
+          if (responseData && responseData.videoUrl) {
+            setVideoData(prevData => ({
+              ...prevData,
+              videoUrl: responseData.videoUrl
+            }));
+          }
+          
+          setUploadSuccess(true);
+          setErrorMessage('');
+          setUploading(false);
+          
+          // Reset success message after 5 seconds
+          setTimeout(() => {
+            setUploadSuccess(false);
+          }, 5000);
+        } else {
+          console.error('Upload failed with status:', xhr.status);
+          setErrorMessage(`Server error (${xhr.status}): ${xhr.responseText || 'Unknown error'}`);
+          setUploading(false);
+        }
+      };
+      
+      xhr.onerror = () => {
+        console.error('XHR error occurred during upload');
+        setErrorMessage('Network error occurred. This may be due to CORS restrictions. Please try again or contact support.');
+        setUploading(false);
+      };
+      
+      xhr.timeout = 300000; // 5 minutes timeout
+      xhr.ontimeout = () => {
+        setErrorMessage('Upload timed out. Please try with a smaller file or check your connection.');
+        setUploading(false);
+      };
+      
+      // Open the request and send the form data
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.send(formData);
+      
+      // Note: We don't need to set the response or success states here
+      // as they will be set in the xhr.onload handler above
+      // We're also not setting uploading to false here, as that will be done in the handlers
       
     } catch (error) {
-      console.error('Error uploading to API:', error);
-      let errorMessage = 'Failed to upload video. Please try again.';
-      
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Error response data:', error.response.data);
-        console.error('Error response status:', error.response.status);
-        console.error('Error response headers:', error.response.headers);
-        
-        errorMessage = `Server error (${error.response.status}): ${error.response.data?.message || error.message}`;
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('Error request:', error.request);
-        errorMessage = 'No response from server. Please check your network connection.';
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error message:', error.message);
-        errorMessage = error.message;
-      }
-      
-      setErrorMessage(errorMessage);
-    } finally {
+      console.error('Error setting up upload:', error);
+      setErrorMessage(`Error preparing upload: ${error.message}`);
       setUploading(false);
     }
   };
@@ -498,6 +548,22 @@ For example, 'Make it look like a sunny day at the beach.'"
           </div>
         )}
         
+        {/* Upload progress */}
+        {uploading && (
+          <div className="mt-4 p-3 bg-[#1A1A1A] border border-[#333] rounded-md">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-[#999]">Uploading video...</span>
+              <span className="text-[#ED5606]">{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-[#333] h-1.5 rounded-full overflow-hidden">
+              <div
+                className="bg-[#ED5606] h-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+        
         {/* Success message */}
         {uploadSuccess && !errorMessage && (
           <div className="mt-4 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
@@ -526,7 +592,7 @@ For example, 'Make it look like a sunny day at the beach.'"
             {uploading ? (
               <>
                 <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
-                Processing...
+                Uploading {uploadProgress > 0 ? `(${uploadProgress}%)` : '...'}
               </>
             ) : (
               <>
