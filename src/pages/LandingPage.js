@@ -186,12 +186,13 @@ const LandingPage = () => {
           />
 
           {/* Bottom row */}
+          <div className="bg-black"></div>
           <StyleTile 
             name="Custom" 
             imageSrc="/style-custom.png" 
             large={false} 
-            wide={true}
           />
+          <div className="bg-black"></div>
 
           {/* Corner dots - larger and positioned outside the grid */}
           <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
