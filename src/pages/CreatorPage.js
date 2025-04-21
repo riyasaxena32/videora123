@@ -147,7 +147,7 @@ function CreatorPage() {
         const data = await response.json();
         const videos = data.video || [];
         setAllVideos(videos);
-        
+      
         // Extract unique creators from videos
         const uniqueCreators = Array.from(new Set(videos.map(v => v.uploadedBy)))
           .filter(Boolean)
@@ -163,7 +163,7 @@ function CreatorPage() {
           });
         
         setCreators(uniqueCreators);
-        
+      
         // Find the creator based on the URL parameter
         const normalizedCreatorId = creatorId.toLowerCase();
         const foundCreator = uniqueCreators.find(c => 
@@ -352,27 +352,6 @@ function CreatorPage() {
           } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile`}
         >
           <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
-            {/* User Profile Section */}
-            <div className="flex flex-col items-center pb-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ED5606] mb-2">
-                <img
-                  src={user?.profilePic || "/user-avatar.png"}
-                  alt={user?.name || "Your Profile"}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/user-avatar.png";
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
-                <p className="text-xs text-[#777]">
-                  {allVideos.filter(v => v.uploadedBy && v.uploadedBy.toLowerCase() === (user?.name || '').toLowerCase()).length} videos
-                </p>
-              </div>
-            </div>
-            
             <div className="space-y-4">
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
               <nav className="space-y-1">
@@ -479,17 +458,17 @@ function CreatorPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Creator Cover Section */}
           <div className="relative w-full h-[40vh] overflow-hidden">
-            <img 
-              src="/image 28.png" 
-              alt={`${creator.name} cover`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-            
+        <img 
+          src="/image 28.png" 
+          alt={`${creator.name} cover`}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+        
             {/* Creator Info Overlay */}
             <div className="absolute bottom-8 left-8 right-8">
-              <div className="flex items-center gap-6">
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[#ED5606] bg-[#1a1a1a] shadow-lg">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a]">
                   <img 
                     src={creator.thumbnailUrl || "/user-avatar.png"} 
                     alt={creator.name}
@@ -499,46 +478,38 @@ function CreatorPage() {
                       e.target.src = "/user-avatar.png";
                     }}
                   />
-                </div>
+            </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold mb-1">{creator.name}</h1>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-300">{creator.videoCount} videos</p>
-                    {creator.subscribers && (
-                      <>
-                        <span className="text-gray-500">•</span>
-                        <p className="text-sm text-gray-300">{creator.subscribers} subscribers</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
+                  <h1 className="text-2xl md:text-3xl font-bold">{creator.name}</h1>
+                  <p className="text-sm text-gray-300">{creator.videoCount} videos</p>
+          </div>
+          
                 {!isCurrentUserProfile && (
                   <button 
                     className="ml-auto bg-[#ED5606] hover:bg-[#ff6a1a] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
                   >
                     Subscribe
-                  </button>
+            </button>
                 )}
                 
                 {isCurrentUserProfile && (
-                  <button 
+              <button 
                     className="ml-auto bg-[#222] hover:bg-[#333] px-4 py-1.5 rounded-full text-sm transition-colors"
                     onClick={() => navigate('/create')}
                   >
                     Upload New Video
-                  </button>
+              </button>
                 )}
               </div>
             </div>
           </div>
           
           {/* Creator Videos Section */}
-          <div className="p-6 md:p-8 bg-[#0A0A0A]">
+          <div className="p-6 md:p-8">
             <h2 className="text-xl font-bold mb-4">
               {isCurrentUserProfile ? 'Your Videos' : `${creator.name}'s Videos`}
             </h2>
-            
+        
             {creatorVideos.length === 0 ? (
               <div className="p-8 text-center border border-[#333] rounded-lg bg-[#111]">
                 <h3 className="text-lg font-medium mb-2">No videos found</h3>
@@ -549,50 +520,24 @@ function CreatorPage() {
                 </p>
                 
                 {isCurrentUserProfile && (
-                  <button 
+              <button 
                     onClick={() => navigate('/create')}
                     className="bg-[#ED5606] hover:bg-[#ff6a1a] px-6 py-2 rounded-full text-sm font-medium transition-colors"
                   >
                     Upload Your First Video
-                  </button>
+              </button>
                 )}
-              </div>
+            </div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {creatorVideos.map((video) => (
-                    <VideoCard 
-                      key={video._id} 
-                      video={video} 
-                      onClick={() => navigate(`/video/${video._id}`)} 
-                    />
-                  ))}
-                </div>
-                
-                {creatorVideos.length > 0 && (
-                  <div className="mt-8 pt-8 border-t border-[#222] text-center">
-                    <p className="text-gray-400 mb-2">
-                      {isCurrentUserProfile 
-                        ? "Want to create more amazing videos?" 
-                        : `Want to see more content from ${creator.name}?`}
-                    </p>
-                    {isCurrentUserProfile ? (
-                      <button 
-                        onClick={() => navigate('/create')}
-                        className="bg-[#ED5606] hover:bg-[#ff6a1a] px-6 py-2 rounded-full text-sm font-medium transition-colors"
-                      >
-                        Create New Video
-                      </button>
-                    ) : (
-                      <button 
-                        className="bg-[#ED5606] hover:bg-[#ff6a1a] px-6 py-2 rounded-full text-sm font-medium transition-colors"
-                      >
-                        Subscribe
-                      </button>
-                    )}
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {creatorVideos.map((video) => (
+                  <VideoCard 
+                    key={video._id} 
+                    video={video} 
+                    onClick={() => navigate(`/video/${video._id}`)} 
+                  />
+              ))}
+            </div>
             )}
           </div>
         </div>

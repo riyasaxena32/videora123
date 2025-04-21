@@ -383,27 +383,6 @@ function HomePage() {
           } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile`}
         >
           <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
-            {/* User Profile Section */}
-            <div className="flex flex-col items-center pb-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ED5606] mb-2">
-                <img
-                  src={user?.profilePic || "/user-avatar.png"}
-                  alt={user?.name || "Your Profile"}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/user-avatar.png";
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
-                <p className="text-xs text-[#777]">
-                  {videos.filter(v => v.uploadedBy && v.uploadedBy.toLowerCase() === (user?.name || '').toLowerCase()).length} videos
-                </p>
-              </div>
-            </div>
-            
             <div className="space-y-4">
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
               <nav className="space-y-1">

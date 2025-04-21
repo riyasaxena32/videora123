@@ -14,7 +14,10 @@ function VideoPage() {
   const [activeTab, setActiveTab] = useState('chat');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [creators, setCreators] = useState([]);
+  const [audioPlaying, setAudioPlaying] = useState(false);
   const profileDropdownRef = useRef(null);
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
   const { logout, user } = useAuth();
 
   // Custom button styles
@@ -135,6 +138,55 @@ function VideoPage() {
       fetchVideo();
     }
   }, [videoId]);
+
+  // Handle synchronized audio-video playback
+  useEffect(() => {
+    if (video && video.voiceURL && videoRef.current && audioRef.current) {
+      // Sync video with audio
+      const videoElement = videoRef.current;
+      const audioElement = audioRef.current;
+
+      const handleVideoPlay = () => {
+        if (audioElement.paused) {
+          audioElement.play()
+            .then(() => setAudioPlaying(true))
+            .catch(err => console.error('Error playing audio:', err));
+        }
+      };
+
+      const handleVideoPause = () => {
+        if (!audioElement.paused) {
+          audioElement.pause();
+          setAudioPlaying(false);
+        }
+      };
+
+      const handleVideoTimeUpdate = () => {
+        // Keep audio in sync with video
+        if (Math.abs(audioElement.currentTime - videoElement.currentTime) > 0.5) {
+          audioElement.currentTime = videoElement.currentTime;
+        }
+      };
+
+      const handleAudioEnd = () => {
+        setAudioPlaying(false);
+      };
+
+      // Add event listeners
+      videoElement.addEventListener('play', handleVideoPlay);
+      videoElement.addEventListener('pause', handleVideoPause);
+      videoElement.addEventListener('timeupdate', handleVideoTimeUpdate);
+      audioElement.addEventListener('ended', handleAudioEnd);
+
+      // Clean up
+      return () => {
+        videoElement.removeEventListener('play', handleVideoPlay);
+        videoElement.removeEventListener('pause', handleVideoPause);
+        videoElement.removeEventListener('timeupdate', handleVideoTimeUpdate);
+        audioElement.removeEventListener('ended', handleAudioEnd);
+      };
+    }
+  }, [video]);
 
   if (loading) {
     return (
@@ -262,30 +314,6 @@ function VideoPage() {
         {/* Left Sidebar - Related Videos List */}
         <div className="w-[120px] md:w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
           <div className="p-3">
-            {/* User Profile Section */}
-            <div className="flex flex-col items-center pb-4 pt-2 mb-4 border-b border-[#333]">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ED5606] mb-2">
-                <img
-                  src={user?.profilePic || "/user-avatar.png"}
-                  alt={user?.name || "Your Profile"}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/user-avatar.png";
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
-                <button 
-                  className="text-xs text-[#ED5606] hover:text-[#ff6a1a] mt-1"
-                  onClick={() => navigate(`/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`)}
-                >
-                  View Your Videos
-                </button>
-              </div>
-            </div>
-            
             <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mb-2">Creators</h3>
             {creators.map((creator) => (
               <div 
@@ -347,9 +375,10 @@ function VideoPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Video Player */}
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
-            {video.videoUrl ? (
+            {video.videoURL || video.videoUrl ? (
               <video
-                src={video.videoUrl}
+                ref={videoRef}
+                src={video.videoURL || video.videoUrl}
                 poster={video.thumbnailLogoUrl || "/image 28.png"}
                 controls
                 className="w-full h-full object-contain"
@@ -367,9 +396,24 @@ function VideoPage() {
                 }}
               />
             )}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {/* Add play button overlay if needed */}
-            </div>
+            
+            {/* Hidden audio element for voice narration */}
+            {video.voiceURL && (
+              <audio 
+                ref={audioRef} 
+                src={video.voiceURL} 
+                preload="auto" 
+                className="hidden"
+              />
+            )}
+            
+            {/* Audio indicator when voice narration is playing */}
+            {video.voiceURL && audioPlaying && (
+              <div className="absolute top-4 right-4 bg-black/70 px-3 py-1 rounded-full text-white text-xs flex items-center">
+                <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                Voice Narration
+              </div>
+            )}
           </div>
 
           {/* Video Info */}
@@ -382,11 +426,17 @@ function VideoPage() {
             {/* Video Title */}
             <div className="mb-4">
               <h1 className="text-xl font-bold flex items-center gap-2 mb-1">
-                {video.name} 
+                {video.name || video.caption || 'Untitled Video'} 
                 {video.category && (
                   <>
                     <span className="text-xs font-normal">•</span> 
                     <span className="text-sm font-normal">{video.category}</span>
+                  </>
+                )}
+                {video.style && (
+                  <>
+                    <span className="text-xs font-normal">•</span> 
+                    <span className="text-sm font-normal text-[#ED5606]">{video.style}</span>
                   </>
                 )}
               </h1>
@@ -445,8 +495,18 @@ function VideoPage() {
             {/* Video Description */}
             <div className="mb-6 bg-[#101010] p-3 rounded-lg">
               <p className="text-sm text-gray-300 mb-2">
-                {video.description || 'No description provided.'}
+                {video.description || video.prompt || 'No description provided.'}
               </p>
+              {video.voiceURL && (
+                <div className="mt-3 border-t border-[#222] pt-3">
+                  <h4 className="text-xs font-medium text-gray-300 mb-2">Voice Narration</h4>
+                  <audio 
+                    src={video.voiceURL} 
+                    controls 
+                    className="w-full h-8" 
+                  />
+                </div>
+              )}
               {video.tags && video.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {video.tags.map((tag, index) => (
