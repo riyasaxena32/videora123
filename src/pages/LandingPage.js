@@ -147,17 +147,76 @@ const LandingPage = () => {
       </section>
 
       {/* Infinite Styles Section */}
-      <section className="py-20 px-6 bg-[#0A0500]">
-        <h2 className="text-3xl font-bold mb-16 max-w-7xl mx-auto">Infinite Styles, Endless Creativity</h2>
+      <section className="py-20 px-6 bg-black">
+        <h2 className="text-3xl font-bold mb-10 max-w-7xl mx-auto text-[#E5B992]">Infinite Styles, Endless Creativity</h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-7xl mx-auto">
-          {/* Style tiles */}
-          <StyleTile name="Animated" imageSrc="/style-animated.png" />
-          <StyleTile name="Retro" imageSrc="/style-retro.png" />
-          <StyleTile name="Cinematic" imageSrc="/style-cinematic.png" />
-          <StyleTile name="Surreal" imageSrc="/style-surreal.png" />
-          <StyleTile name="Cyberpunk" imageSrc="/style-cyberpunk.png" />
-          <StyleTile name="Custom" imageSrc="/style-custom.png" />
+        <div className="grid grid-cols-3 max-w-7xl mx-auto relative border border-[#3D2D19]">
+          {/* Row 1 */}
+          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
+            <img src="/animated.jpg" alt="Animated" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Animated</div>
+          </div>
+          
+          {/* Center info block */}
+          <div className="relative aspect-square border border-[#3D2D19] bg-black flex items-center justify-center p-6">
+            <p className="text-sm text-gray-400 text-center">
+              Customize the look and feel of your videos with AI-powered styles.
+            </p>
+          </div>
+          
+          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
+            <img src="/retro.jpg" alt="Retro" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Retro</div>
+          </div>
+          
+          {/* Row 2 */}
+          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
+            <img src="/cinematic.jpg" alt="Cinematic" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Cinematic</div>
+          </div>
+          
+          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
+            <img src="/sketch.jpg" alt="Sketch" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Sketch</div>
+          </div>
+          
+          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
+            <img src="/cyberpunk.jpg" alt="Cyberpunk" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Cyberpunk</div>
+          </div>
+          
+          {/* Row 3 */}
+          <div className="relative aspect-square border border-[#3D2D19] opacity-0">
+            {/* Empty space */}
+          </div>
+          
+          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
+            <img src="/custom.jpg" alt="Custom" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Custom</div>
+          </div>
+          
+          <div className="relative aspect-square border border-[#3D2D19] opacity-0">
+            {/* Empty space */}
+          </div>
+          
+          {/* Corner dots */}
+          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] top-0 left-0 transform -translate-x-1 -translate-y-1"></div>
+          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] top-0 right-0 transform translate-x-1 -translate-y-1"></div>
+          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] bottom-0 left-0 transform -translate-x-1 translate-y-1"></div>
+          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] bottom-0 right-0 transform translate-x-1 translate-y-1"></div>
+          
+          {/* Carousel indicator */}
+          <div className="absolute bottom-[-24px] left-1/2 transform -translate-x-1/2 flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#ED5606]"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-700"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-700"></div>
+          </div>
         </div>
       </section>
 
