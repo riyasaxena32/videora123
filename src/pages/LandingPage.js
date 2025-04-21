@@ -211,8 +211,8 @@ const LandingPage = () => {
             alt=""
             className="w-full h-full object-cover opacity-90"
           />
-          {/* Subtle dark overlay with highlight color */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#270E00] to-black opacity-80"></div>
+          {/* Subtle dark overlay to improve text readability */}
+          <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto">
@@ -241,26 +241,39 @@ const LandingPage = () => {
       </section>
 
       {/* Discover Content Section */}
-      <section className="py-20 px-6 flex flex-col md:flex-row-reverse max-w-7xl mx-auto">
-        <div className="md:w-1/2 mb-10 md:mb-0 md:pl-10">
-          <h2 className="text-3xl font-bold mb-4">Discover & Watch AI-Created Content</h2>
-          <p className="text-gray-400 mb-6">Explore a library of AI-generated videos from the community.</p>
-          
-          <Link 
-            to="/videos"
-            className="inline-block px-5 py-2 border border-[#6B2E0A] bg-[#270E00] rounded-md text-sm text-white hover:bg-[#3A1500] transition-colors"
-          >
-            Stream Now
-          </Link>
+      <section className="py-20 px-6 relative">
+        {/* Background pattern */}
+        <div className="absolute inset-0 overflow-hidden z-0">
+          <img 
+            src="/Group 193 (1).png" 
+            alt=""
+            className="w-full h-full object-cover opacity-90"
+          />
+          {/* Subtle dark overlay to improve text readability */}
+          <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
-        <div className="md:w-1/2">
-          <div className="bg-[#111] rounded-lg overflow-hidden shadow-lg border border-[#333]">
-            <img 
-              src="/discover-content.png" 
-              alt="Video Player Interface" 
-              className="w-full"
-            />
+        <div className="relative z-10 flex flex-col md:flex-row-reverse max-w-7xl mx-auto">
+          <div className="md:w-[45%] mb-10 md:mb-0 md:pl-10 pt-8">
+            <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Discover & Watch AI-Created Content</h2>
+            <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
+            
+            <Link 
+              to="/videos"
+              className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+            >
+              Stream Now
+            </Link>
+          </div>
+          
+          <div className="md:w-[55%]">
+            <div className="rounded-lg overflow-hidden shadow-lg">
+              <img 
+                src="/91605 1.png" 
+                alt="Video Player Interface" 
+                className="w-full h-auto"
+              />
+            </div>
           </div>
         </div>
       </section>
