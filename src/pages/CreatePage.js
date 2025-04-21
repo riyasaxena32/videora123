@@ -160,25 +160,20 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [cloudinaryUrl, setCloudinaryUrl] = useState('');
-  const [selectedStyle, setSelectedStyle] = useState('normal');
   const { user } = useAuth();
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
-  
-  // Add a ref to clean up object URLs
-  const createdObjectUrls = useRef([]);
 
   const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setVideoFile(file);
+      setUploading(true);
       setErrorMessage('');
       
       try {
         // Create temporary URL for the video
         const videoURL = URL.createObjectURL(file);
-        createdObjectUrls.current.push(videoURL); // Track URL for cleanup
         
         // Load video to get duration
         const videoElement = document.createElement('video');
@@ -195,54 +190,25 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         const durationInSeconds = Math.floor(videoElement.duration);
         
         // Update state with video info
-        setVideoData(prevData => ({
-          ...prevData,
+        setVideoData({
+          ...videoData,
           duration: durationInSeconds,
           videoUrl: videoURL, // Temporary URL for preview
           name: file.name.split('.')[0] // Use filename as the video name
-        }));
+        });
+        
+        // Call the upload API
+        await uploadVideoToAPI(videoURL, durationInSeconds, file.name.split('.')[0]);
       } catch (error) {
         console.error('Error processing video:', error);
         setErrorMessage('Failed to process video. Please try again.');
+        setUploading(false);
       }
     }
   };
 
-  // Function to upload to video player API and get Cloudinary URL
-  const uploadToVideoPlayer = async (videoUrl) => {
-    try {
-      console.log('Uploading to video player API...');
-      
-      const payload = {
-        videoUrl: videoUrl,
-        style: selectedStyle,
-        prompt: creativePrompt,
-        caption: videoData.name,
-        voiceURL: "https://example.com/voice.mp3" // Placeholder for voice URL
-      };
-      
-      console.log('Video player payload:', payload);
-      
-      const response = await axios.get('https://videora-ai.onrender.com/videoplayer/paly-video', {
-        data: payload
-      });
-      
-      console.log('Video player response:', response.data);
-      
-      if (response.data.cloudinaryUrl) {
-        setCloudinaryUrl(response.data.cloudinaryUrl);
-        return response.data.cloudinaryUrl;
-      } else {
-        throw new Error('No Cloudinary URL in response');
-      }
-    } catch (error) {
-      console.error('Error uploading to video player:', error);
-      throw error;
-    }
-  };
-
-  // Function to upload to video database API
-  const uploadVideoToAPI = async (cloudinaryUrl) => {
+  // Separate function to upload to API
+  const uploadVideoToAPI = async (videoURL, duration, name) => {
     try {
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
@@ -252,16 +218,16 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      console.log('Uploading video metadata to API...');
+      console.log('Uploading video to API...');
       
       const payload = {
-        name: videoData.name || 'Untitled Video',
+        name: name || 'Untitled Video',
         description: creativePrompt || 'No description provided',
         category: 'Education',
-        tags: ['ai-generated', selectedStyle],
-        thumbnailLogoUrl: thumbnailFile ? URL.createObjectURL(thumbnailFile) : '',
-        videoUrl: cloudinaryUrl, // Use Cloudinary URL instead of temporary URL
-        duration: videoData.duration,
+        tags: ['ai-generated'],
+        thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
+        videoUrl: videoURL,
+        duration: duration,
         uploadedBy: user?.name || 'Anonymous',
         views: 0,
         likes: 0,
@@ -272,6 +238,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       console.log('Upload payload:', payload);
       
+      // Use the correct API endpoint from the curl command
       const response = await axios.post(
         'https://videora-ai.onrender.com/videos/upload-videos', 
         payload,
@@ -296,18 +263,19 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       let errorMessage = 'Failed to upload video. Please try again.';
       
       if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
         console.error('Error response data:', error.response.data);
         console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
         
-        if (error.response.status === 401) {
-          errorMessage = 'Authentication failed. Please log in again.';
-        } else {
-          errorMessage = `Server error (${error.response.status}): ${error.response.data?.message || error.message}`;
-        }
+        errorMessage = `Server error (${error.response.status}): ${error.response.data?.message || error.message}`;
       } else if (error.request) {
+        // The request was made but no response was received
         console.error('Error request:', error.request);
         errorMessage = 'No response from server. Please check your network connection.';
       } else {
+        // Something happened in setting up the request that triggered an Error
         console.error('Error message:', error.message);
         errorMessage = error.message;
       }
@@ -318,15 +286,8 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     }
   };
 
-  // Clean up object URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      createdObjectUrls.current.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, []);
-
-  // Update handlePromptChange to only update the prompt state
-  const handlePromptChange = (e) => {
+  // Update handlePromptChange to also trigger API update with new description
+  const handlePromptChange = async (e) => {
     const newPrompt = e.target.value;
     setCreativePrompt(newPrompt);
     
@@ -335,9 +296,18 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       ...prevData,
       description: newPrompt
     }));
+    
+    // If we already have a video uploaded, update its description
+    if (videoFile && videoData.videoUrl) {
+      try {
+        await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+      } catch (error) {
+        console.error('Error updating video description:', error);
+      }
+    }
   };
 
-  // Handle upload
+  // Keep the handleUpload function, but now it'll be used for retrying uploads
   const handleUpload = async () => {
     if (!videoFile) {
       setErrorMessage('Please upload a video first');
@@ -347,12 +317,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     try {
       setUploading(true);
       setErrorMessage('');
-      
-      // First, upload to video player API to get Cloudinary URL
-      const cloudinaryUrl = await uploadToVideoPlayer(videoData.videoUrl);
-      
-      // Then upload video metadata to the main API
-      await uploadVideoToAPI(cloudinaryUrl);
+      await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
     } catch (error) {
       setErrorMessage('Failed to upload video. Please try again.');
     }
@@ -429,16 +394,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
             <ChevronDown className="w-4 h-4" />
             <span className="text-sm">Select a vibe that matches your version</span>
           </div>
-          <select 
-            className="w-full bg-[#191919] border border-[#333] rounded px-3 py-2 text-sm text-white mt-2"
-            value={selectedStyle}
-            onChange={(e) => setSelectedStyle(e.target.value)}
-          >
-            <option value="normal">Normal</option>
-            <option value="cartoon">Cartoon</option>
-            <option value="anime">Anime</option>
-            <option value="cinematic">Cinematic</option>
-          </select>
+          <p className="text-xs text-[#777] pl-4">Lorem ipsum description text</p>
         </div>
         
         <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
@@ -490,13 +446,6 @@ For example, 'Make it look like a sunny day at the beach.'"
         {uploadSuccess && (
           <div className="mt-4 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
             Video uploaded successfully!
-            {cloudinaryUrl && (
-              <p className="text-xs mt-1">
-                Cloudinary URL: <a href={cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:underline">
-                  {cloudinaryUrl.substring(0, 50)}...
-                </a>
-              </p>
-            )}
           </div>
         )}
         
@@ -506,7 +455,7 @@ For example, 'Make it look like a sunny day at the beach.'"
             onClick={handleUpload}
             disabled={uploading || !videoFile}
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
           >
             {uploading ? (
               <>
@@ -673,5 +622,4 @@ function VideoNarrationContent({ gradientButtonStyle }) {
   );
 }
 
-export default CreatePage;
-
+export default CreatePage; 
