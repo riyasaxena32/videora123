@@ -109,16 +109,8 @@ const LandingPage = () => {
           </div>
           
           {/* Video Streaming Card */}
-          <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors relative">
-            <div className="absolute inset-0 z-0">
-              <img 
-                src="/Group 192 (1).png" 
-                alt=""
-                className="w-full h-full object-cover opacity-50"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-            </div>
-            <div className="p-6 relative z-10">
+          <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors">
+            <div className="p-6">
               <div className="flex justify-center mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Studio</span>
               </div>
@@ -155,34 +147,65 @@ const LandingPage = () => {
       </section>
 
       {/* Infinite Styles Section */}
-      <section className="bg-black text-white py-24 relative overflow-hidden">
-        <div className="absolute left-2 top-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
-        <div className="absolute right-2 top-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
-        <div className="absolute left-2 bottom-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
-        <div className="absolute right-2 bottom-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#E5B992]"></div>
+      <section className="py-16 px-6 bg-black">
+        <h2 className="text-3xl font-bold mb-10 max-w-7xl mx-auto text-[#E5B992]">Infinite Styles, Endless Creativity</h2>
         
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 text-[#E5B992]">Infinite Styles</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-1 max-w-4xl mx-auto">
-            {/* Row 1 */}
-            <StyleTile name="Animated" imageSrc="/styles/animated.webp" />
-            <div className="aspect-square border border-[#333333] flex items-center justify-center p-6 text-center text-sm">
-              <p>Generate videos in a wide range of styles - from animated to realistic</p>
-            </div>
-            <StyleTile name="Retro" imageSrc="/styles/retro.webp" />
-            
-            {/* Row 2 */}
-            <StyleTile name="Cinematic" imageSrc="/styles/cinematic.webp" />
-            <StyleTile name="Sketch" imageSrc="/styles/sketch.webp" />
-            <StyleTile name="Cyberpunk" imageSrc="/styles/cyberpunk.webp" />
-            
-            {/* Row 3 */}
-            <div className="aspect-square border border-[#333333]"></div>
-            <div className="aspect-square border border-[#333333]"></div>
-            <StyleTile name="Custom" imageSrc="/styles/custom.webp" />
+        <div className="grid grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
+          {/* Left column */}
+          <div className="col-span-1 space-y-[2px]">
+            <StyleTile 
+              name="Animated" 
+              imageSrc="/style-animated.png" 
+              large={true} 
+            />
+            <StyleTile 
+              name="Cinematic" 
+              imageSrc="/style-cinematic.png" 
+              large={false} 
+            />
           </div>
+
+          {/* Middle column */}
+          <div className="col-span-1 space-y-[2px] flex flex-col">
+            <div className="h-full flex bg-black items-center justify-center p-6 text-center text-xs text-gray-400">
+              <p>Customize the look and feel of your videos with AI-powered styles.</p>
+            </div>
+            <StyleTile 
+              name="Sketch" 
+              imageSrc="/style-sketch.png" 
+              large={false} 
+            />
+          </div>
+
+          {/* Right column */}
+          <div className="col-span-1 space-y-[2px]">
+            <StyleTile 
+              name="Retro" 
+              imageSrc="/style-retro.png" 
+              large={false} 
+            />
+            <StyleTile 
+              name="Cyberpunk" 
+              imageSrc="/style-cyberpunk.png" 
+              large={false} 
+            />
+          </div>
+
+          {/* Bottom row - spans all columns */}
+          <div className="col-span-3">
+            <StyleTile 
+              name="Custom" 
+              imageSrc="/style-custom.png" 
+              large={false} 
+              wide={true}
+            />
+          </div>
+
+          {/* Corner dots */}
+          <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#5A4837] rounded-full"></div>
+          <div className="absolute right-0 top-0 w-2 h-2 translate-x-1 -translate-y-1 bg-[#5A4837] rounded-full"></div>
+          <div className="absolute left-0 bottom-0 w-2 h-2 -translate-x-1 translate-y-1 bg-[#5A4837] rounded-full"></div>
+          <div className="absolute right-0 bottom-0 w-2 h-2 translate-x-1 translate-y-1 bg-[#5A4837] rounded-full"></div>
         </div>
       </section>
 
@@ -309,12 +332,26 @@ const LandingPage = () => {
 };
 
 // Style Tile Component
-const StyleTile = ({ name, imageSrc }) => {
+const StyleTile = ({ name, imageSrc, large, wide }) => {
+  // Determine the appropriate CSS classes based on props
+  const tileClassNames = `
+    relative overflow-hidden group rounded-lg border border-[#333]
+    ${large ? 'aspect-[1.5/1]' : 'aspect-square'} 
+    ${wide ? 'col-span-3' : ''}
+    transition-all duration-300 hover:border-[#E5B992] hover:shadow-[0_0_15px_rgba(229,185,146,0.3)]
+  `;
+
   return (
-    <div className="aspect-square relative border border-[#333333] overflow-hidden">
-      <img src={imageSrc} alt={name} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
-      <div className="absolute bottom-2 left-0 right-0 text-center text-sm font-medium">{name}</div>
+    <div className={tileClassNames}>
+      {/* Corner dots */}
+      <div className="absolute top-2 left-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute top-2 right-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute bottom-2 left-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute bottom-2 right-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
+      
+      <img src={imageSrc} alt={name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+      <div className="absolute bottom-4 left-4 text-white font-medium">{name}</div>
     </div>
   );
 };
