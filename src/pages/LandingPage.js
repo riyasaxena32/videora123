@@ -138,17 +138,58 @@ const LandingPage = () => {
       </section>
 
       {/* Infinite Styles Section */}
-      <section className="py-20 px-6 bg-[#0A0500]">
-        <h2 className="text-3xl font-bold mb-16 max-w-7xl mx-auto">Infinite Styles, Endless Creativity</h2>
+      <section className="py-16 px-6 bg-black">
+        <h2 className="text-4xl font-bold mb-10 max-w-7xl mx-auto text-[#E0A87D]">Infinite Styles, Endless Creativity</h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-7xl mx-auto">
-          {/* Style tiles */}
-          <StyleTile name="Animated" imageSrc="/style-animated.png" />
-          <StyleTile name="Retro" imageSrc="/style-retro.png" />
-          <StyleTile name="Cinematic" imageSrc="/style-cinematic.png" />
-          <StyleTile name="Surreal" imageSrc="/style-surreal.png" />
-          <StyleTile name="Cyberpunk" imageSrc="/style-cyberpunk.png" />
-          <StyleTile name="Custom" imageSrc="/style-custom.png" />
+        <div className="grid grid-cols-3 gap-1 max-w-6xl mx-auto relative">
+          {/* Small decorative dots at corners */}
+          <div className="absolute -top-1 -left-1 w-2 h-2 bg-[#E0A87D] rounded-full"></div>
+          <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#E0A87D] rounded-full"></div>
+          <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-[#E0A87D] rounded-full"></div>
+          <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#E0A87D] rounded-full"></div>
+          
+          {/* Row 1 */}
+          <div className="col-span-1 row-span-1 relative aspect-square">
+            <img src="/style-animated.png" alt="Animated" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <p className="absolute bottom-3 left-3 text-white font-medium">Animated</p>
+          </div>
+          
+          <div className="col-span-1 row-span-1 relative aspect-square bg-black flex items-center justify-center p-6">
+            <p className="text-xs text-gray-400 text-center">Customize the look and feel of your videos with AI-powered styles.</p>
+          </div>
+          
+          <div className="col-span-1 row-span-1 relative aspect-square">
+            <img src="/style-retro.png" alt="Retro" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <p className="absolute bottom-3 left-3 text-white font-medium">Retro</p>
+          </div>
+          
+          {/* Row 2 */}
+          <div className="col-span-1 row-span-1 relative aspect-square">
+            <img src="/style-cinematic.png" alt="Cinematic" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <p className="absolute bottom-3 left-3 text-white font-medium">Cinematic</p>
+          </div>
+          
+          <div className="col-span-1 row-span-1 relative aspect-square">
+            <img src="/style-sketch.png" alt="Sketch" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <p className="absolute bottom-3 left-3 text-white font-medium">Sketch</p>
+          </div>
+          
+          <div className="col-span-1 row-span-1 relative aspect-square">
+            <img src="/style-cyberpunk.png" alt="Cyberpunk" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <p className="absolute bottom-3 left-3 text-white font-medium">Cyberpunk</p>
+          </div>
+          
+          {/* Row 3 - Custom spans the entire width */}
+          <div className="col-span-3 row-span-1 relative aspect-[3/1]">
+            <img src="/style-custom.png" alt="Custom" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <p className="absolute bottom-3 left-3 text-white font-medium">Custom</p>
+          </div>
         </div>
       </section>
 
