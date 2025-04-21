@@ -215,25 +215,25 @@ const LandingPage = () => {
           <div className="absolute inset-0 bg-black opacity-70"></div>
         </div>
         
-        <div className="relative z-10 flex items-center justify-between max-w-7xl mx-auto">
-          <div className="w-5/12">
-            <h2 className="text-3xl font-bold mb-4 text-[#E5B992]">Smart Captions & Seamless<br />Voice Integration</h2>
-            <p className="text-gray-300 mb-6">Edit captions without affecting voice continuity.</p>
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="flex items-start">
+            <div className="w-[45%] pt-8">
+              <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Smart Captions & Seamless<br />Voice Integration</h2>
+              <p className="text-gray-300 mb-8">Edit captions without affecting voice continuity.</p>
+              
+              <Link 
+                to="/playground"
+                className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+              >
+                Try the Playground
+              </Link>
+            </div>
             
-            <Link 
-              to="/playground"
-              className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
-            >
-              Try the Playground
-            </Link>
-          </div>
-          
-          <div className="w-6/12">
-            <div className="bg-transparent rounded-lg overflow-hidden">
+            <div className="w-[55%] pl-10">
               <img 
                 src="/Frame 182.png" 
                 alt="Live Caption Interface" 
-                className="w-full h-auto"
+                className="w-full h-auto max-w-md ml-auto"
               />
             </div>
           </div>
