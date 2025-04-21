@@ -5,27 +5,35 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Components for consistency with other pages
 function VideoCard({ video, onClick }) {
+  const [imageError, setImageError] = useState(false);
+  
   return (
     <div className="relative group cursor-pointer" onClick={onClick}>
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
-        <img 
-          src={video.thumbnailLogoUrl || "/image 28.png"} 
-          alt={video.name || video.caption} 
-          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/image 28.png";
-          }}
-        />
+        {!video ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="animate-pulse w-full h-full bg-gray-700"></div>
+          </div>
+        ) : (
+          <img 
+            src={imageError ? "/image 28.png" : (video.thumbnailUrl || video.thumbnailLogoUrl || "/image 28.png")} 
+            alt={video.name || video.caption || "Video thumbnail"} 
+            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+            onError={() => setImageError(true)}
+          />
+        )}
+        
         {/* Category tag */}
-        <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
-          {video.style || video.category || "Unknown"}
-        </div>
+        {video && (
+          <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
+            {video.style || video.category || "Unknown"}
+          </div>
+        )}
         
         {/* Video indicator */}
-        {(video.videoURL || video.videoUrl) && (
-          <div className="absolute top-2 left-2 bg-[#ED5606] px-2 py-0.5 rounded text-xs text-white flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {video && (video.videoURL || video.videoUrl) && (
+          <div className="absolute top-2 left-2 bg-[#ED5606] px-1.5 py-0.5 rounded text-xs text-white flex items-center gap-0.5 sm:px-2 sm:gap-1">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="sm:w-[10px] sm:h-[10px]">
               <path d="M5 3L19 12L5 21V3Z" fill="white"/>
             </svg>
             Video
@@ -33,9 +41,9 @@ function VideoCard({ video, onClick }) {
         )}
         
         {/* Audio indicator */}
-        {video.voiceURL && (
-          <div className="absolute top-9 left-2 bg-[#333] px-2 py-0.5 rounded text-xs text-white flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {video && video.voiceURL && (
+          <div className="absolute top-9 left-2 bg-[#333] px-1.5 py-0.5 rounded text-xs text-white flex items-center gap-0.5 sm:px-2 sm:gap-1">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="sm:w-[10px] sm:h-[10px]">
               <path d="M12 3V21M3 12H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Audio
@@ -45,10 +53,12 @@ function VideoCard({ video, onClick }) {
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
-      <div className="mt-2">
-        <h3 className="text-sm font-medium">{video.name || video.caption || 'Untitled'}</h3>
-        <p className="text-xs text-[#b0b0b0]">{video.views || 0} views • {formatDateAgo(video.uploadDate)}</p>
-      </div>
+      {video && (
+        <div className="mt-1.5 sm:mt-2">
+          <h3 className="text-xs sm:text-sm font-medium truncate">{video.name || video.caption || 'Untitled'}</h3>
+          <p className="text-xs text-[#b0b0b0] truncate">{video.views || 0} views • {formatDateAgo(video.uploadDate)}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -76,6 +86,93 @@ const formatDateAgo = (dateString) => {
   }
 };
 
+function Sidebar({ creators, loading, error, handleCreatorClick, selectedCreator, mobileOpen, setMobileOpen }) {
+  const closeSidebar = () => setMobileOpen(false);
+  
+  return (
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeSidebar}
+        ></div>
+      )}
+      
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#0D0D0D] border-r border-[#252525] transition-transform duration-300 ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      } md:translate-x-0 md:static md:z-auto`}>
+        <div className="p-4 flex justify-between items-center border-b border-[#252525]">
+          <h2 className="text-lg font-semibold">Creators</h2>
+          <button 
+            className="md:hidden text-white p-1" 
+            onClick={closeSidebar}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div className="p-3">
+          {loading && (
+            <div className="flex justify-center items-center h-20">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="text-red-500 text-sm p-3">
+              Failed to load creators: {error}
+            </div>
+          )}
+          
+          {!loading && !error && creators.length === 0 && (
+            <div className="text-gray-400 text-sm p-3">
+              No creators found
+            </div>
+          )}
+          
+          <div className="space-y-2 max-h-[calc(100vh-150px)] overflow-y-auto pr-1">
+            {creators.map((creator) => (
+              <div
+                key={creator.id}
+                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                  selectedCreator?.id === creator.id
+                    ? "bg-[#252525]"
+                    : "hover:bg-[#1A1A1A]"
+                }`}
+                onClick={() => {
+                  handleCreatorClick(creator);
+                  if (window.innerWidth < 768) closeSidebar();
+                }}
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-[#252525]">
+                  <img
+                    src={creator.avatar || creator.logoUrl || "/image 28.png"}
+                    alt={creator.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/image 28.png";
+                    }}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium truncate">{creator.name}</h3>
+                  <p className="text-xs text-[#b0b0b0] truncate">
+                    {creator.videoCount || 0} videos
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
 function CreatorPage() {
   const { creatorId } = useParams();
   const navigate = useNavigate();
@@ -91,6 +188,7 @@ function CreatorPage() {
   const [creators, setCreators] = useState([]);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -279,6 +377,17 @@ function CreatorPage() {
 
   const isCurrentUserProfile = creator.isCurrentUser || 
     (user && creator.name.toLowerCase() === user.name?.toLowerCase());
+
+  const handleCreatorClick = (creator) => {
+    setCreator(creator);
+    setCreatorVideos(creatorVideos.filter(v => v.uploadedBy === creator.name));
+    setActiveSidebarItem(creator.name);
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  };
+
+  const selectedCreator = creator;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -491,17 +600,17 @@ function CreatorPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Creator Cover Section */}
           <div className="relative w-full h-[40vh] overflow-hidden">
-        <img 
-          src="/image 28.png" 
-          alt={`${creator.name} cover`}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-        
+            <img 
+              src="/image 28.png" 
+              alt={`${creator.name} cover`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+            
             {/* Creator Info Overlay */}
-            <div className="absolute bottom-8 left-8 right-8">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a]">
+            <div className="absolute bottom-8 left-4 sm:left-8 right-4 sm:right-8">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a]">
                   <img 
                     src={creator.thumbnailUrl || "/user-avatar.png"} 
                     alt={creator.name}
@@ -511,70 +620,84 @@ function CreatorPage() {
                       e.target.src = "/user-avatar.png";
                     }}
                   />
-            </div>
+                </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">{creator.name}</h1>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{creator.name}</h1>
                   <p className="text-sm text-gray-300">{creator.videoCount} videos</p>
-          </div>
-          
-                {!isCurrentUserProfile && (
-                  <button 
-                    className="ml-auto bg-[#ED5606] hover:bg-[#ff6a1a] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                  >
-                    Subscribe
-            </button>
-                )}
+                </div>
                 
-                {isCurrentUserProfile && (
-              <button 
-                    className="ml-auto bg-[#222] hover:bg-[#333] px-4 py-1.5 rounded-full text-sm transition-colors"
-                    onClick={() => navigate('/create')}
-                  >
-                    Upload New Video
-              </button>
-                )}
+                <div className="mt-4 sm:mt-0 sm:ml-auto flex">
+                  {!isCurrentUserProfile && (
+                    <button 
+                      className="w-full sm:w-auto bg-[#ED5606] hover:bg-[#ff6a1a] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+                    >
+                      Subscribe
+                    </button>
+                  )}
+                  
+                  {isCurrentUserProfile && (
+                    <button 
+                      className="w-full sm:w-auto bg-[#222] hover:bg-[#333] px-4 py-1.5 rounded-full text-sm transition-colors"
+                      onClick={() => navigate('/create')}
+                    >
+                      Upload New Video
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
           
-          {/* Creator Videos Section */}
-          <div className="p-6 md:p-8">
-            <h2 className="text-xl font-bold mb-4">
-              {isCurrentUserProfile ? 'Your Videos' : `${creator.name}'s Videos`}
-            </h2>
-        
-            {creatorVideos.length === 0 ? (
-              <div className="p-8 text-center border border-[#333] rounded-lg bg-[#111]">
-                <h3 className="text-lg font-medium mb-2">No videos found</h3>
-                <p className="text-gray-400 mb-4">
-                  {isCurrentUserProfile 
-                    ? "You haven't uploaded any videos yet." 
-                    : `${creator.name} hasn't uploaded any videos yet.`}
-                </p>
-                
+          {/* Videos Grid */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-4">Videos</h2>
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+              </div>
+            ) : creatorVideos.length === 0 ? (
+              <div className="text-center py-12 bg-[#1a1a1a] rounded-md">
+                <p className="text-gray-400">No videos found</p>
                 {isCurrentUserProfile && (
-              <button 
+                  <button
                     onClick={() => navigate('/create')}
-                    className="bg-[#ED5606] hover:bg-[#ff6a1a] px-6 py-2 rounded-full text-sm font-medium transition-colors"
+                    className="mt-4 bg-[#ED5606] text-white px-4 py-2 rounded-full hover:bg-[#ff6a1a] transition-colors"
                   >
                     Upload Your First Video
-              </button>
+                  </button>
                 )}
-            </div>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {creatorVideos.map((video) => (
-                  <VideoCard 
-                    key={video._id} 
-                    video={video} 
-                    onClick={() => navigate(`/video/${video._id}`)} 
-                  />
-              ))}
-            </div>
+                  <VideoCard key={video._id} video={video} onClick={() => navigate(`/video/${video._id}`)} />
+                ))}
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Mobile menu button */}
+      <button
+        className="md:hidden fixed bottom-4 left-4 z-30 bg-[#ED5606] text-white p-3 rounded-full shadow-lg"
+        onClick={() => setMobileOpen(true)}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* Pass props to Sidebar */}
+      <Sidebar
+        creators={creators}
+        loading={loading}
+        error={error}
+        handleCreatorClick={handleCreatorClick}
+        selectedCreator={selectedCreator}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
     </div>
   );
 }
