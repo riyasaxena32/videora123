@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
+import { videoAPI } from '../lib/videoApi';
 
 function HomePage() {
   const [activeNavItem, setActiveNavItem] = useState("Home");
@@ -15,7 +16,7 @@ function HomePage() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
-  const { logout, user } = useAuth();
+  const { logout, user, token } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -36,13 +37,9 @@ function HomePage() {
     const fetchVideos = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch videos');
-        }
-        
-        const data = await response.json();
+        // Use our API service
+        const data = await videoAPI.getAllVideos();
         setVideos(data.video || []);
         setLoading(false);
       } catch (err) {
@@ -723,24 +720,122 @@ function HomePage() {
 }
 
 function VideoCard({ title, image, tag, id }) {
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [isHovering, setIsHovering] = useState(false);
+  const videoRef = useRef(null);
+  const [playbackUrl, setPlaybackUrl] = useState(null);
+  const [videoData, setVideoData] = useState(null);
+  
+  // First fetch the video details if we don't have them
+  useEffect(() => {
+    if (id && !videoData) {
+      const fetchVideoDetails = async () => {
+        try {
+          // Use our API service
+          const data = await videoAPI.getVideoById(id);
+          setVideoData(data.video);
+        } catch (err) {
+          console.error('Error fetching video details:', err);
+        }
+      };
+      
+      fetchVideoDetails();
+    }
+  }, [id, videoData]);
+  
+  const handleVideoPreview = async (e) => {
+    e.stopPropagation();
+    
+    try {
+      // Only attempt to get preview URL if we have valid data and token
+      if (id && token && !playbackUrl && videoData) {
+        // Use our API service
+        const data = await videoAPI.playVideo({
+          videoUrl: videoData.videoUrl,
+          style: "preview", // Use preview style for thumbnails
+          prompt: videoData.description || "preview quality",
+          caption: videoData.name,
+          voiceURL: videoData.voiceURL || ""
+        }, token);
+        
+        setPlaybackUrl(data.cloudinaryUrl || videoData.videoUrl);
+        
+        // Start playing if we have a video element
+        if (videoRef.current) {
+          videoRef.current.play().catch(err => {
+            console.error('Autoplay failed:', err);
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error getting preview URL:', err);
+      // If we have video data but the endpoint fails, use direct URL as fallback
+      if (videoData && videoData.videoUrl) {
+        setPlaybackUrl(videoData.videoUrl);
+      }
+    }
+  };
+  
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    handleVideoPreview({ stopPropagation: () => {} });
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    // Pause video when mouse leaves
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
+  
+  const handleClick = () => {
+    navigate(`/video/${id}`);
+  };
+
   return (
-    <div className="relative group cursor-pointer video-card">
+    <div 
+      className="relative group cursor-pointer video-card"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+    >
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
-        <img 
-          src={image || "/image 28.png"} 
-          alt={title} 
-          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/image 28.png";
-          }}
-        />
+        {isHovering && playbackUrl ? (
+          <video 
+            ref={videoRef}
+            src={playbackUrl} 
+            className="w-full h-full object-cover"
+            loop
+            muted
+          />
+        ) : (
+          <img 
+            src={image || "/image 28.png"} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "/image 28.png";
+            }}
+          />
+        )}
         {/* Category tag */}
         <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
           {tag ? tag.split("/")[0] : "Unknown"}
         </div>
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
+        
+        {/* Play button that appears on hover */}
+        {isHovering && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+              <PlayIcon className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-2">
         <h3 className="text-sm font-medium">{title}</h3>

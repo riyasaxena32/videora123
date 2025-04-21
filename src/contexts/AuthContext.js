@@ -184,6 +184,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Add a function to get the current token
+  const getToken = () => {
+    return user?.tokenType === 'jwt' ? 
+      localStorage.getItem('access_token') : 
+      localStorage.getItem('token');
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -192,7 +199,8 @@ export const AuthProvider = ({ children }) => {
       logout,
       checkJwtToken,
       fetchUserProfile, 
-      isAuthenticated: !!user 
+      isAuthenticated: !!user,
+      token: getToken() 
     }}>
       {children}
     </AuthContext.Provider>

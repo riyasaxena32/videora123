@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { videoAPI } from '../lib/videoApi';
+import VideoPlayer from '../components/VideoPlayer';
 
 function VideoPage() {
   const { videoId } = useParams();
@@ -13,8 +15,11 @@ function VideoPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackUrl, setPlaybackUrl] = useState(null);
+  const videoRef = useRef(null);
   const profileDropdownRef = useRef(null);
-  const { logout, user } = useAuth();
+  const { logout, user, token } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -84,14 +89,8 @@ function VideoPage() {
         setLoading(true);
         setError(null);
         
-        // First fetch all videos
-        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch videos');
-        }
-        
-        const data = await response.json();
+        // Use our API service
+        const data = await videoAPI.getAllVideos();
         const videos = data.video || [];
         
         // Find the specific video
@@ -119,6 +118,48 @@ function VideoPage() {
       fetchVideo();
     }
   }, [videoId]);
+
+  // New function to initiate video playback
+  const initiatePlayback = async () => {
+    try {
+      if (!videoId || !video) return;
+      
+      setLoading(true);
+      
+      // Use our API service for video playback
+      const data = await videoAPI.playVideo({
+        videoUrl: video.videoUrl,
+        style: "default", // Could be set from video metadata or user preference
+        prompt: video.description || "make it high quality",
+        caption: video.name,
+        voiceURL: video.voiceURL || "" // If we have a voiceover URL
+      }, token);
+      
+      setPlaybackUrl(data.cloudinaryUrl || video.videoUrl);
+      setIsPlaying(true);
+      setLoading(false);
+      
+      // Start playing if we have a video element
+      if (videoRef.current) {
+        videoRef.current.play().catch(err => {
+          console.error('Autoplay failed:', err);
+        });
+      }
+    } catch (err) {
+      console.error('Error initiating playback:', err);
+      setError(err.message);
+      setLoading(false);
+      // Fallback to direct URL if playback initiation fails
+      setPlaybackUrl(video.videoUrl);
+    }
+  };
+
+  // Start playback when video is available
+  useEffect(() => {
+    if (video && video.videoUrl && !playbackUrl) {
+      initiatePlayback();
+    }
+  }, [video]);
 
   if (loading) {
     return (
@@ -282,12 +323,14 @@ function VideoPage() {
           {/* Video Player */}
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
             {video.videoUrl ? (
-              <video
-                src={video.videoUrl}
-                poster={video.thumbnailLogoUrl || "/image 28.png"}
-                controls
-                className="w-full h-full object-contain"
-                style={{ maxHeight: '70vh' }}
+              <VideoPlayer
+                videoId={videoId}
+                videoUrl={video.videoUrl}
+                posterUrl={video.thumbnailLogoUrl || "/image 28.png"}
+                title={video.name}
+                description={video.description}
+                voiceURL={video.voiceURL}
+                onError={(err) => setError(`Failed to load video: ${err.message || 'Unknown error'}`)}
               />
             ) : (
               <img 
@@ -301,9 +344,6 @@ function VideoPage() {
                 }}
               />
             )}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {/* Add play button overlay if needed */}
-            </div>
           </div>
 
           {/* Video Info */}
