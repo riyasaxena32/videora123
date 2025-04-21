@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ArrowRight, Home } from 'lucide-react';
+import { ArrowUpRight, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage = () => {
@@ -31,8 +31,7 @@ const LandingPage = () => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1">
-            <Home className="w-4 h-4" />
+          <Link to="/" className="text-sm text-gray-400 hover:text-white transition-colors">
             Home
           </Link>
           <Link to="/about" className="text-sm text-gray-400 hover:text-white transition-colors">
