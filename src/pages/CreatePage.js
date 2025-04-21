@@ -198,7 +198,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         });
         
         // Call the upload API
-        await uploadVideoToAPI(videoURL, durationInSeconds, file.name.split('.')[0]);
+        await uploadVideoToAPI(file, durationInSeconds, file.name.split('.')[0]);
       } catch (error) {
         console.error('Error processing video:', error);
         setErrorMessage('Failed to process video. Please try again.');
@@ -208,7 +208,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   };
 
   // Separate function to upload to API
-  const uploadVideoToAPI = async (videoURL, duration, name) => {
+  const uploadVideoToAPI = async (videoFile, duration, name) => {
     try {
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
@@ -220,31 +220,30 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       console.log('Uploading video to API...');
       
-      const payload = {
-        name: name || 'Untitled Video',
-        description: creativePrompt || 'No description provided',
-        category: 'Education',
-        tags: ['ai-generated'],
-        thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
-        videoUrl: videoURL,
-        duration: duration,
-        uploadedBy: user?.name || 'Anonymous',
-        views: 0,
-        likes: 0,
-        dislikes: 0,
-        comments: [],
-        isPublic: true
-      };
+      // Create FormData object to send file data
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      formData.append('name', name || 'Untitled Video');
+      formData.append('description', creativePrompt || 'No description provided');
+      formData.append('category', 'Education');
+      formData.append('tags', JSON.stringify(['ai-generated']));
+      formData.append('duration', duration);
+      formData.append('uploadedBy', user?.name || 'Anonymous');
+      formData.append('isPublic', true);
       
-      console.log('Upload payload:', payload);
+      if (videoData.thumbnailLogoUrl) {
+        formData.append('thumbnailLogoUrl', videoData.thumbnailLogoUrl);
+      }
+      
+      console.log('Uploading file:', videoFile.name);
       
       // Use the correct API endpoint from the curl command
       const response = await axios.post(
         'https://videora-ai.onrender.com/videos/upload-videos', 
-        payload,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${token}`
           }
         }
@@ -300,7 +299,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     // If we already have a video uploaded, update its description
     if (videoFile && videoData.videoUrl) {
       try {
-        await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+        await uploadVideoToAPI(videoFile, videoData.duration, videoData.name);
       } catch (error) {
         console.error('Error updating video description:', error);
       }
@@ -317,7 +316,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     try {
       setUploading(true);
       setErrorMessage('');
-      await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+      await uploadVideoToAPI(videoFile, videoData.duration, videoData.name);
     } catch (error) {
       setErrorMessage('Failed to upload video. Please try again.');
     }
