@@ -88,6 +88,8 @@ function VideoPage() {
         setLoading(true);
         setError(null);
         
+        console.log('Fetching video with ID:', videoId);
+        
         // First fetch all videos
         const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
         
@@ -98,12 +100,16 @@ function VideoPage() {
         const data = await response.json();
         const videos = data.video || [];
         
+        console.log(`Found ${videos.length} videos in total`);
+        
         // Find the specific video
         const foundVideo = videos.find(v => v._id === videoId);
         
         if (!foundVideo) {
           throw new Error('Video not found');
         }
+        
+        console.log('Found video:', foundVideo);
         
         // Set the video
         setVideo(foundVideo);
@@ -127,6 +133,11 @@ function VideoPage() {
         
         setCreators(uniqueCreators);
         setLoading(false);
+
+        // Preload video if possible
+        if (foundVideo.videoURL && videoRef.current) {
+          videoRef.current.load();
+        }
       } catch (err) {
         console.error('Error fetching video:', err);
         setError(err.message);
@@ -137,6 +148,19 @@ function VideoPage() {
     if (videoId) {
       fetchVideo();
     }
+    
+    // Cleanup function
+    return () => {
+      // Stop video and audio playback when component unmounts
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = '';
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
   }, [videoId]);
 
   // Handle synchronized audio-video playback
@@ -375,43 +399,55 @@ function VideoPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Video Player */}
           <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
-            {video.videoURL || video.videoUrl ? (
-              <video
-                ref={videoRef}
-                src={video.videoURL || video.videoUrl}
-                poster={video.thumbnailLogoUrl || "/image 28.png"}
-                controls
-                className="w-full h-full object-contain"
-                style={{ maxHeight: '70vh' }}
-              />
+            {!loading && (video.videoURL || video.videoUrl) ? (
+              <div className="video-container" style={{ maxHeight: '70vh' }}>
+                <video
+                  ref={videoRef}
+                  src={video.videoURL || video.videoUrl}
+                  poster={video.thumbnailLogoUrl || "/image 28.png"}
+                  controls
+                  className="w-full h-full object-contain"
+                  style={{ maxHeight: '70vh' }}
+                  playsInline
+                  preload="auto"
+                  onLoadedData={() => console.log('Video loaded successfully')}
+                  onError={(e) => console.error('Video load error:', e)}
+                />
+                
+                {/* Hidden audio element for voice narration */}
+                {video.voiceURL && (
+                  <audio 
+                    ref={audioRef} 
+                    src={video.voiceURL} 
+                    preload="auto" 
+                    className="hidden"
+                  />
+                )}
+                
+                {/* Audio indicator when voice narration is playing */}
+                {video.voiceURL && audioPlaying && (
+                  <div className="absolute top-4 right-4 bg-black/70 px-3 py-1 rounded-full text-white text-xs flex items-center">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                    Voice Narration
+                  </div>
+                )}
+              </div>
             ) : (
-              <img 
-                src={video.thumbnailLogoUrl || "/image 28.png"} 
-                alt={video.name}
-                className="w-full h-full object-cover"
-                style={{ maxHeight: '70vh' }}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/image 28.png";
-                }}
-              />
-            )}
-            
-            {/* Hidden audio element for voice narration */}
-            {video.voiceURL && (
-              <audio 
-                ref={audioRef} 
-                src={video.voiceURL} 
-                preload="auto" 
-                className="hidden"
-              />
-            )}
-            
-            {/* Audio indicator when voice narration is playing */}
-            {video.voiceURL && audioPlaying && (
-              <div className="absolute top-4 right-4 bg-black/70 px-3 py-1 rounded-full text-white text-xs flex items-center">
-                <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
-                Voice Narration
+              <div className="flex items-center justify-center" style={{ height: '50vh' }}>
+                {loading ? (
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+                ) : (
+                  <img 
+                    src={video?.thumbnailLogoUrl || "/image 28.png"} 
+                    alt={video?.name || 'Video thumbnail'}
+                    className="w-full h-full object-contain"
+                    style={{ maxHeight: '70vh' }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/image 28.png";
+                    }}
+                  />
+                )}
               </div>
             )}
           </div>
