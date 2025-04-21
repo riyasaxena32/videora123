@@ -224,7 +224,7 @@ const LandingPage = () => {
               <Link 
                 to="/playground"
                 style={gradientButtonStyle}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium rounded-full"
               >
                 Try the Playground
                 <ArrowRight className="w-4 h-4" />
@@ -272,9 +272,9 @@ const LandingPage = () => {
               <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
               
               <Link 
-                to="/videos"
+                to="/"
                 style={gradientButtonStyle}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium rounded-full"
               >
                 Stream Now
                 <ArrowRight className="w-4 h-4" />
@@ -306,7 +306,7 @@ const LandingPage = () => {
               <Link 
                 to="/join"
                 style={gradientButtonStyle}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium rounded-full"
               >
                 Join Now
                 <ArrowRight className="w-4 h-4" />
@@ -360,7 +360,7 @@ const LandingPage = () => {
           <Link 
             to="/create"
             style={gradientButtonStyle}
-            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
+            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium rounded-full"
           >
             Generate Your First Video
             <ArrowUpRight className="w-4 h-4" />
