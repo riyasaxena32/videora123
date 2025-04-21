@@ -147,75 +147,33 @@ const LandingPage = () => {
       </section>
 
       {/* Infinite Styles Section */}
-      <section className="py-20 px-6 bg-black">
-        <h2 className="text-3xl font-bold mb-10 max-w-7xl mx-auto text-[#E5B992]">Infinite Styles, Endless Creativity</h2>
+      <section className="bg-black text-white py-24 relative overflow-hidden">
+        <div className="absolute left-2 top-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
+        <div className="absolute right-2 top-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
+        <div className="absolute left-2 bottom-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
+        <div className="absolute right-2 bottom-2 w-1.5 h-1.5 rounded-full bg-[#E5B992]"></div>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#E5B992]"></div>
         
-        <div className="grid grid-cols-3 max-w-7xl mx-auto relative border border-[#3D2D19]">
-          {/* Row 1 */}
-          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
-            <img src="/animated.jpg" alt="Animated" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Animated</div>
-          </div>
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 text-[#E5B992]">Infinite Styles</h2>
           
-          {/* Center info block */}
-          <div className="relative aspect-square border border-[#3D2D19] bg-black flex items-center justify-center p-6">
-            <p className="text-sm text-gray-400 text-center">
-              Customize the look and feel of your videos with AI-powered styles.
-            </p>
-          </div>
-          
-          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
-            <img src="/retro.jpg" alt="Retro" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Retro</div>
-          </div>
-          
-          {/* Row 2 */}
-          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
-            <img src="/cinematic.jpg" alt="Cinematic" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Cinematic</div>
-          </div>
-          
-          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
-            <img src="/sketch.jpg" alt="Sketch" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Sketch</div>
-          </div>
-          
-          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
-            <img src="/cyberpunk.jpg" alt="Cyberpunk" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Cyberpunk</div>
-          </div>
-          
-          {/* Row 3 */}
-          <div className="relative aspect-square border border-[#3D2D19] opacity-0">
-            {/* Empty space */}
-          </div>
-          
-          <div className="relative aspect-square border border-[#3D2D19] overflow-hidden">
-            <img src="/custom.jpg" alt="Custom" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-0 w-full text-center font-medium">Custom</div>
-          </div>
-          
-          <div className="relative aspect-square border border-[#3D2D19] opacity-0">
-            {/* Empty space */}
-          </div>
-          
-          {/* Corner dots */}
-          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] top-0 left-0 transform -translate-x-1 -translate-y-1"></div>
-          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] top-0 right-0 transform translate-x-1 -translate-y-1"></div>
-          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] bottom-0 left-0 transform -translate-x-1 translate-y-1"></div>
-          <div className="absolute w-2 h-2 rounded-full bg-[#ED5606] bottom-0 right-0 transform translate-x-1 translate-y-1"></div>
-          
-          {/* Carousel indicator */}
-          <div className="absolute bottom-[-24px] left-1/2 transform -translate-x-1/2 flex gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#ED5606]"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-700"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-700"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-1 max-w-4xl mx-auto">
+            {/* Row 1 */}
+            <StyleTile name="Animated" imageSrc="/styles/animated.webp" />
+            <div className="aspect-square border border-[#333333] flex items-center justify-center p-6 text-center text-sm">
+              <p>Generate videos in a wide range of styles - from animated to realistic</p>
+            </div>
+            <StyleTile name="Retro" imageSrc="/styles/retro.webp" />
+            
+            {/* Row 2 */}
+            <StyleTile name="Cinematic" imageSrc="/styles/cinematic.webp" />
+            <StyleTile name="Sketch" imageSrc="/styles/sketch.webp" />
+            <StyleTile name="Cyberpunk" imageSrc="/styles/cyberpunk.webp" />
+            
+            {/* Row 3 */}
+            <div className="aspect-square border border-[#333333]"></div>
+            <div className="aspect-square border border-[#333333]"></div>
+            <StyleTile name="Custom" imageSrc="/styles/custom.webp" />
           </div>
         </div>
       </section>
@@ -345,10 +303,10 @@ const LandingPage = () => {
 // Style Tile Component
 const StyleTile = ({ name, imageSrc }) => {
   return (
-    <div className="aspect-square bg-[#111] rounded-lg overflow-hidden relative group">
-      <img src={imageSrc} alt={name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-      <div className="absolute bottom-4 left-4 font-medium">{name}</div>
+    <div className="aspect-square relative border border-[#333333] overflow-hidden">
+      <img src={imageSrc} alt={name} className="w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
+      <div className="absolute bottom-2 left-0 right-0 text-center text-sm font-medium">{name}</div>
     </div>
   );
 };
