@@ -223,9 +223,11 @@ const LandingPage = () => {
               
               <Link 
                 to="/playground"
-                className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+                style={gradientButtonStyle}
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
               >
                 Try the Playground
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             
@@ -271,9 +273,11 @@ const LandingPage = () => {
               
               <Link 
                 to="/videos"
-                className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+                style={gradientButtonStyle}
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
               >
                 Stream Now
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -301,9 +305,11 @@ const LandingPage = () => {
               
               <Link 
                 to="/join"
-                className="inline-block px-5 py-2 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+                style={gradientButtonStyle}
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
               >
                 Join Now
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             
@@ -353,10 +359,11 @@ const LandingPage = () => {
           
           <Link 
             to="/create"
-            className="inline-block px-6 py-3 bg-[#5A3413] rounded-md text-sm text-white hover:bg-[#6B4018] transition-colors"
+            style={gradientButtonStyle}
+            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
           >
             Generate Your First Video
-            <ArrowUpRight className="inline-block ml-2 w-4 h-4" />
+            <ArrowUpRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
