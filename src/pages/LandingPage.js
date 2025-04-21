@@ -110,7 +110,15 @@ const LandingPage = () => {
           
           {/* Video Streaming Card */}
           <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors relative">
-            <div className="p-6 flex flex-col items-center">
+            <div className="absolute inset-0 overflow-hidden z-0">
+              <img 
+                src="/Group 192 (1).png" 
+                alt=""
+                className="w-full h-full object-cover opacity-40"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+            </div>
+            <div className="p-6 relative z-10">
               <div className="flex justify-center mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Studio</span>
               </div>
@@ -118,48 +126,11 @@ const LandingPage = () => {
               <div className="text-xs text-center text-[#ED5606] mb-4">
                 <span>Watch</span> • <span>Engage</span> • <span>Interact</span>
               </div>
-              <p className="text-sm text-gray-400 mb-6 text-center">
+              <p className="text-sm text-gray-400 mb-4 text-center">
                 Stream AI-generated videos in real-time, interact with
                 creators through in-video chat, and explore a world of
                 innovative content.
               </p>
-              
-              {/* Live Caption UI */}
-              <div className="w-full bg-black rounded-lg overflow-hidden border border-[#333]">
-                <div className="bg-[#0F0F0F] py-1 px-2 border-b border-[#222]">
-                  <p className="text-xs text-white">Live Caption</p>
-                </div>
-                <div className="p-3 text-gray-300 space-y-2 text-xs">
-                  <p>This scene perfectly captures the essence of a classic shonen rivalry.</p>
-                  <p>The cherry blossoms falling symbolize a bittersweet farewell.</p>
-                  <p className="font-bold text-white">The protagonist awakens their hidden powers in the final battle!</p>
-                  <p>"Her transformation sequence is so beautifully animated!"</p>
-                  <p>"That plot twist was straight out of a psychological thriller anime!"</p>
-                </div>
-                <div className="flex items-center px-3 pb-3 pt-1">
-                  <button className="w-8 h-8 rounded-full bg-[#ED5606] flex items-center justify-center text-white mr-2">
-                    <span className="transform translate-x-[1px]">▶</span>
-                  </button>
-                  <div className="flex-1 h-8 bg-[#1A1A1A] rounded-full overflow-hidden flex items-center">
-                    <div className="h-full w-1/3 bg-[#ED5606]"></div>
-                    <div className="h-3 flex-1 flex items-center px-1">
-                      <div className="w-full flex space-x-1">
-                        {Array(20).fill(0).map((_, i) => (
-                          <div 
-                            key={i} 
-                            className="bg-white h-4" 
-                            style={{
-                              width: '2px',
-                              height: `${Math.random() * 100}%`,
-                              opacity: i < 10 ? 0.8 : 0.4
-                            }}
-                          ></div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
           
