@@ -109,33 +109,8 @@ const LandingPage = () => {
           </div>
           
           {/* Video Streaming Card */}
-          <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors relative">
-            <div className="absolute inset-0 overflow-hidden z-0">
-              <div className="w-full h-full bg-black">
-                <div className="w-full h-full p-4 flex flex-col">
-                  <div className="text-xs text-white font-semibold mb-1 bg-black p-1">Live Caption</div>
-                  <div className="flex-1 bg-black p-3 text-xs text-gray-300 overflow-hidden flex flex-col justify-end space-y-2">
-                    <p>This scene perfectly captures the essence of a classic shonen rivalry.</p>
-                    <p>The cherry blossoms falling symbolize a bittersweet farewell.</p>
-                    <p className="text-white font-bold">The protagonist awakens their hidden powers in the final battle!</p>
-                    <p>"Her transformation sequence is so beautifully animated!"</p>
-                    <p>"That plot twist was straight out of a psychological thriller anime!"</p>
-                    <div className="flex items-center gap-2 mt-4">
-                      <div className="w-8 h-8 rounded-full bg-[#ED5606] flex items-center justify-center">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                      </div>
-                      <div className="w-full h-8 flex items-center">
-                        <div className="w-full bg-gradient-to-r from-[#ED5606] to-white h-2 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute inset-0 bg-black bg-opacity-80"></div>
-            </div>
-            <div className="p-6 relative z-10">
+          <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors">
+            <div className="p-6">
               <div className="flex justify-center mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Studio</span>
               </div>
