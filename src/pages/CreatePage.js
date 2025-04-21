@@ -152,11 +152,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     thumbnailLogoUrl: '',
     videoUrl: '',
     duration: 0,
-    isPublic: true,
-    style: 'cartoon', // Default style
-    prompt: '',
-    caption: '',
-    voiceURL: ''
+    isPublic: true
   });
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -164,23 +160,9 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [cloudinaryUrl, setCloudinaryUrl] = useState('');
-  const [isPlaying, setIsPlaying] = useState(false);
   const { user } = useAuth();
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
-  const [selectedStyle, setSelectedStyle] = useState('cartoon');
-  const [caption, setCaption] = useState('');
-  const [voiceURL, setVoiceURL] = useState('');
-  const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
-  
-  const styles = [
-    { id: 'cartoon', name: 'Cartoon' },
-    { id: 'realistic', name: 'Realistic' },
-    { id: 'anime', name: 'Anime' },
-    { id: 'minimalist', name: 'Minimalist' },
-    { id: 'cinematic', name: 'Cinematic' }
-  ];
 
   const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
@@ -212,14 +194,11 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           ...videoData,
           duration: durationInSeconds,
           videoUrl: videoURL, // Temporary URL for preview
-          name: file.name.split('.')[0], // Use filename as the video name
-          style: selectedStyle,
-          prompt: creativePrompt,
-          caption: caption,
-          voiceURL: voiceURL
+          name: file.name.split('.')[0] // Use filename as the video name
         });
         
-        setUploading(false);
+        // Call the upload API
+        await uploadVideoToAPI(videoURL, durationInSeconds, file.name.split('.')[0]);
       } catch (error) {
         console.error('Error processing video:', error);
         setErrorMessage('Failed to process video. Please try again.');
@@ -228,17 +207,9 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     }
   };
 
-  // Updated upload function to match API requirements
-  const uploadVideoToAPI = async () => {
-    if (!videoFile) {
-      setErrorMessage('Please upload a video first');
-      return;
-    }
-    
+  // Separate function to upload to API
+  const uploadVideoToAPI = async (videoURL, duration, name) => {
     try {
-      setUploading(true);
-      setErrorMessage('');
-      
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
@@ -247,15 +218,16 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      // First, upload to the upload-videos endpoint
-      const uploadPayload = {
-        name: videoData.name || 'Untitled Video',
-        description: videoData.description || creativePrompt || 'No description provided',
-        category: videoData.category || 'Education',
-        tags: videoData.tags || ['ai-generated'],
+      console.log('Uploading video to API...');
+      
+      const payload = {
+        name: name || 'Untitled Video',
+        description: creativePrompt || 'No description provided',
+        category: 'Education',
+        tags: ['ai-generated'],
         thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
-        videoUrl: videoData.videoUrl,
-        duration: videoData.duration,
+        videoUrl: videoURL,
+        duration: duration,
         uploadedBy: user?.name || 'Anonymous',
         views: 0,
         likes: 0,
@@ -264,11 +236,12 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         isPublic: true
       };
       
-      console.log('Uploading video to API...');
+      console.log('Upload payload:', payload);
       
-      const uploadResponse = await axios.post(
+      // Use the correct API endpoint from the curl command
+      const response = await axios.post(
         'https://videora-ai.onrender.com/videos/upload-videos', 
-        uploadPayload,
+        payload,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -277,63 +250,32 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         }
       );
       
-      console.log('Upload response:', uploadResponse.data);
+      console.log('Upload response:', response.data);
+      setUploadSuccess(true);
       
-      if (uploadResponse.data && uploadResponse.data.cloudinaryUrl) {
-        setCloudinaryUrl(uploadResponse.data.cloudinaryUrl);
-        
-        // Now call the play-video endpoint with the additional parameters
-        const playPayload = {
-          videoUrl: uploadResponse.data.cloudinaryUrl,
-          style: selectedStyle,
-          prompt: creativePrompt,
-          caption: caption,
-          voiceURL: voiceURL || "https://example.com/voice.mp3" // Default voice URL if none provided
-        };
-        
-        console.log('Playing video with:', playPayload);
-        
-        const playResponse = await axios.post(
-          'https://videora-ai.onrender.com/videoplayer/paly-video',
-          playPayload,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
-        
-        console.log('Play response:', playResponse.data);
-        
-        if (playResponse.data && playResponse.data.cloudinaryUrl) {
-          setCloudinaryUrl(playResponse.data.cloudinaryUrl);
-          setIsPlaying(true);
-        }
-        
-        setUploadSuccess(true);
-        
-        // Reset success message after 3 seconds
-        setTimeout(() => {
-          setUploadSuccess(false);
-        }, 3000);
-      } else {
-        throw new Error('No Cloudinary URL returned from upload');
-      }
+      // Reset success message after 3 seconds
+      setTimeout(() => {
+        setUploadSuccess(false);
+      }, 3000);
       
     } catch (error) {
       console.error('Error uploading to API:', error);
       let errorMessage = 'Failed to upload video. Please try again.';
       
       if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
         console.error('Error response data:', error.response.data);
         console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
         
         errorMessage = `Server error (${error.response.status}): ${error.response.data?.message || error.message}`;
       } else if (error.request) {
+        // The request was made but no response was received
         console.error('Error request:', error.request);
         errorMessage = 'No response from server. Please check your network connection.';
       } else {
+        // Something happened in setting up the request that triggered an Error
         console.error('Error message:', error.message);
         errorMessage = error.message;
       }
@@ -344,49 +286,41 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     }
   };
 
-  // Update handlePromptChange to save to both state variables
-  const handlePromptChange = (e) => {
+  // Update handlePromptChange to also trigger API update with new description
+  const handlePromptChange = async (e) => {
     const newPrompt = e.target.value;
     setCreativePrompt(newPrompt);
     
     // Also store in video data description
     setVideoData(prevData => ({
       ...prevData,
-      description: newPrompt,
-      prompt: newPrompt
+      description: newPrompt
     }));
+    
+    // If we already have a video uploaded, update its description
+    if (videoFile && videoData.videoUrl) {
+      try {
+        await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+      } catch (error) {
+        console.error('Error updating video description:', error);
+      }
+    }
   };
 
-  // Keep the handleUpload function, but now it'll call the updated uploadVideoToAPI
-  const handleUpload = () => {
-    uploadVideoToAPI();
-  };
-  
-  const handleCaptionChange = (e) => {
-    const newCaption = e.target.value;
-    setCaption(newCaption);
-    setVideoData(prevData => ({
-      ...prevData,
-      caption: newCaption
-    }));
-  };
-  
-  const handleVoiceURLChange = (e) => {
-    const newVoiceURL = e.target.value;
-    setVoiceURL(newVoiceURL);
-    setVideoData(prevData => ({
-      ...prevData,
-      voiceURL: newVoiceURL
-    }));
-  };
-  
-  const handleStyleSelect = (style) => {
-    setSelectedStyle(style.id);
-    setVideoData(prevData => ({
-      ...prevData,
-      style: style.id
-    }));
-    setStyleDropdownOpen(false);
+  // Keep the handleUpload function, but now it'll be used for retrying uploads
+  const handleUpload = async () => {
+    if (!videoFile) {
+      setErrorMessage('Please upload a video first');
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      setErrorMessage('');
+      await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
+    } catch (error) {
+      setErrorMessage('Failed to upload video. Please try again.');
+    }
   };
 
   const triggerVideoInput = () => {
@@ -456,30 +390,11 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       <div className="flex flex-col space-y-6">
         <h2 className="text-sm font-medium">Pick Your Style</h2>
         <div className="border border-[#333] bg-[#111] rounded-md p-4">
-          <div className="relative">
-            <div 
-              onClick={() => setStyleDropdownOpen(!styleDropdownOpen)}
-              className="flex items-center justify-between cursor-pointer"
-            >
-              <span className="text-sm">{styles.find(s => s.id === selectedStyle)?.name}</span>
-              <ChevronDown className="w-4 h-4" />
-            </div>
-            
-            {styleDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#191919] border border-[#333] rounded-md z-10">
-                {styles.map(style => (
-                  <div 
-                    key={style.id} 
-                    className="p-2 text-sm hover:bg-[#222] cursor-pointer"
-                    onClick={() => handleStyleSelect(style)}
-                  >
-                    {style.name}
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="flex items-center justify-between mb-2">
+            <ChevronDown className="w-4 h-4" />
+            <span className="text-sm">Select a vibe that matches your version</span>
           </div>
-          <p className="text-xs text-[#777] mt-2">Select a style for your AI-generated video</p>
+          <p className="text-xs text-[#777] pl-4">Lorem ipsum description text</p>
         </div>
         
         <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
@@ -488,7 +403,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
             className="w-full h-[300px] bg-transparent border-none text-[#999] text-sm focus:outline-none resize-none"
             placeholder="Type what you want in your video.
 
-For example, 'Make it funny' or 'Create a dramatic scene'"
+For example, 'Make it look like a sunny day at the beach.'"
             value={creativePrompt}
             onChange={handlePromptChange}
           ></textarea>
@@ -500,21 +415,9 @@ For example, 'Make it funny' or 'Create a dramatic scene'"
         <h2 className="text-sm font-medium">Add Audio</h2>
         <div className="border border-[#333] bg-[#111] rounded-md p-4">
           <h3 className="text-sm font-medium mb-2">Caption</h3>
-          <textarea
-            className="w-full h-32 bg-[#0a0a0a] border border-[#222] rounded p-3 text-xs text-white resize-none focus:outline-none focus:border-[#ED5606]"
-            placeholder="Enter caption for your video"
-            value={caption}
-            onChange={handleCaptionChange}
-          ></textarea>
-          
-          <h3 className="text-sm font-medium mt-4 mb-2">Voice URL</h3>
-          <input
-            type="text"
-            className="w-full bg-[#0a0a0a] border border-[#222] rounded p-3 text-xs text-white focus:outline-none focus:border-[#ED5606]"
-            placeholder="https://example.com/voice.mp3"
-            value={voiceURL}
-            onChange={handleVoiceURLChange}
-          />
+          <div className="h-40 border border-[#222] bg-[#0a0a0a] rounded p-3 text-xs text-[#777]">
+            Your live caption will appear here after the file is uploaded and processed.
+          </div>
           
           <div className="flex justify-end mt-4 gap-2">
             <button type="button" className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
@@ -531,20 +434,6 @@ For example, 'Make it funny' or 'Create a dramatic scene'"
             </button>
           </div>
         </div>
-        
-        {/* Preview section for the Cloudinary URL */}
-        {cloudinaryUrl && (
-          <div className="border border-[#333] bg-[#111] rounded-md p-4">
-            <h3 className="text-sm font-medium mb-2">Video Preview</h3>
-            <div className="rounded overflow-hidden">
-              <video controls className="w-full">
-                <source src={cloudinaryUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-            <p className="text-xs text-[#777] mt-2 break-all">{cloudinaryUrl}</p>
-          </div>
-        )}
         
         {/* Error message */}
         {errorMessage && (
@@ -566,7 +455,7 @@ For example, 'Make it funny' or 'Create a dramatic scene'"
             onClick={handleUpload}
             disabled={uploading || !videoFile}
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
           >
             {uploading ? (
               <>
@@ -575,7 +464,7 @@ For example, 'Make it funny' or 'Create a dramatic scene'"
               </>
             ) : (
               <>
-                {cloudinaryUrl ? 'Process Again' : 'Process Video'}
+                Get Started
                 <ArrowUpRight className="w-4 h-4" />
               </>
             )}
