@@ -180,11 +180,23 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     setSelectedStyle(e.target.value);
   };
 
+  // Update handlePromptChange to only update state, not trigger API
+  const handlePromptChange = async (e) => {
+    const newPrompt = e.target.value;
+    setCreativePrompt(newPrompt);
+    
+    // Also store in video data description
+    setVideoData(prevData => ({
+      ...prevData,
+      description: newPrompt
+    }));
+  };
+
+  // Handle video selection without API call
   const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setVideoFile(file);
-      setUploading(true);
       setErrorMessage('');
       
       try {
@@ -212,13 +224,9 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           videoUrl: videoURL, // Temporary URL for preview
           name: file.name.split('.')[0] // Use filename as the video name
         });
-        
-        // Call the upload API
-        await uploadVideoToAPI(videoURL, durationInSeconds, file.name.split('.')[0]);
       } catch (error) {
         console.error('Error processing video:', error);
         setErrorMessage('Failed to process video. Please try again.');
-        setUploading(false);
       }
     }
   };
@@ -227,9 +235,17 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     setCaption(e.target.value);
   };
 
-  // Separate function to upload to API
-  const uploadVideoToAPI = async (videoURL, duration, name) => {
+  // Modified handleUpload function to call API only on button click
+  const handleUpload = async () => {
+    if (!videoFile) {
+      setErrorMessage('Please upload a video first');
+      return;
+    }
+    
     try {
+      setUploading(true);
+      setErrorMessage('');
+      
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
@@ -332,43 +348,6 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       duration: 0,
       isPublic: true
     });
-  };
-
-  // Update handlePromptChange to also trigger API update with new description
-  const handlePromptChange = async (e) => {
-    const newPrompt = e.target.value;
-    setCreativePrompt(newPrompt);
-    
-    // Also store in video data description
-    setVideoData(prevData => ({
-      ...prevData,
-      description: newPrompt
-    }));
-    
-    // If we already have a video uploaded, update its description
-    if (videoFile && videoData.videoUrl) {
-      try {
-        await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
-      } catch (error) {
-        console.error('Error updating video description:', error);
-      }
-    }
-  };
-
-  // Keep the handleUpload function, but now it'll be used for retrying uploads
-  const handleUpload = async () => {
-    if (!videoFile) {
-      setErrorMessage('Please upload a video first');
-      return;
-    }
-    
-    try {
-      setUploading(true);
-      setErrorMessage('');
-      await uploadVideoToAPI(videoData.videoUrl, videoData.duration, videoData.name);
-    } catch (error) {
-      setErrorMessage('Failed to upload video. Please try again.');
-    }
   };
 
   const triggerVideoInput = () => {
