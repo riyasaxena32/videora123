@@ -223,8 +223,11 @@ const LandingPage = () => {
               
               <Link 
                 to="/playground"
-                style={gradientButtonStyle}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium rounded-full"
+                style={{
+                  ...gradientButtonStyle,
+                  borderRadius: '4px' 
+                }}
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
               >
                 Try the Playground
                 <ArrowRight className="w-4 h-4" />
@@ -273,8 +276,11 @@ const LandingPage = () => {
               
               <Link 
                 to="/"
-                style={gradientButtonStyle}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium rounded-full"
+                style={{
+                  ...gradientButtonStyle,
+                  borderRadius: '4px'
+                }}
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
               >
                 Stream Now
                 <ArrowRight className="w-4 h-4" />
@@ -305,8 +311,11 @@ const LandingPage = () => {
               
               <Link 
                 to="/join"
-                style={gradientButtonStyle}
-                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium rounded-full"
+                style={{
+                  ...gradientButtonStyle,
+                  borderRadius: '4px'
+                }}
+                className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
               >
                 Join Now
                 <ArrowRight className="w-4 h-4" />
@@ -359,8 +368,11 @@ const LandingPage = () => {
           
           <Link 
             to="/create"
-            style={gradientButtonStyle}
-            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium rounded-full"
+            style={{
+              ...gradientButtonStyle,
+              borderRadius: '4px'
+            }}
+            className="inline-flex items-center gap-2 text-white px-6 py-3 text-sm font-medium"
           >
             Generate Your First Video
             <ArrowUpRight className="w-4 h-4" />
