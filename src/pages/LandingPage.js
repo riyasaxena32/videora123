@@ -332,7 +332,7 @@ const LandingPage = () => {
             <div className="md:w-[55%] md:pl-10">
               <div className="bg-[#111] rounded-lg overflow-hidden shadow-xl border border-[#333]">
                 <div className="p-4 border-b border-[#333]">
-                  <h3 className="text-xl font-bold">Sparsh</h3>
+                  <h3 className="text-xl font-bold">Creator</h3>
                 </div>
                 
                 <div className="bg-black p-4">
