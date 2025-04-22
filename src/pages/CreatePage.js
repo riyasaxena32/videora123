@@ -545,17 +545,30 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         }
       );
       
-      console.log('Upload response:', response.data);
+      console.log('Upload response full:', JSON.stringify(response.data));
+      console.log('Saved video fields:', Object.keys(response.data.savedvideo || {}));
+      console.log('videoUrl in payload:', videoPayload.videoUrl);
       
       // Store the full response data
       setUploadResponse(response.data);
       
-      // Update videoData with the response
+      // Update videoData with the response and preserve videoUrl if missing
       if (response.data && response.data.savedvideo) {
+        const savedVideo = response.data.savedvideo;
+        
+        // Check if videoUrl is missing but videoURL exists (case difference)
+        const responseVideoUrl = savedVideo.videoUrl || savedVideo.videoURL || cloudinaryVideoUrl;
+        
         setVideoData(prevData => ({
           ...prevData,
-          ...response.data.savedvideo
+          ...savedVideo,
+          videoUrl: responseVideoUrl // Ensure we have the video URL
         }));
+        
+        // Add videoUrl to the response object if it's missing
+        if (!savedVideo.videoUrl && cloudinaryVideoUrl) {
+          response.data.savedvideo.videoUrl = cloudinaryVideoUrl;
+        }
       }
       
       setUploadSuccess(true);
@@ -804,10 +817,12 @@ For example, 'Make it look like a sunny day at the beach.'"
                 <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
                 <p className="mb-1">Category: {uploadResponse.savedvideo?.category || 'None'}</p>
                 <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
-                <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoUrl || 'None'}</p>
+                <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoUrl || uploadResponse.savedvideo?.videoURL || 'Not returned from server'}</p>
                 <p className="mb-1 break-all">Thumbnail URL: {uploadResponse.savedvideo?.thumbnailLogoUrl || 'None'}</p>
+                <p className="mb-1 break-all">Voice URL: {uploadResponse.savedvideo?.voiceURL || 'None'}</p>
                 <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
                 <p className="mb-1 break-all">Status: {uploadResponse.message || 'Unknown'}</p>
+                <p className="mt-3 text-xs text-yellow-400">Note: If Video URL is missing in the response, check your backend schema.</p>
               </div>
             ) : (
               <>
