@@ -155,7 +155,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     category: 'Education',
     tags: [],
     thumbnailLogoUrl: '',
-    videoUrl: '',
+    videoURL: '',
     duration: 0,
     isPublic: true
   });
@@ -258,7 +258,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           setVideoData({
             ...videoData,
             duration: durationInSeconds,
-            videoUrl: fileURL, // Temporary URL for preview
+            videoURL: fileURL, // Temporary URL for preview
             name: file.name.split('.')[0] // Use filename as the video name
           });
         } else {
@@ -266,7 +266,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           // If it's an image, set it as both video source and thumbnail
           setVideoData({
             ...videoData,
-            videoUrl: fileURL, // Temporary URL for preview
+            videoURL: fileURL, // Temporary URL for preview
             name: file.name.split('.')[0], // Use filename as the name
             duration: 0 // No duration for images
           });
@@ -446,7 +446,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
 
   // Modified handleUpload function to upload to Cloudinary first
   const handleUpload = async () => {
-    if (!videoFile && !videoData.videoUrl) {
+    if (!videoFile && !videoData.videoURL) {
       setErrorMessage('Please upload a video or image file');
       return;
     }
@@ -469,42 +469,42 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       const isVideoFile = videoFile && validVideoTypes.includes(videoFile.type);
       
       // Upload to Cloudinary if there's a file
-      let cloudinaryVideoUrl = videoData.videoUrl;
+      let cloudinaryVideoURL = videoData.videoURL;
       if (videoFile) {
         // Use appropriate upload type (video or image)
         const fileType = isVideoFile ? 'video' : 'image';
         setErrorMessage(`Uploading ${fileType} to Cloudinary...`);
-        cloudinaryVideoUrl = await uploadToCloudinary(videoFile, fileType);
+        cloudinaryVideoURL = await uploadToCloudinary(videoFile, fileType);
         setVideoData(prevData => ({
           ...prevData,
-          videoUrl: cloudinaryVideoUrl
+          videoURL: cloudinaryVideoURL
         }));
       }
       
-      if (!cloudinaryVideoUrl) {
+      if (!cloudinaryVideoURL) {
         throw new Error('Failed to get a valid file URL');
       }
       
       // Upload thumbnail to Cloudinary if available and different from main file
-      let cloudinaryThumbnailUrl = videoData.thumbnailLogoUrl;
+      let cloudinaryThumbnailURL = videoData.thumbnailLogoUrl;
       if (thumbnailFile && (!videoFile || (videoFile && thumbnailFile !== videoFile))) {
         setErrorMessage('Uploading thumbnail to Cloudinary...');
-        cloudinaryThumbnailUrl = await uploadToCloudinary(thumbnailFile, 'image');
+        cloudinaryThumbnailURL = await uploadToCloudinary(thumbnailFile, 'image');
         setVideoData(prevData => ({
           ...prevData,
-          thumbnailLogoUrl: cloudinaryThumbnailUrl
+          thumbnailLogoUrl: cloudinaryThumbnailURL
         }));
       } else if (videoFile && !isVideoFile && !thumbnailFile) {
         // If user uploaded an image as main file and no thumbnail, use the same URL for thumbnail
-        cloudinaryThumbnailUrl = cloudinaryVideoUrl;
+        cloudinaryThumbnailURL = cloudinaryVideoURL;
       }
       
       // Upload voice file if available
-      let cloudinaryVoiceUrl = '';
+      let cloudinaryVoiceURL = '';
       if (voiceFile) {
         setErrorMessage('Uploading voice to Cloudinary...');
-        cloudinaryVoiceUrl = await uploadToCloudinary(voiceFile, 'video'); // Audio uploads use video endpoint in Cloudinary
-        console.log('Voice URL:', cloudinaryVoiceUrl);
+        cloudinaryVoiceURL = await uploadToCloudinary(voiceFile, 'video'); // Audio uploads use video endpoint in Cloudinary
+        console.log('Voice URL:', cloudinaryVoiceURL);
       }
       
       console.log('Uploading media info to API...');
@@ -515,8 +515,8 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         description: creativePrompt || 'No description provided',
         category: videoData.category || 'Education',
         tags: videoData.tags || [selectedStyle, isVideoFile ? 'video' : 'image'],
-        thumbnailLogoUrl: cloudinaryThumbnailUrl || '',
-        videoUrl: cloudinaryVideoUrl,
+        thumbnailLogoUrl: cloudinaryThumbnailURL || '',
+        videoURL: cloudinaryVideoURL,
         duration: videoData.duration || 0,
         uploadedBy: user?.name || 'Anonymous User',
         views: 0,
@@ -528,7 +528,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         style: selectedStyle,
         prompt: creativePrompt || '',
         caption: caption || videoData.name || 'Untitled Media',
-        voiceURL: cloudinaryVoiceUrl
+        voiceURL: cloudinaryVoiceURL
       };
       
       console.log('Payload:', videoPayload);
@@ -547,27 +547,27 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       console.log('Upload response full:', JSON.stringify(response.data));
       console.log('Saved video fields:', Object.keys(response.data.savedvideo || {}));
-      console.log('videoUrl in payload:', videoPayload.videoUrl);
+      console.log('videoURL in payload:', videoPayload.videoURL);
       
       // Store the full response data
       setUploadResponse(response.data);
       
-      // Update videoData with the response and preserve videoUrl if missing
+      // Update videoData with the response and preserve videoURL if missing
       if (response.data && response.data.savedvideo) {
         const savedVideo = response.data.savedvideo;
         
-        // Check if videoUrl is missing but videoURL exists (case difference)
-        const responseVideoUrl = savedVideo.videoUrl || savedVideo.videoURL || cloudinaryVideoUrl;
+        // Check if videoURL is missing but videoURL exists (case difference)
+        const responseVideoURL = savedVideo.videoURL || savedVideo.videoURL || cloudinaryVideoURL;
         
         setVideoData(prevData => ({
           ...prevData,
           ...savedVideo,
-          videoUrl: responseVideoUrl // Ensure we have the video URL
+          videoURL: responseVideoURL // Ensure we have the video URL
         }));
         
-        // Add videoUrl to the response object if it's missing
-        if (!savedVideo.videoUrl && cloudinaryVideoUrl) {
-          response.data.savedvideo.videoUrl = cloudinaryVideoUrl;
+        // Add videoURL to the response object if it's missing
+        if (!savedVideo.videoURL && cloudinaryVideoURL) {
+          response.data.savedvideo.videoURL = cloudinaryVideoURL;
         }
       }
       
@@ -611,7 +611,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       category: 'Education',
       tags: [],
       thumbnailLogoUrl: '',
-      videoUrl: '',
+      videoURL: '',
       duration: 0,
       isPublic: true
     });
@@ -673,12 +673,12 @@ function GenerateVideoContent({ gradientButtonStyle }) {
               <div className="flex flex-col items-center">
                 {videoFile.type.startsWith('video/') ? (
                   <video className="h-24 max-w-full" controls>
-                    <source src={videoData.videoUrl} />
+                    <source src={videoData.videoURL} />
                     Your browser does not support the video tag.
                   </video>
                 ) : (
                   <img 
-                    src={videoData.videoUrl} 
+                    src={videoData.videoURL} 
                     alt="Image preview" 
                     className="h-24 max-w-full object-cover" 
                   />
@@ -817,7 +817,7 @@ For example, 'Make it look like a sunny day at the beach.'"
                 <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
                 <p className="mb-1">Category: {uploadResponse.savedvideo?.category || 'None'}</p>
                 <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
-                <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoUrl || uploadResponse.savedvideo?.videoURL || 'Not returned from server'}</p>
+                <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoURL || uploadResponse.savedvideo?.videoURL || 'Not returned from server'}</p>
                 <p className="mb-1 break-all">Thumbnail URL: {uploadResponse.savedvideo?.thumbnailLogoUrl || 'None'}</p>
                 <p className="mb-1 break-all">Voice URL: {uploadResponse.savedvideo?.voiceURL || 'None'}</p>
                 <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
@@ -894,7 +894,7 @@ For example, 'Make it look like a sunny day at the beach.'"
             <div className="flex justify-between text-xs mb-1">
               <span className="text-[#999]">
                 {uploadProgress < 100 ? 
-                  (videoFile && !videoData.videoUrl ? 'Uploading to Cloudinary...' : 'Processing...') 
+                  (videoFile && !videoData.videoURL ? 'Uploading to Cloudinary...' : 'Processing...') 
                   : 'Finalizing...'}
               </span>
               <span className="text-[#ED5606]">{uploadProgress}%</span>
