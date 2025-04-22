@@ -499,6 +499,14 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         cloudinaryThumbnailUrl = cloudinaryVideoUrl;
       }
       
+      // Upload voice file if available
+      let cloudinaryVoiceUrl = '';
+      if (voiceFile) {
+        setErrorMessage('Uploading voice to Cloudinary...');
+        cloudinaryVoiceUrl = await uploadToCloudinary(voiceFile, 'video'); // Audio uploads use video endpoint in Cloudinary
+        console.log('Voice URL:', cloudinaryVoiceUrl);
+      }
+      
       console.log('Uploading media info to API...');
       
       // Create JSON payload matching the curl request structure
@@ -515,7 +523,12 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         likes: 0,
         dislikes: 0,
         comments: [],
-        isPublic: videoData.isPublic
+        isPublic: videoData.isPublic,
+        // Add the new fields
+        style: selectedStyle,
+        prompt: creativePrompt || '',
+        caption: caption || videoData.name || 'Untitled Media',
+        voiceURL: cloudinaryVoiceUrl
       };
       
       console.log('Payload:', videoPayload);
@@ -787,6 +800,8 @@ For example, 'Make it look like a sunny day at the beach.'"
               <div className="h-full overflow-y-auto">
                 <p className="mb-2 text-green-400">Upload Successful!</p>
                 <p className="mb-1">Name: {uploadResponse.savedvideo?.name || 'None'}</p>
+                <p className="mb-1">Style: {uploadResponse.savedvideo?.style || 'None'}</p>
+                <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
                 <p className="mb-1">Category: {uploadResponse.savedvideo?.category || 'None'}</p>
                 <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
                 <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
