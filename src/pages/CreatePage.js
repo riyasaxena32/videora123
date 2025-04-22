@@ -4,10 +4,10 @@ import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, Hel
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
-// Use environment variables for Cloudinary configuration
-const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'dv9pzz0ru';
-const CLOUDINARY_API_KEY = process.env.REACT_APP_CLOUDINARY_API_KEY || '571566961397168';
-const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'videora_uploads';
+// Cloudinary configuration
+const CLOUDINARY_UPLOAD_PRESET = 'ljildkpe'; // User's upload preset
+const CLOUDINARY_CLOUD_NAME = 'dnxgnecn7'; // User's cloud name
+const CLOUDINARY_API_KEY = '184426529586122'; // User's API key
 
 function CreatePage() {
   const [activeTab, setActiveTab] = useState('Generate Video');
@@ -380,7 +380,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     };
   }, [audioURL]);
 
-  // Updated Cloudinary upload function to use signed uploads
+  // Add Cloudinary upload function
   const uploadToCloudinary = async (file) => {
     try {
       setUploading(true);
@@ -389,16 +389,12 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       // Create form data for Cloudinary
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('api_key', "571566961397168");
-      formData.append('timestamp', Math.floor(Date.now() / 1000).toString());
-      
-      // For signed uploads, we would typically generate a signature on the server side
-      // Since we can't do that here, we're using the API key directly
-      // In production, you should generate signatures server-side
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('api_key', CLOUDINARY_API_KEY);
       
       // Upload to Cloudinary
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/dv9pzz0ru/video/upload`,
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
         formData,
         {
           onUploadProgress: (progressEvent) => {
