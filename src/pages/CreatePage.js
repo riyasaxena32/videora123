@@ -804,6 +804,8 @@ For example, 'Make it look like a sunny day at the beach.'"
                 <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
                 <p className="mb-1">Category: {uploadResponse.savedvideo?.category || 'None'}</p>
                 <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
+                <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoUrl || 'None'}</p>
+                <p className="mb-1 break-all">Thumbnail URL: {uploadResponse.savedvideo?.thumbnailLogoUrl || 'None'}</p>
                 <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
                 <p className="mb-1 break-all">Status: {uploadResponse.message || 'Unknown'}</p>
               </div>

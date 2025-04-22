@@ -619,16 +619,22 @@ function HomePage() {
                     </div>
                     <div className="flex items-center mt-4 gap-2">
                       <p className="text-sm text-[#b0b0b0]">Created by:</p>
-                      <div className="flex items-center gap-2">
-                        <img
-                          src="/user-avatar.png"
-                          alt="Creator"
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
-                        <span className="text-sm">{videos[0].uploadedBy}</span>
-                      </div>
+                      {videos[0].uploadedBy && (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(videos[0].uploadedBy)}&background=ED5606&color=fff&size=40`}
+                            alt={videos[0].uploadedBy}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/user-avatar.png";
+                            }}
+                          />
+                          <span className="text-sm">{videos[0].uploadedBy}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
