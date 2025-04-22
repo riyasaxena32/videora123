@@ -210,21 +210,25 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     }));
   };
 
-  // Handle video selection without API call
+  // Handle video or image selection
   const handleVideoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file type
-      const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
-      if (!validTypes.includes(file.type)) {
-        setErrorMessage(`Invalid file type. Please upload a valid video format (${validTypes.join(', ')})`);
+      // Check file type - now accept both videos and images
+      const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+      const isVideo = validVideoTypes.includes(file.type);
+      const isImage = validImageTypes.includes(file.type);
+      
+      if (!isVideo && !isImage) {
+        setErrorMessage(`Invalid file type. Please upload a valid video or image format.`);
         return;
       }
       
-      // Check file size (limit to 100MB)
-      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+      // Check file size
+      const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024; // 100MB for video, 10MB for image
       if (file.size > maxSize) {
-        setErrorMessage(`File too large. Maximum size is 100MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+        setErrorMessage(`File too large. Maximum size is ${isVideo ? '100MB' : '10MB'}. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
         return;
       }
       
@@ -232,33 +236,53 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       setErrorMessage('');
       
       try {
-        // Create temporary URL for the video
-        const videoURL = URL.createObjectURL(file);
+        // Create temporary URL for the file
+        const fileURL = URL.createObjectURL(file);
         
-        // Load video to get duration
-        const videoElement = document.createElement('video');
-        videoElement.src = videoURL;
-        
-        // Wait for metadata to load to get duration
-        await new Promise((resolve) => {
-          videoElement.onloadedmetadata = () => {
-            resolve();
-          };
-        });
-        
-        // Duration in seconds
-        const durationInSeconds = Math.floor(videoElement.duration);
-        
-        // Update state with video info
-        setVideoData({
-          ...videoData,
-          duration: durationInSeconds,
-          videoUrl: videoURL, // Temporary URL for preview
-          name: file.name.split('.')[0] // Use filename as the video name
-        });
+        if (isVideo) {
+          // Handle video
+          const videoElement = document.createElement('video');
+          videoElement.src = fileURL;
+          
+          // Wait for metadata to load to get duration
+          await new Promise((resolve) => {
+            videoElement.onloadedmetadata = () => {
+              resolve();
+            };
+          });
+          
+          // Duration in seconds
+          const durationInSeconds = Math.floor(videoElement.duration);
+          
+          // Update state with video info
+          setVideoData({
+            ...videoData,
+            duration: durationInSeconds,
+            videoUrl: fileURL, // Temporary URL for preview
+            name: file.name.split('.')[0] // Use filename as the video name
+          });
+        } else {
+          // Handle image
+          // If it's an image, set it as both video source and thumbnail
+          setVideoData({
+            ...videoData,
+            videoUrl: fileURL, // Temporary URL for preview
+            name: file.name.split('.')[0], // Use filename as the name
+            duration: 0 // No duration for images
+          });
+          
+          // Also set it as a thumbnail if no thumbnail is already set
+          if (!thumbnailFile) {
+            setThumbnailFile(file);
+            setVideoData(prevData => ({
+              ...prevData,
+              thumbnailLogoUrl: fileURL
+            }));
+          }
+        }
       } catch (error) {
-        console.error('Error processing video:', error);
-        setErrorMessage('Failed to process video. Please try again.');
+        console.error('Error processing file:', error);
+        setErrorMessage('Failed to process file. Please try again.');
       }
     }
   };
@@ -381,7 +405,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   }, [audioURL]);
 
   // Add Cloudinary upload function
-  const uploadToCloudinary = async (file) => {
+  const uploadToCloudinary = async (file, fileType = 'video') => {
     try {
       setUploading(true);
       setErrorMessage('');
@@ -392,35 +416,38 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
       formData.append('api_key', CLOUDINARY_API_KEY);
       
+      // Upload to Cloudinary - use different resource type based on file
+      const resourceType = fileType === 'image' ? 'image' : 'video';
+      
       // Upload to Cloudinary
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
         formData,
         {
           onUploadProgress: (progressEvent) => {
             if (progressEvent.lengthComputable) {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              console.log(`Cloudinary upload progress: ${percentCompleted}%`);
+              console.log(`Cloudinary ${fileType} upload progress: ${percentCompleted}%`);
               setUploadProgress(percentCompleted);
             }
           }
         }
       );
       
-      console.log('Cloudinary response:', response.data);
+      console.log(`Cloudinary ${fileType} response:`, response.data);
       
       // Return the secure URL from Cloudinary
       return response.data.secure_url;
     } catch (error) {
-      console.error('Error uploading to Cloudinary:', error);
-      throw new Error(`Cloudinary upload failed: ${error.message}`);
+      console.error(`Error uploading ${fileType} to Cloudinary:`, error);
+      throw new Error(`Cloudinary ${fileType} upload failed: ${error.message}`);
     }
   };
 
   // Modified handleUpload function to upload to Cloudinary first
   const handleUpload = async () => {
     if (!videoFile && !videoData.videoUrl) {
-      setErrorMessage('Please upload a video or provide a video URL');
+      setErrorMessage('Please upload a video or image file');
       return;
     }
     
@@ -437,31 +464,51 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      // Upload to Cloudinary if there's a video file
-      let cloudinaryUrl = videoData.videoUrl;
+      // Determine file types
+      const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
+      const isVideoFile = videoFile && validVideoTypes.includes(videoFile.type);
+      
+      // Upload to Cloudinary if there's a file
+      let cloudinaryVideoUrl = videoData.videoUrl;
       if (videoFile) {
-        setErrorMessage('Uploading video to Cloudinary...');
-        cloudinaryUrl = await uploadToCloudinary(videoFile);
+        // Use appropriate upload type (video or image)
+        const fileType = isVideoFile ? 'video' : 'image';
+        setErrorMessage(`Uploading ${fileType} to Cloudinary...`);
+        cloudinaryVideoUrl = await uploadToCloudinary(videoFile, fileType);
         setVideoData(prevData => ({
           ...prevData,
-          videoUrl: cloudinaryUrl
+          videoUrl: cloudinaryVideoUrl
         }));
       }
       
-      if (!cloudinaryUrl) {
-        throw new Error('Failed to get a valid video URL');
+      if (!cloudinaryVideoUrl) {
+        throw new Error('Failed to get a valid file URL');
       }
       
-      console.log('Uploading video info to API...');
+      // Upload thumbnail to Cloudinary if available and different from main file
+      let cloudinaryThumbnailUrl = videoData.thumbnailLogoUrl;
+      if (thumbnailFile && (!videoFile || (videoFile && thumbnailFile !== videoFile))) {
+        setErrorMessage('Uploading thumbnail to Cloudinary...');
+        cloudinaryThumbnailUrl = await uploadToCloudinary(thumbnailFile, 'image');
+        setVideoData(prevData => ({
+          ...prevData,
+          thumbnailLogoUrl: cloudinaryThumbnailUrl
+        }));
+      } else if (videoFile && !isVideoFile && !thumbnailFile) {
+        // If user uploaded an image as main file and no thumbnail, use the same URL for thumbnail
+        cloudinaryThumbnailUrl = cloudinaryVideoUrl;
+      }
+      
+      console.log('Uploading media info to API...');
       
       // Create JSON payload matching the curl request structure
       const videoPayload = {
-        name: videoData.name || caption || 'Untitled Video',
+        name: videoData.name || caption || 'Untitled Media',
         description: creativePrompt || 'No description provided',
         category: videoData.category || 'Education',
-        tags: videoData.tags || [selectedStyle, 'video'],
-        thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
-        videoUrl: cloudinaryUrl,
+        tags: videoData.tags || [selectedStyle, isVideoFile ? 'video' : 'image'],
+        thumbnailLogoUrl: cloudinaryThumbnailUrl || '',
+        videoUrl: cloudinaryVideoUrl,
         duration: videoData.duration || 0,
         uploadedBy: user?.name || 'Anonymous User',
         views: 0,
@@ -508,7 +555,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       }, 5000);
       
     } catch (error) {
-      console.error('Error uploading video:', error);
+      console.error('Error uploading media:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Unknown error occurred';
       setErrorMessage(`Error: ${errorMsg}`);
       setUploading(false);
@@ -518,10 +565,14 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   // Reset form to create a new video
   const handleResetForm = () => {
     setVideoFile(null);
+    setThumbnailFile(null);
     setVoiceFile(null);
     if (audioURL) {
       URL.revokeObjectURL(audioURL);
       setAudioURL('');
+    }
+    if (videoData.thumbnailLogoUrl && thumbnailFile) {
+      URL.revokeObjectURL(videoData.thumbnailLogoUrl);
     }
     setCreativePrompt('');
     setCaption('');
@@ -548,11 +599,45 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     voiceInputRef.current.click();
   };
 
+  // Handle thumbnail selection
+  const handleThumbnailSelect = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setErrorMessage(`Invalid thumbnail type. Please upload a valid image format (JPG, PNG, WebP)`);
+        return;
+      }
+      
+      // Check file size (limit to 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        setErrorMessage(`Thumbnail too large. Maximum size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+        return;
+      }
+      
+      setThumbnailFile(file);
+      setErrorMessage('');
+      
+      // Create temporary URL for preview
+      const thumbnailURL = URL.createObjectURL(file);
+      setVideoData(prevData => ({
+        ...prevData,
+        thumbnailLogoUrl: thumbnailURL // Temporary URL for preview
+      }));
+    }
+  };
+
+  const triggerThumbnailInput = () => {
+    thumbnailInputRef.current.click();
+  };
+
   return (
     <div className="flex-1 grid grid-cols-3 gap-6 p-6">
       {/* Left Panel: Upload Media */}
       <div className="flex flex-col space-y-6">
-        <h2 className="text-sm font-medium">Upload Your Media</h2>
+        <h2 className="text-sm font-medium">Upload Your Media (Video or Image)</h2>
         <div className="flex-1 border border-[#333] bg-[#111] rounded-md flex flex-col items-center justify-center p-6">
           <div 
             onClick={triggerVideoInput}
@@ -560,10 +645,18 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           >
             {videoFile ? (
               <div className="flex flex-col items-center">
-                <video className="h-24 max-w-full" controls>
-                  <source src={videoData.videoUrl} />
-                  Your browser does not support the video tag.
-                </video>
+                {videoFile.type.startsWith('video/') ? (
+                  <video className="h-24 max-w-full" controls>
+                    <source src={videoData.videoUrl} />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <img 
+                    src={videoData.videoUrl} 
+                    alt="Image preview" 
+                    className="h-24 max-w-full object-cover" 
+                  />
+                )}
                 <p className="text-xs text-[#ED5606] mt-2">{videoFile.name}</p>
               </div>
             ) : (
@@ -578,13 +671,56 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           <input 
             ref={videoInputRef}
             type="file" 
-            accept="video/*" 
+            accept="video/*,image/*" 
             className="hidden"
             onChange={handleVideoSelect}
           />
           <p className="text-xs text-[#777] text-center">
             Drag and drop your video or image here, or click here to upload.
           </p>
+          
+          {/* Add thumbnail upload button */}
+          <div className="w-full mt-4">
+            <div 
+              onClick={triggerThumbnailInput}
+              className="w-full h-16 border-2 border-dashed border-[#333] rounded-md flex items-center justify-between px-4 py-2 cursor-pointer hover:border-[#ED5606] transition-colors"
+            >
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-[#191919] rounded overflow-hidden flex-shrink-0 flex items-center justify-center mr-3">
+                  {thumbnailFile ? (
+                    <img 
+                      src={videoData.thumbnailLogoUrl} 
+                      alt="Thumbnail preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <UploadIcon className="w-4 h-4 text-[#666]" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-medium">
+                    {thumbnailFile ? 'Change thumbnail' : 'Upload custom thumbnail'}
+                  </p>
+                  <p className="text-[10px] text-[#777]">
+                    {thumbnailFile ? thumbnailFile.name : 'JPG, PNG, or WebP (max 5MB)'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="bg-[#191919] rounded px-2 py-1 text-xs hover:bg-[#333]"
+              >
+                {thumbnailFile ? 'Change' : 'Upload'}
+              </button>
+            </div>
+            <input 
+              ref={thumbnailInputRef}
+              type="file" 
+              accept="image/*" 
+              className="hidden"
+              onChange={handleThumbnailSelect}
+            />
+          </div>
         </div>
         
         {/* Camera Movements */}
@@ -773,7 +909,7 @@ For example, 'Make it look like a sunny day at the beach.'"
               </>
             ) : (
               <>
-                {uploadResponse ? 'Uploaded' : 'Get Started'}
+                {uploadResponse ? 'Uploaded' : 'Upload Media'}
                 {!uploadResponse && <ArrowUpRight className="w-4 h-4" />}
               </>
             )}
