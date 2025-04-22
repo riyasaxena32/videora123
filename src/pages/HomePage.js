@@ -32,45 +32,51 @@ function HomePage() {
     borderRadius: '9999px'
   };
 
-  // Fetch videos from API
+  // Fetch videos and creators from API
   useEffect(() => {
-    const fetchVideos = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
         
-        if (!response.ok) {
+        // Fetch videos
+        const videosResponse = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        if (!videosResponse.ok) {
           throw new Error('Failed to fetch videos');
         }
-        
-        const data = await response.json();
-        const videoData = data.video || [];
+        const videosData = await videosResponse.json();
+        const videoData = videosData.video || [];
         setVideos(videoData);
         
-        // Extract unique creators from videos
-        const uniqueCreators = Array.from(new Set(videoData.map(v => v.uploadedBy)))
-          .filter(Boolean)
-          .map(creator => {
-            // Find the first video by this creator
-            const creatorVideo = videoData.find(v => v.uploadedBy === creator);
-            return {
-              name: creator,
-              id: creator.toLowerCase().replace(/\s+/g, '-'),
-              videoCount: videoData.filter(v => v.uploadedBy === creator).length,
-              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png'
-            };
-          });
+        // Fetch creators
+        const creatorsResponse = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
+        if (!creatorsResponse.ok) {
+          throw new Error('Failed to fetch creators');
+        }
+        const creatorsData = await creatorsResponse.json();
+        const creatorsList = creatorsData.creator || [];
         
-        setCreators(uniqueCreators);
+        // Map creators with additional info
+        const mappedCreators = creatorsList.map(creator => {
+          return {
+            name: creator.name,
+            id: creator.name.toLowerCase().replace(/\s+/g, '-'),
+            videoCount: creator.TotalVideos || 0,
+            followers: creator.followers || 0,
+            about: creator.about || '',
+            _id: creator._id
+          };
+        });
+        
+        setCreators(mappedCreators);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching videos:', err);
+        console.error('Error fetching data:', err);
         setError(err.message);
         setLoading(false);
       }
     };
     
-    fetchVideos();
+    fetchData();
   }, []);
 
   const toggleSidebar = () => {
@@ -467,7 +473,7 @@ function HomePage() {
               <nav className="space-y-1">
                 {creators.length > 0 ? creators.slice(0, 5).map((creator) => (
                   <a
-                    key={creator.id}
+                    key={creator._id}
                     href="#"
                     className={`flex items-center gap-3 py-2 text-sm transition-colors sidebar-item ${
                       activeSidebarItem === creator.name
@@ -486,7 +492,7 @@ function HomePage() {
                   >
                     <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
                       <img 
-                        src={creator.thumbnailUrl} 
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=30`} 
                         alt={`${creator.name} avatar`} 
                         width={20} 
                         height={20} 
@@ -716,7 +722,7 @@ function HomePage() {
                 </div>
               )}
 
-              {/* We can keep the creators section as is */}
+              {/* Top Creators Section - Sorted by follower count */}
               <div className="px-8 py-6 relative">
                 <div className="flex items-center mb-4">
                   <h2 className="text-xl font-bold">Top Creators</h2>
@@ -738,16 +744,30 @@ function HomePage() {
                 </div>
                 <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="creatorsScroll">
                   <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                    {creatorsData.map((creator, index) => (
-                      <div 
-                        key={index} 
-                        className="snap-start cursor-pointer" 
-                        style={{ width: '280px', flexShrink: 0 }}
-                        onClick={() => navigate(`/creator/${creator.id || creator.name.toLowerCase().replace(/\s+/g, '-')}`)}
-                      >
-                        <CreatorCard {...creator} />
-                      </div>
-                    ))}
+                    {creators.length > 0 ? 
+                      // Sort creators by follower count (highest first)
+                      [...creators]
+                        .sort((a, b) => b.followers - a.followers)
+                        .map((creator) => (
+                          <div 
+                            key={creator._id} 
+                            className="snap-start cursor-pointer" 
+                            style={{ width: '280px', flexShrink: 0 }}
+                            onClick={() => navigate(`/creator/${creator.id}`)}
+                          >
+                            <CreatorCard 
+                              name={creator.name}
+                              followers={creator.followers}
+                              videos={creator.videoCount}
+                              _id={creator._id}
+                            />
+                          </div>
+                        )) : (
+                          <div className="w-full text-center py-10">
+                            <p className="text-gray-400">No creators found</p>
+                          </div>
+                        )
+                    }
                   </div>
                 </div>
               </div>
@@ -787,21 +807,25 @@ function VideoCard({ title, image, tag, id }) {
   );
 }
 
-function CreatorCard({ name, image, subscribers, videos }) {
+function CreatorCard({ name, image, followers, videos, _id }) {
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
-          src={image} 
+          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ED5606&color=fff&size=200`} 
           alt={name} 
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/user-avatar.png";
+          }}
         />
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
       <div className="mt-2">
         <h3 className="text-sm font-medium">{name}</h3>
-        <p className="text-xs text-[#b0b0b0]">{subscribers}</p>
+        <p className="text-xs text-[#b0b0b0]">{followers} followers</p>
         <p className="text-xs text-[#b0b0b0]">{videos} videos</p>
       </div>
     </div>
@@ -859,30 +883,5 @@ function ErrorIcon(props) {
     </svg>
   );
 }
-
-// Sample data with better image references and IDs
-const topVideos = [
-  { id: 1, title: "St Charming", image: "/image 28.png", tag: "Crime/Drama" },
-  { id: 2, title: "Theory of Everything", image: "/image 28.png", tag: "Sci-Fi/Thriller" },
-  { id: 3, title: "Oppenheimer", image: "/image 28.png", tag: "History/Drama" },
-  { id: 4, title: "New Delhi", image: "/image 28.png", tag: "Comedy" },
-];
-
-const animeVideos = [
-  { id: 5, title: "St Charming", image: "/image 28.png", tag: "Anime/Fantasy" },
-  { id: 6, title: "Theory of Everything", image: "/image 28.png", tag: "Anime/Sci-Fi" },
-  { id: 7, title: "Oppenheimer", image: "/image 28.png", tag: "Anime/History" },
-  { id: 8, title: "New Delhi", image: "/image 28.png", tag: "Anime/Comedy" },
-];
-
-// Sample creator data
-const creatorsData = [
-  { name: "MrWhosTheBoss", image: "/user-avatar.png", subscribers: "12.5M subs", videos: 524 },
-  { name: "MKBHD", image: "/user-avatar.png", subscribers: "18.2M subs", videos: 810 },
-  { name: "T-SERIES", image: "/user-avatar.png", subscribers: "245M subs", videos: 1432 },
-  { name: "Casey Neistat", image: "/user-avatar.png", subscribers: "10.1M subs", videos: 682 },
-  { name: "PewDiePie", image: "/user-avatar.png", subscribers: "111M subs", videos: 2840 },
-  { name: "Linus Tech Tips", image: "/user-avatar.png", subscribers: "15.3M subs", videos: 1215 },
-];
 
 export default HomePage; 
