@@ -389,7 +389,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       // Create form data for Cloudinary
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('api_key', CLOUDINARY_API_KEY);
+      formData.append('api_key', "571566961397168");
       formData.append('timestamp', Math.floor(Date.now() / 1000).toString());
       
       // For signed uploads, we would typically generate a signature on the server side
@@ -398,7 +398,7 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       
       // Upload to Cloudinary
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
+        `https://api.cloudinary.com/v1_1/dv9pzz0ru/video/upload`,
         formData,
         {
           onUploadProgress: (progressEvent) => {
