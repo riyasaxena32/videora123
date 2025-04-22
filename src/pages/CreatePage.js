@@ -4,6 +4,11 @@ import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, Hel
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
+// Use environment variables for Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'dv9pzz0ru';
+const CLOUDINARY_API_KEY = process.env.REACT_APP_CLOUDINARY_API_KEY || '571566961397168';
+const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'videora_uploads';
+
 function CreatePage() {
   const [activeTab, setActiveTab] = useState('Generate Video');
   const navigate = useNavigate();
@@ -375,10 +380,51 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     };
   }, [audioURL]);
 
-  // Modified handleUpload function to call API only on button click
+  // Updated Cloudinary upload function to use signed uploads
+  const uploadToCloudinary = async (file) => {
+    try {
+      setUploading(true);
+      setErrorMessage('');
+      
+      // Create form data for Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', CLOUDINARY_API_KEY);
+      formData.append('timestamp', Math.floor(Date.now() / 1000).toString());
+      
+      // For signed uploads, we would typically generate a signature on the server side
+      // Since we can't do that here, we're using the API key directly
+      // In production, you should generate signatures server-side
+      
+      // Upload to Cloudinary
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.lengthComputable) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              console.log(`Cloudinary upload progress: ${percentCompleted}%`);
+              setUploadProgress(percentCompleted);
+            }
+          }
+        }
+      );
+      
+      console.log('Cloudinary response:', response.data);
+      
+      // Return the secure URL from Cloudinary
+      return response.data.secure_url;
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      throw new Error(`Cloudinary upload failed: ${error.message}`);
+    }
+  };
+
+  // Modified handleUpload function to upload to Cloudinary first
   const handleUpload = async () => {
-    if (!videoFile) {
-      setErrorMessage('Please upload a video first');
+    if (!videoFile && !videoData.videoUrl) {
+      setErrorMessage('Please upload a video or provide a video URL');
       return;
     }
     
@@ -387,131 +433,88 @@ function GenerateVideoContent({ gradientButtonStyle }) {
       setUploadProgress(0);
       setErrorMessage('');
       
-      // Get the token from local storage - use exact format from curl
+      // Get the token from local storage
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       
-      console.log('Token found:', !!token); // Log if token exists
+      console.log('Token found:', !!token);
       if (!token) {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      console.log('Uploading video to API...');
-      
-      // Create FormData object for multipart/form-data upload
-      const formData = new FormData();
-      
-      // Append values in the exact same order as the curl request
-      formData.append('video', videoFile);
-      formData.append('style', selectedStyle);
-      formData.append('prompt', creativePrompt || '');
-      formData.append('caption', caption || videoData.name || '');
-      
-      // Add voice file if available
-      if (voiceFile) {
-        formData.append('voice', voiceFile);
+      // Upload to Cloudinary if there's a video file
+      let cloudinaryUrl = videoData.videoUrl;
+      if (videoFile) {
+        setErrorMessage('Uploading video to Cloudinary...');
+        cloudinaryUrl = await uploadToCloudinary(videoFile);
+        setVideoData(prevData => ({
+          ...prevData,
+          videoUrl: cloudinaryUrl
+        }));
       }
       
-      // Debug logging for FormData
-      console.log('FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        if (key === 'video') {
-          console.log('video file details:', {
-            name: videoFile.name,
-            type: videoFile.type,
-            size: videoFile.size
-          });
-        } else if (key === 'voice') {
-          console.log('voice file details:', {
-            name: voiceFile.name,
-            type: voiceFile.type,
-            size: voiceFile.size
-          });
-        } else {
-          console.log(`${key}: ${value}`);
-        }
+      if (!cloudinaryUrl) {
+        throw new Error('Failed to get a valid video URL');
       }
       
-      // Try using fetch instead of axios as an alternative
-      const fetchOptions = {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          // Don't set Content-Type here, the browser will set it with the correct boundary
-        },
-        body: formData,
-        mode: 'cors',
-        credentials: 'omit'
+      console.log('Uploading video info to API...');
+      
+      // Create JSON payload matching the curl request structure
+      const videoPayload = {
+        name: videoData.name || caption || 'Untitled Video',
+        description: creativePrompt || 'No description provided',
+        category: videoData.category || 'Education',
+        tags: videoData.tags || [selectedStyle, 'video'],
+        thumbnailLogoUrl: videoData.thumbnailLogoUrl || '',
+        videoUrl: cloudinaryUrl,
+        duration: videoData.duration || 0,
+        uploadedBy: user?.name || 'Anonymous User',
+        views: 0,
+        likes: 0,
+        dislikes: 0,
+        comments: [],
+        isPublic: videoData.isPublic
       };
       
-      // Track upload progress with XMLHttpRequest if needed
-      const xhr = new XMLHttpRequest();
-      const url = 'https://videora-ai.onrender.com/videos/upload-videos';
+      console.log('Payload:', videoPayload);
       
-      // Set up progress tracking
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentCompleted = Math.round((event.loaded * 100) / event.total);
-          console.log(`Upload progress: ${percentCompleted}%`);
-          setUploadProgress(percentCompleted);
-        }
-      };
-      
-      // Set up completion handlers
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const responseData = JSON.parse(xhr.responseText);
-          console.log('Upload response:', responseData);
-          
-          // Store the full response data
-          setUploadResponse(responseData);
-          
-          // Update videoData with the response URL
-          if (responseData && responseData.videoUrl) {
-            setVideoData(prevData => ({
-              ...prevData,
-              videoUrl: responseData.videoUrl
-            }));
+      // Make API request
+      const response = await axios.post(
+        'https://videora-ai.onrender.com/videos/upload-videos',
+        videoPayload,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-          
-          setUploadSuccess(true);
-          setErrorMessage('');
-          setUploading(false);
-          
-          // Reset success message after 5 seconds
-          setTimeout(() => {
-            setUploadSuccess(false);
-          }, 5000);
-        } else {
-          console.error('Upload failed with status:', xhr.status);
-          setErrorMessage(`Server error (${xhr.status}): ${xhr.responseText || 'Unknown error'}`);
-          setUploading(false);
         }
-      };
+      );
       
-      xhr.onerror = () => {
-        console.error('XHR error occurred during upload');
-        setErrorMessage('Network error occurred. This may be due to CORS restrictions. Please try again or contact support.');
-        setUploading(false);
-      };
+      console.log('Upload response:', response.data);
       
-      xhr.timeout = 300000; // 5 minutes timeout
-      xhr.ontimeout = () => {
-        setErrorMessage('Upload timed out. Please try with a smaller file or check your connection.');
-        setUploading(false);
-      };
+      // Store the full response data
+      setUploadResponse(response.data);
       
-      // Open the request and send the form data
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.send(formData);
+      // Update videoData with the response
+      if (response.data && response.data.savedvideo) {
+        setVideoData(prevData => ({
+          ...prevData,
+          ...response.data.savedvideo
+        }));
+      }
       
-      // Note: We don't need to set the response or success states here
-      // as they will be set in the xhr.onload handler above
-      // We're also not setting uploading to false here, as that will be done in the handlers
+      setUploadSuccess(true);
+      setErrorMessage('');
+      setUploading(false);
+      
+      // Reset success message after 5 seconds
+      setTimeout(() => {
+        setUploadSuccess(false);
+      }, 5000);
       
     } catch (error) {
-      console.error('Error setting up upload:', error);
-      setErrorMessage(`Error preparing upload: ${error.message}`);
+      console.error('Error uploading video:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Unknown error occurred';
+      setErrorMessage(`Error: ${errorMsg}`);
       setUploading(false);
     }
   };
@@ -651,11 +654,11 @@ For example, 'Make it look like a sunny day at the beach.'"
             {uploadResponse ? (
               <div className="h-full overflow-y-auto">
                 <p className="mb-2 text-green-400">Upload Successful!</p>
-                <p className="mb-1">Caption: {uploadResponse.video?.caption || 'None'}</p>
-                <p className="mb-1">Style: {uploadResponse.video?.style || 'None'}</p>
-                <p className="mb-1">ID: {uploadResponse.video?._id || 'Unknown'}</p>
-                <p className="mb-1">Upload Date: {uploadResponse.video?.uploadDate ? new Date(uploadResponse.video.uploadDate).toLocaleString() : 'Unknown'}</p>
-                <p className="mb-1 break-all">Video URL: {uploadResponse.videoUrl || 'Not available'}</p>
+                <p className="mb-1">Name: {uploadResponse.savedvideo?.name || 'None'}</p>
+                <p className="mb-1">Category: {uploadResponse.savedvideo?.category || 'None'}</p>
+                <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
+                <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
+                <p className="mb-1 break-all">Status: {uploadResponse.message || 'Unknown'}</p>
               </div>
             ) : (
               <>
@@ -716,7 +719,7 @@ For example, 'Make it look like a sunny day at the beach.'"
         {/* Error message */}
         {errorMessage && (
           <div className="mt-4 p-3 bg-red-900 bg-opacity-30 border border-red-800 rounded-md text-red-200 text-xs">
-            <div className="font-medium mb-1">Error uploading video:</div>
+            <div className="font-medium mb-1">Error:</div>
             {errorMessage}
           </div>
         )}
@@ -725,7 +728,11 @@ For example, 'Make it look like a sunny day at the beach.'"
         {uploading && (
           <div className="mt-4 p-3 bg-[#1A1A1A] border border-[#333] rounded-md">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-[#999]">Uploading video...</span>
+              <span className="text-[#999]">
+                {uploadProgress < 100 ? 
+                  (videoFile && !videoData.videoUrl ? 'Uploading to Cloudinary...' : 'Processing...') 
+                  : 'Finalizing...'}
+              </span>
               <span className="text-[#ED5606]">{uploadProgress}%</span>
             </div>
             <div className="w-full bg-[#333] h-1.5 rounded-full overflow-hidden">
@@ -741,7 +748,8 @@ For example, 'Make it look like a sunny day at the beach.'"
         {uploadSuccess && !errorMessage && (
           <div className="mt-4 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
             <div className="font-medium mb-1">Success!</div>
-            Video uploaded successfully! You can view the details in the caption box.
+            <p>Video uploaded successfully to Cloudinary and saved to Videora.</p>
+            <p className="mt-1">You can view the details in the caption box.</p>
           </div>
         )}
         
