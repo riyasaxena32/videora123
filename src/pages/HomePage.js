@@ -11,6 +11,8 @@ function HomePage() {
   const [selectedCreator, setSelectedCreator] = useState(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [videosByCategory, setVideosByCategory] = useState({});
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [creators, setCreators] = useState([]);
@@ -46,6 +48,24 @@ function HomePage() {
         const videosData = await videosResponse.json();
         const videoData = videosData.video || [];
         setVideos(videoData);
+        
+        // Group videos by category
+        const groupedVideos = {};
+        const categorySet = new Set();
+
+        videoData.forEach(video => {
+          // Use "Uncategorized" if no category is specified
+          const category = video.category || "Uncategorized";
+          categorySet.add(category);
+          
+          if (!groupedVideos[category]) {
+            groupedVideos[category] = [];
+          }
+          groupedVideos[category].push(video);
+        });
+        
+        setVideosByCategory(groupedVideos);
+        setCategories(Array.from(categorySet));
         
         // Fetch creators
         const creatorsResponse = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
@@ -147,27 +167,24 @@ function HomePage() {
       return () => scrollContainer.removeEventListener('scroll', handleScroll);
     };
     
-    // Set up scroll button visibility for the creators section (static)
-    const setupCreatorsScroll = () => {
-      return handleScrollButtonVisibility('creatorsScroll', 'creatorsLeftBtn', 'creatorsRightBtn');
-    };
-
-    // Set up dynamic scroll button visibility for all category sections
-    const setupCategoryScrolls = () => {
-      const cleanupFunctions = [];
-      
-      // Set up for each category section
-      sortedCategories.forEach(category => {
-        const scrollId = `${category.toLowerCase()}Scroll`;
-        const leftBtnId = `${category.toLowerCase()}LeftBtn`;
-        const rightBtnId = `${category.toLowerCase()}RightBtn`;
-        
-        const cleanup = handleScrollButtonVisibility(scrollId, leftBtnId, rightBtnId);
-        if (cleanup) cleanupFunctions.push(cleanup);
+    // Set up scroll button visibility for each section
+    const sections = [
+      { scrollId: 'creatorsScroll', leftBtnId: 'creatorsLeftBtn', rightBtnId: 'creatorsRightBtn' }
+    ];
+    
+    // Add category sections
+    categories.forEach(category => {
+      sections.push({
+        scrollId: `${category.replace(/\s+/g, '')}Scroll`,
+        leftBtnId: `${category.replace(/\s+/g, '')}LeftBtn`,
+        rightBtnId: `${category.replace(/\s+/g, '')}RightBtn`
       });
-      
-      return cleanupFunctions;
-    };
+    });
+    
+    // Set up listeners for each section
+    const cleanupFunctions = sections.map(({ scrollId, leftBtnId, rightBtnId }) => 
+      handleScrollButtonVisibility(scrollId, leftBtnId, rightBtnId)
+    ).filter(Boolean); // Filter out any undefined cleanups
     
     // Add an event listener for window resize to auto-collapse sidebar on small screens
     const handleResize = () => {
@@ -183,17 +200,12 @@ function HomePage() {
     
     window.addEventListener('resize', handleResize);
     
-    // Set up scroll buttons for all sections
-    const creatorsCleanup = setupCreatorsScroll();
-    const categoryCleanups = setupCategoryScrolls();
-    
     // Clean up all event listeners
     return () => {
-      if (creatorsCleanup) creatorsCleanup();
-      if (categoryCleanups) categoryCleanups.forEach(cleanup => cleanup());
+      cleanupFunctions.forEach(cleanup => cleanup && cleanup());
       window.removeEventListener('resize', handleResize);
     };
-  }, [sortedCategories]); // Add sortedCategories as dependency
+  }, [categories]);
 
   // Function to handle creator selection
   const handleCreatorSelect = (creator) => {
@@ -204,26 +216,6 @@ function HomePage() {
   const closeCreatorProfile = () => {
     setSelectedCreator(null);
   };
-
-  // Group videos by category
-  const videosByCategory = videos.reduce((acc, video) => {
-    // Handle videos with no category
-    const category = video.category || 'Uncategorized';
-    
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    
-    acc[category].push(video);
-    return acc;
-  }, {});
-
-  // Sort categories alphabetically but ensure "Trending" comes first if it exists
-  const sortedCategories = Object.keys(videosByCategory).sort((a, b) => {
-    if (a === 'Trending') return -1;
-    if (b === 'Trending') return 1;
-    return a.localeCompare(b);
-  });
 
   // Default video if needed
   const defaultVideo = {
@@ -642,7 +634,7 @@ function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 p-8 w-full z-10">
                     <h1 className="text-6xl font-bold mb-2">{(videos[0].caption ? videos[0].caption.toUpperCase() : videos[0].name.toUpperCase())}</h1>
-                    <p className="text-xl mb-6">Category: {videos[0].category}</p>
+                    <p className="text-xl mb-6">Category: {videos[0].category || "Uncategorized"}</p>
                     <div className="flex items-center gap-4">
                       <button 
                         className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium"
@@ -691,47 +683,54 @@ function HomePage() {
                 </div>
               )}
 
-              {/* Videos Sections - Organized by categories */}
-              {sortedCategories.map((category, index) => (
-                <div key={category} className="px-8 py-6 relative">
-                  <div className="flex items-center mb-4">
-                    <h2 className="text-xl font-bold">{category} Videos</h2>
-                    <div className="ml-auto flex gap-2">
-                      <button 
-                        id={`${category.toLowerCase()}LeftBtn`}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                        onClick={() => document.getElementById(`${category.toLowerCase()}Scroll`).scrollBy({left: -300, behavior: 'smooth'})}>
-                        <ChevronRight className="w-4 h-4 rotate-180" />
-                      </button>
-                      <button 
-                        id={`${category.toLowerCase()}RightBtn`}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                        onClick={() => document.getElementById(`${category.toLowerCase()}Scroll`).scrollBy({left: 300, behavior: 'smooth'})}>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
+              {/* Videos Sections - One per category */}
+              {categories.map((category) => {
+                const categoryVideos = videosByCategory[category] || [];
+                if (categoryVideos.length === 0) return null;
+                
+                const categoryId = category.replace(/\s+/g, '');
+                
+                return (
+                  <div key={category} className="px-8 py-6 relative">
+                    <div className="flex items-center mb-4">
+                      <h2 className="text-xl font-bold">{category} Videos</h2>
+                      <div className="ml-auto flex gap-2">
+                        <button 
+                          id={`${categoryId}LeftBtn`}
+                          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                          onClick={() => document.getElementById(`${categoryId}Scroll`).scrollBy({left: -300, behavior: 'smooth'})}>
+                          <ChevronRight className="w-4 h-4 rotate-180" />
+                        </button>
+                        <button 
+                          id={`${categoryId}RightBtn`}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                          onClick={() => document.getElementById(`${categoryId}Scroll`).scrollBy({left: 300, behavior: 'smooth'})}>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id={`${categoryId}Scroll`}>
+                      <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                        {categoryVideos.map((video) => (
+                          <div 
+                            key={video._id} 
+                            className="snap-start cursor-pointer" 
+                            style={{ width: '280px', flexShrink: 0 }}
+                            onClick={() => navigate(`/video/${video._id}`)}
+                          >
+                            <VideoCard 
+                              id={video._id}
+                              title={video.caption || video.name}
+                              image={video.thumbnailLogoUrl}
+                              tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id={`${category.toLowerCase()}Scroll`}>
-                    <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                      {videosByCategory[category].map((video) => (
-                        <div 
-                          key={video._id} 
-                          className="snap-start cursor-pointer" 
-                          style={{ width: '280px', flexShrink: 0 }}
-                          onClick={() => navigate(`/video/${video._id}`)}
-                        >
-                          <VideoCard 
-                            id={video._id}
-                            title={video.caption || video.name}
-                            image={video.thumbnailLogoUrl}
-                            tag={category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               {/* Top Creators Section - Sorted by follower count */}
               <div className="px-8 py-6 relative">
