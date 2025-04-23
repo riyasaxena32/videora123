@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus, User, Bell, ChevronRight, Menu, LogOut, Clock, MessageSquareShare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getAccessToken, getToken } from '../lib/auth'; // Import auth helpers
 
 // Components for consistency with other pages
 function VideoCard({ video, onClick }) {
@@ -426,31 +427,51 @@ function CreatorPage() {
         }
       }
       
-      // Get authentication token
-      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      // Get the proper token using auth helpers
+      // First try access_token (OAuth token), then fall back to regular token
+      const accessToken = getAccessToken();
+      const authToken = getToken();
+      
+      // Use the first available token
+      const token = accessToken || authToken;
+      
+      console.log("Using token for authentication:", token ? "Token available" : "No token found");
+      
       if (!token) {
         console.error("No authentication token found");
-        throw new Error("Authentication token required");
+        throw new Error("Authentication required. Please log in again.");
       }
       
-      console.log(`Making follow request to: https://videora-ai.onrender.com/api/creator/${creatorId}/follow`);
+      const apiUrl = `https://videora-ai.onrender.com/api/creator/${creatorId}/follow`;
+      console.log(`Making follow request to: ${apiUrl}`);
       
       // Make POST request to follow endpoint
-      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
+        }
       });
       
       console.log("Follow response status:", response.status);
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Follow error response:", errorText);
-        throw new Error(`Failed to follow creator: ${response.status} ${errorText}`);
+        let errorMessage = "Failed to follow creator";
+        try {
+          const errorData = await response.json();
+          console.error("Follow error response:", errorData);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          console.error("Follow error response text:", errorText);
+        }
+        
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("Your session has expired. Please log in again.");
+        }
+        
+        throw new Error(`Failed to follow creator: ${errorMessage}`);
       }
       
       const data = await response.json();
@@ -469,7 +490,21 @@ function CreatorPage() {
       
     } catch (err) {
       console.error('Error following creator:', err);
-      alert(`Failed to follow: ${err.message}`);
+      
+      // If authentication error, offer to redirect to login
+      if (err.message.includes("session has expired") || err.message.includes("Authentication required")) {
+        if (confirm(`${err.message} Would you like to log in now?`)) {
+          // Clear tokens before redirecting
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userData');
+          
+          navigate('/login'); // Redirect to login page
+          return;
+        }
+      } else {
+        alert(`Failed to follow: ${err.message}`);
+      }
     } finally {
       setFollowLoading(false);
     }
