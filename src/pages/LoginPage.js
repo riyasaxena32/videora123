@@ -9,14 +9,14 @@ const API_URL = 'https://videora-ai.onrender.com';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   
   // Redirect if user is already authenticated
   useEffect(() => {
-    if (!loading && user) {
+    if (user) {
       navigate('/', { replace: true });
     }
-  }, [user, navigate, loading]);
+  }, [user, navigate]);
 
   // Gradient button style
   const gradientButtonStyle = {

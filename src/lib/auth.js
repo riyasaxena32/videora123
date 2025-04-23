@@ -30,21 +30,16 @@ export const handleGoogleCallback = async (code) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Authentication error response:', errorText);
-      throw new Error(`Authentication failed: ${response.status} ${errorText}`);
+      throw new Error('Authentication failed');
     }
 
     const data = await response.json();
     console.log('Google authentication response:', data);
     
-    // Normalize token structure to ensure we always have both access_token and token
-    const accessToken = data.access_token || data.token;
-    const token = data.token || data.access_token;
-    
-    if (!accessToken) {
-      console.error('No access_token or token received from API.');
-      throw new Error('No access_token received from API');
+    // Ensure we received access_token from the API
+    if (!data.access_token) {
+      console.warn('No access_token received from API. Using token as fallback.');
+      data.access_token = data.token || 'missing_access_token';
     }
     
     // Transform Google user data to the desired format
@@ -63,20 +58,15 @@ export const handleGoogleCallback = async (code) => {
     }
     
     // Store tokens in localStorage
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('token', token);
+    localStorage.setItem('access_token', data.access_token); // OAuth2 access token for API requests
+    localStorage.setItem('token', data.token); // JWT or session token
     localStorage.setItem('userData', JSON.stringify(userData));
     localStorage.setItem('authType', 'google');
     
-    console.log('Access token stored:', accessToken);
+    console.log('Access token stored:', data.access_token);
     console.log('User data stored:', userData);
     
-    // Return a consistent object structure
-    return { 
-      access_token: accessToken,
-      token: token, 
-      user: userData 
-    };
+    return { ...data, user: userData };
   } catch (error) {
     console.error('Google authentication error:', error);
     
@@ -88,18 +78,12 @@ export const handleGoogleCallback = async (code) => {
         email: 'mock@example.com',
         profilePic: 'https://ui-avatars.com/api/?name=Mock+User&background=random'
       };
-      
-      const mockToken = 'mock_token_' + Date.now();
       localStorage.setItem('userData', JSON.stringify(mockUser));
       localStorage.setItem('authType', 'google');
-      localStorage.setItem('access_token', mockToken);
-      localStorage.setItem('token', mockToken);
+      localStorage.setItem('access_token', 'mock_token');
+      localStorage.setItem('token', 'mock_token');
       
-      return { 
-        user: mockUser, 
-        token: mockToken,
-        access_token: mockToken
-      };
+      return { user: mockUser, token: 'mock_token' };
     }
     
     throw error;

@@ -1,19 +1,9 @@
-import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  const location = useLocation();
-
-  useEffect(() => {
-    console.log('ProtectedRoute - Auth state:', { 
-      isAuthenticated: !!user, 
-      loading, 
-      user: user ? { name: user.name, email: user.email } : null,
-      path: location.pathname
-    });
-  }, [user, loading, location]);
 
   if (loading) {
     return (
@@ -24,11 +14,9 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    console.log('ProtectedRoute - Redirecting to login, no user found');
     return <Navigate to="/login" replace />;
   }
 
-  console.log('ProtectedRoute - Rendering protected content');
   return children;
 };
 
