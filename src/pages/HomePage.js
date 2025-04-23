@@ -58,12 +58,12 @@ function HomePage() {
         // Map creators with additional info
         const mappedCreators = creatorsList.map(creator => {
           return {
-            name: creator.name,
-            id: creator.name.toLowerCase().replace(/\s+/g, '-'),
-            videoCount: creator.TotalVideos || 0,
-            followers: creator.followers || 0,
+            name: creator.name || 'Unknown Creator',
+            id: creator.name ? creator.name.toLowerCase().replace(/\s+/g, '-') : `creator-${creator._id}`,
+            videoCount: typeof creator.TotalVideos === 'number' ? creator.TotalVideos : 0,
+            followers: typeof creator.followers === 'number' ? creator.followers : 0,
             about: creator.about || '',
-            _id: creator._id
+            _id: creator._id || ''
           };
         });
         
@@ -334,7 +334,7 @@ function HomePage() {
               onClick={toggleProfileDropdown}
             >
               <img
-                src={user?.profilePic || "/user-avatar.png"}
+                src={user && user.profilePic ? user.profilePic : "/user-avatar.png"}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -398,7 +398,10 @@ function HomePage() {
                   { 
                     name: "Your Videos", 
                     icon: <User className="w-4 h-4" />,
-                    action: () => navigate(`/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`)
+                    action: () => {
+                      const userId = user?.name ? user.name.toLowerCase().replace(/\s+/g, '-') : 'profile';
+                      navigate(`/creator/${userId}`);
+                    }
                   },
                   { name: "Watch Later", icon: <Clock className="w-4 h-4" /> },
                 ].map((item) => (
@@ -831,8 +834,8 @@ function CreatorCard({ name, image, followers, videos, _id }) {
       </div>
       <div className="mt-2">
         <h3 className="text-sm font-medium">{name}</h3>
-        <p className="text-xs text-[#b0b0b0]">{followers} followers</p>
-        <p className="text-xs text-[#b0b0b0]">{videos} videos</p>
+        <p className="text-xs text-[#b0b0b0]">{typeof followers === 'number' ? followers : 0} followers</p>
+        <p className="text-xs text-[#b0b0b0]">{typeof videos === 'number' ? videos : 0} videos</p>
       </div>
     </div>
   );
