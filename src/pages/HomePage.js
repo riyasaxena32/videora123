@@ -57,13 +57,24 @@ function HomePage() {
         
         // Map creators with additional info
         const mappedCreators = creatorsList.map(creator => {
+          // Check if profilePic exists and has a valid URL
+          let profilePicUrl = null;
+          if (creator.profilePic && creator.profilePic.length > 0 && typeof creator.profilePic[0] === 'string') {
+            profilePicUrl = creator.profilePic[0];
+          }
+          
+          // Check followers array
+          const followersCount = Array.isArray(creator.followers) ? creator.followers.length : 
+                                (typeof creator.Totalfollowers === 'number' ? creator.Totalfollowers : 0);
+          
           return {
             name: creator.name || 'Unknown Creator',
             id: creator.name ? creator.name.toLowerCase().replace(/\s+/g, '-') : `creator-${creator._id}`,
             videoCount: typeof creator.TotalVideos === 'number' ? creator.TotalVideos : 0,
-            followers: typeof creator.followers === 'number' ? creator.followers : 0,
+            followers: followersCount,
             about: creator.about || '',
-            _id: creator._id || ''
+            _id: creator._id || '',
+            profilePic: profilePicUrl
           };
         });
         
@@ -495,7 +506,7 @@ function HomePage() {
                   >
                     <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
                       <img 
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=30`} 
+                        src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=30`} 
                         alt={`${creator.name} avatar`} 
                         width={20} 
                         height={20} 
@@ -624,17 +635,25 @@ function HomePage() {
                       <p className="text-sm text-[#b0b0b0]">Created by:</p>
                       {videos[0].uploadedBy && (
                         <div className="flex items-center gap-2">
-                          <img
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(videos[0].uploadedBy)}&background=ED5606&color=fff&size=40`}
-                            alt={videos[0].uploadedBy}
-                            width={24}
-                            height={24}
-                            className="rounded-full"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "/user-avatar.png";
-                            }}
-                          />
+                          {(() => {
+                            // Find creator in the creators list
+                            const creator = creators.find(c => 
+                              c.name.toLowerCase() === videos[0].uploadedBy.toLowerCase()
+                            );
+                            return (
+                              <img
+                                src={creator?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(videos[0].uploadedBy)}&background=ED5606&color=fff&size=40`}
+                                alt={videos[0].uploadedBy}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = "/user-avatar.png";
+                                }}
+                              />
+                            );
+                          })()}
                           <span className="text-sm">{videos[0].uploadedBy}</span>
                         </div>
                       )}
@@ -769,6 +788,7 @@ function HomePage() {
                               followers={creator.followers}
                               videos={creator.videoCount}
                               _id={creator._id}
+                              profilePic={creator.profilePic}
                             />
                           </div>
                         )) : (
@@ -816,12 +836,12 @@ function VideoCard({ title, image, tag, id }) {
   );
 }
 
-function CreatorCard({ name, image, followers, videos, _id }) {
+function CreatorCard({ name, image, followers, videos, _id, profilePic }) {
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
-          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ED5606&color=fff&size=200`} 
+          src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ED5606&color=fff&size=200`} 
           alt={name} 
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
           onError={(e) => {

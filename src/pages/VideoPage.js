@@ -14,6 +14,7 @@ function VideoPage() {
   const [activeTab, setActiveTab] = useState('chat');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [creators, setCreators] = useState([]);
+  const [apiCreators, setApiCreators] = useState([]);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const profileDropdownRef = useRef(null);
   const videoRef = useRef(null);
@@ -81,6 +82,49 @@ function VideoPage() {
     }
   };
 
+  // Fetch creators from API
+  useEffect(() => {
+    const fetchCreators = async () => {
+      try {
+        const response = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
+        if (!response.ok) {
+          throw new Error('Failed to fetch creators');
+        }
+        const data = await response.json();
+        const creatorsList = data.creator || [];
+        
+        // Map creators with additional info
+        const mappedCreators = creatorsList.map(creator => {
+          // Check if profilePic exists and has a valid URL
+          let profilePicUrl = null;
+          if (creator.profilePic && creator.profilePic.length > 0 && typeof creator.profilePic[0] === 'string') {
+            profilePicUrl = creator.profilePic[0];
+          }
+          
+          // Check followers array
+          const followersCount = Array.isArray(creator.followers) ? creator.followers.length : 
+                               (typeof creator.Totalfollowers === 'number' ? creator.Totalfollowers : 0);
+          
+          return {
+            name: creator.name || 'Unknown Creator',
+            id: creator.name ? creator.name.toLowerCase().replace(/\s+/g, '-') : `creator-${creator._id}`,
+            videoCount: typeof creator.TotalVideos === 'number' ? creator.TotalVideos : 0,
+            followers: followersCount,
+            about: creator.about || '',
+            _id: creator._id || '',
+            profilePic: profilePicUrl
+          };
+        });
+        
+        setApiCreators(mappedCreators);
+      } catch (err) {
+        console.error('Error fetching creators from API:', err);
+      }
+    };
+    
+    fetchCreators();
+  }, []);
+
   useEffect(() => {
     // Fetch video data from API
     const fetchVideo = async () => {
@@ -123,11 +167,16 @@ function VideoPage() {
           .map(creator => {
             // Find the first video by this creator
             const creatorVideo = videos.find(v => v.uploadedBy === creator);
+            
+            // Try to find this creator in the API creators list
+            const apiCreator = apiCreators.find(c => c.name.toLowerCase() === creator.toLowerCase());
+            
             return {
               name: creator,
               id: creator.toLowerCase().replace(/\s+/g, '-'),
               videoCount: videos.filter(v => v.uploadedBy === creator).length,
-              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png'
+              thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png',
+              profilePic: apiCreator?.profilePic || null
             };
           });
         
@@ -161,7 +210,7 @@ function VideoPage() {
         audioRef.current.src = '';
       }
     };
-  }, [videoId]);
+  }, [videoId, apiCreators]);
 
   // Handle synchronized audio-video playback
   useEffect(() => {
@@ -347,7 +396,7 @@ function VideoPage() {
               >
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
                   <img 
-                    src={creator.thumbnailUrl}
+                    src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=60`}
                     alt={creator.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -483,11 +532,21 @@ function VideoPage() {
               {/* Creator */}
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222]">
-                  <img 
-                    src="/user-avatar.png" 
-                    alt={video.uploadedBy}
-                    className="w-full h-full object-cover"
-                  />
+                  {video.uploadedBy && (() => {
+                    // Find creator in the creators list for profile pic
+                    const creator = creators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
+                    return (
+                      <img 
+                        src={creator?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(video.uploadedBy)}&background=ED5606&color=fff&size=80`} 
+                        alt={video.uploadedBy}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "/user-avatar.png";
+                        }}
+                      />
+                    );
+                  })()}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium">{video.uploadedBy}</h3>
@@ -563,9 +622,13 @@ function VideoPage() {
                     <div key={index} className="flex gap-3">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
                         <img 
-                          src="/user-avatar.png" 
+                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId || 'User')}&background=ED5606&color=fff&size=60`} 
                           alt="User"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/user-avatar.png";
+                          }}
                         />
                       </div>
                       <div>
