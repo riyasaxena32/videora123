@@ -623,7 +623,7 @@ function CreatorPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   if (item === "Home") {
-                    navigate('/HomePage');
+                    navigate('/home');
                   } else {
                     navigate(`/${item.toLowerCase()}`);
                   }
