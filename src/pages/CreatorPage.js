@@ -415,47 +415,55 @@ function CreatorPage() {
     try {
       setFollowLoading(true);
       
-      // Get the auth token
-      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      // Get access_token from localStorage
+      const accessToken = localStorage.getItem('access_token');
       
-      if (!token) {
-        console.error('No authentication token found');
-        // Redirect to login if needed
+      if (!accessToken) {
+        console.error('No access token found');
+        alert('Please login to follow creators');
         // navigate('/login');
         return;
       }
+
+      console.log('Using access token (first 10 chars):', accessToken.substring(0, 10) + '...');
 
       const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'access_token': accessToken
         }
       });
 
+      const responseText = await response.text();
+      console.log('API Response:', response.status, responseText);
+      
       if (!response.ok) {
         if (response.status === 401) {
-          console.error('Authentication failed. Redirecting to login...');
+          console.error('Authentication failed:', responseText);
+          alert('Authentication failed. Please login again.');
           // You might want to refresh the token or redirect to login
           // navigate('/login');
           return;
         }
-        throw new Error(`Failed to follow creator: ${response.status}`);
+        throw new Error(`Failed to follow creator: ${response.status} - ${responseText}`);
       }
 
-      const data = await response.json();
-      console.log('Follow response:', data);
+      // Parse the response if it's JSON
+      const data = responseText ? JSON.parse(responseText) : {};
+      console.log('Follow success:', data);
       
       // Update creator state with new followers count
       setCreator(prevCreator => ({
         ...prevCreator,
-        followers: data.followers
+        followers: data.followers || prevCreator.followers + 1
       }));
       
       setIsFollowing(true);
       
     } catch (err) {
       console.error('Error following creator:', err);
+      alert('Failed to follow creator. Please try again.');
     } finally {
       setFollowLoading(false);
     }
