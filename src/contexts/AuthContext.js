@@ -76,6 +76,9 @@ export const AuthProvider = ({ children }) => {
       const token = user?.tokenType === 'jwt' ? 
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
+      
+        localStorage.clear("access_token")
+        localStorage.clear("token")
 
       // Make API call to logout endpoint with appropriate token
       await fetch('https://api.videora.ai/api/logout', {
