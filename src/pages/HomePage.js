@@ -341,6 +341,11 @@ function HomePage() {
                 onClick={(e) => {
                   e.preventDefault();
                   setActiveNavItem(item);
+                  if (item === "Home") {
+                    navigate('/');
+                  } else {
+                    navigate(`/${item.toLowerCase()}`);
+                  }
                 }}
               >
                 {item}

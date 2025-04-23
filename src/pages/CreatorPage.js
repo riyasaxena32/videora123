@@ -614,15 +614,23 @@ function CreatorPage() {
         <div className="hidden md:flex items-center justify-center flex-1">
           <nav className="flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
-              <Link
+              <a
                 key={item}
-                to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                href="#"
                 className={`text-sm font-medium transition-colors ${
                   item === "Home" ? "text-white" : "text-[#b0b0b0] hover:text-white"
                 }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (item === "Home") {
+                    navigate('/');
+                  } else {
+                    navigate(`/${item.toLowerCase()}`);
+                  }
+                }}
               >
                 {item}
-              </Link>
+              </a>
             ))}
           </nav>
         </div>
