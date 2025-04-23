@@ -414,16 +414,33 @@ function CreatorPage() {
 
     try {
       setFollowLoading(true);
+      
+      // Get the auth token
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        // Redirect to login if needed
+        // navigate('/login');
+        return;
+      }
+
       const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add authentication headers if needed
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to follow creator');
+        if (response.status === 401) {
+          console.error('Authentication failed. Redirecting to login...');
+          // You might want to refresh the token or redirect to login
+          // navigate('/login');
+          return;
+        }
+        throw new Error(`Failed to follow creator: ${response.status}`);
       }
 
       const data = await response.json();
