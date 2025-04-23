@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { handleGoogleCallback } from '../lib/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AuthCallback() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { fetchUserProfile } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -25,8 +27,8 @@ export default function AuthCallback() {
           const authData = await handleGoogleCallback(code);
           console.log('Authentication successful:', authData);
           
-          // Reset query count on successful Google auth
-         
+          // Update Auth Context with user data
+          await fetchUserProfile(null, authData.token || authData.access_token);
           
           // Redirect to homepage on success
           navigate('/', { replace: true });
@@ -52,6 +54,9 @@ export default function AuthCallback() {
         localStorage.removeItem('queryLimitReached');
         localStorage.removeItem('queryCount');
         
+        // Update Auth Context for mock user
+        await fetchUserProfile(null, 'mock_token');
+        
         // Redirect to homepage on success with replace to prevent back navigation to auth page
         navigate('/', { replace: true });
       } catch (err) {
@@ -61,7 +66,7 @@ export default function AuthCallback() {
     };
     
     handleCallback();
-  }, [location, navigate]);
+  }, [location, navigate, fetchUserProfile]);
 
   // Loading state while processing the callback
   if (error) {
