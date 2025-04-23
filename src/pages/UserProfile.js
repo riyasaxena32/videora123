@@ -83,7 +83,9 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
-    fetchUserProfile();
+    (async()=>{
+      await fetchUserProfile();
+    })()
   }, []);
 
   const fetchUserProfile = async () => {
@@ -199,7 +201,9 @@ const UserProfile = () => {
         
         // After successful update, reload profile data to ensure we have latest data
         setTimeout(() => {
-          fetchUserProfile();
+          (async()=>{
+            await fetchUserProfile();
+          })()
         }, 500);
       }
       

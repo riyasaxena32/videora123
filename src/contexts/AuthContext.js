@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Modify the checkJwtToken function to fetch profile data after JWT validation
-  const checkJwtToken = () => {
+  const checkJwtToken = async () => {
     const token = sessionStorage.getItem('jwt') || localStorage.getItem('access_token');
     if (token) {
       try {
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
           return false;
         } else {
           // Valid token - fetch user details from API
-          fetchUserProfile(decoded.id, token);
+          await fetchUserProfile(decoded.id, token);
           return true;
         }
       } catch (error) {
