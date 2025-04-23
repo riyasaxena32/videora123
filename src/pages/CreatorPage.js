@@ -187,6 +187,8 @@ function CreatorPage() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [creators, setCreators] = useState([]);
   const [apiCreators, setApiCreators] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -377,7 +379,8 @@ function CreatorPage() {
             foundCreator = {
               ...foundCreator,
               thumbnailUrl: apiCreator.profilePic || foundCreator.thumbnailUrl,
-              followers: apiCreator.followers
+              followers: apiCreator.followers,
+              _id: apiCreator._id  // Make sure to store the API creator ID
             };
           }
           
@@ -401,6 +404,45 @@ function CreatorPage() {
     
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
+
+  // Handle follow/unfollow creator
+  const handleFollowCreator = async () => {
+    if (!creator || !creator._id) {
+      console.error('Cannot follow creator: missing creator ID');
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authentication headers if needed
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to follow creator');
+      }
+
+      const data = await response.json();
+      console.log('Follow response:', data);
+      
+      // Update creator state with new followers count
+      setCreator(prevCreator => ({
+        ...prevCreator,
+        followers: data.followers
+      }));
+      
+      setIsFollowing(true);
+      
+    } catch (err) {
+      console.error('Error following creator:', err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -689,6 +731,12 @@ function CreatorPage() {
                       <span className="text-sm font-medium">Total Videos</span>
                       <span className="ml-2 text-sm font-bold">{creator.videoCount}</span>
                     </div>
+                    {creator.followers > 0 && (
+                      <div className="bg-black/30 px-3 py-1 rounded-full">
+                        <span className="text-sm font-medium">Followers</span>
+                        <span className="ml-2 text-sm font-bold">{creator.followers}</span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Description */}
@@ -703,8 +751,22 @@ function CreatorPage() {
                     </button>
                     
                     {!isCurrentUserProfile ? (
-                      <button className="flex items-center gap-2 border border-white/20 px-5 py-2 rounded-full hover:bg-white/10 transition-colors">
-                        <span className="text-sm font-medium">Follow</span>
+                      <button 
+                        className={`flex items-center gap-2 ${isFollowing ? 'bg-[#ED5606]' : 'border border-white/20'} px-5 py-2 rounded-full hover:bg-[#ED5606] transition-colors relative`}
+                        onClick={handleFollowCreator}
+                        disabled={followLoading}
+                      >
+                        {followLoading ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing
+                          </span>
+                        ) : (
+                          <span className="text-sm font-medium">{isFollowing ? 'Following' : 'Follow'}</span>
+                        )}
                       </button>
                     ) : (
                       <button 
