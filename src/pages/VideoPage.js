@@ -327,7 +327,7 @@ function VideoPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   if (item === "Home") {
-                    navigate('/');
+                    navigate('/home');
                   } else {
                     navigate(`/${item.toLowerCase()}`);
                   }
