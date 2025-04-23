@@ -662,18 +662,51 @@ function CreatorPage() {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Creator Cover Section */}
-          <div className="relative w-full h-[40vh] overflow-hidden">
-            <img 
-              src="/image 28.png" 
-              alt={`${creator.name} cover`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-            
-            {/* Creator Info Overlay */}
-            <div className="absolute bottom-8 left-4 sm:left-8 right-4 sm:right-8">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a]">
+          <div className="relative w-full bg-gradient-to-r from-black to-[#2d0606] overflow-hidden">
+            <div className="max-w-7xl mx-auto px-6 py-10">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+                {/* Creator name and stats */}
+                <div className="flex-1">
+                  <h1 className="text-4xl md:text-5xl font-bold mb-2">{creator.name}</h1>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="bg-black/30 px-3 py-1 rounded-full">
+                      <span className="text-sm font-medium">Total Videos</span>
+                      <span className="ml-2 text-sm font-bold">{creator.videoCount}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Description */}
+                  <p className="text-sm text-gray-300 max-w-2xl mb-6">
+                    {creator.about || "A breathtaking cinematic anime scene set in a futuristic cyberpunk city at night. Neon lights reflect off the rain-soaked streets as a lone warrior in a sleek black trench coat and a glowing cybernetic eye walks forward, katana in hand."}
+                  </p>
+                  
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-3">
+                    <button className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors">
+                      <span className="text-xl font-bold">G</span>
+                    </button>
+                    
+                    {!isCurrentUserProfile ? (
+                      <button className="flex items-center gap-2 border border-white/20 px-5 py-2 rounded-full hover:bg-white/10 transition-colors">
+                        <span className="text-sm font-medium">Follow</span>
+                      </button>
+                    ) : (
+                      <button 
+                        className="flex items-center gap-2 border border-white/20 px-5 py-2 rounded-full hover:bg-white/10 transition-colors"
+                        onClick={() => navigate('/create')}
+                      >
+                        <span className="text-sm font-medium">Upload Video</span>
+                      </button>
+                    )}
+                    
+                    <button className="flex items-center gap-2 bg-transparent px-5 py-2 rounded-full hover:bg-white/10 transition-colors">
+                      <span className="text-sm font-medium">About</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Creator profile image */}
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a] order-first md:order-last">
                   <img 
                     src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=200`} 
                     alt={creator.name}
@@ -683,32 +716,6 @@ function CreatorPage() {
                       e.target.src = "/user-avatar.png";
                     }}
                   />
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{creator.name}</h1>
-                  <p className="text-sm text-gray-300">
-                    {creator.videoCount} videos
-                    {creator.followers > 0 && ` • ${creator.followers} followers`}
-                  </p>
-                </div>
-                
-                <div className="mt-4 sm:mt-0 sm:ml-auto flex">
-                  {!isCurrentUserProfile && (
-                    <button 
-                      className="w-full sm:w-auto bg-[#ED5606] hover:bg-[#ff6a1a] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                    >
-                      Subscribe
-                    </button>
-                  )}
-                  
-                  {isCurrentUserProfile && (
-                    <button 
-                      className="w-full sm:w-auto bg-[#222] hover:bg-[#333] px-4 py-1.5 rounded-full text-sm transition-colors"
-                      onClick={() => navigate('/create')}
-                    >
-                      Upload New Video
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
