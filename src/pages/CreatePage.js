@@ -194,8 +194,32 @@ function GenerateVideoContent({ gradientButtonStyle }) {
     { name: 'pixar', label: 'Pixar Style' }
   ];
 
+  // Available video categories
+  const videoCategories = [
+    { value: 'Education', label: 'Education' },
+    { value: 'Entertainment', label: 'Entertainment' },
+    { value: 'Gaming', label: 'Gaming' },
+    { value: 'Music', label: 'Music' },
+    { value: 'Sports', label: 'Sports' },
+    { value: 'Technology', label: 'Technology' },
+    { value: 'Travel', label: 'Travel' },
+    { value: 'Cooking', label: 'Cooking' },
+    { value: 'Fashion', label: 'Fashion' },
+    { value: 'Business', label: 'Business' },
+    { value: 'Science', label: 'Science' },
+    { value: 'Health', label: 'Health' },
+    { value: 'Other', label: 'Other' }
+  ];
+
   const handleStyleChange = (e) => {
     setSelectedStyle(e.target.value);
+  };
+
+  const handleCategoryChange = (e) => {
+    setVideoData(prevData => ({
+      ...prevData,
+      category: e.target.value
+    }));
   };
 
   // Update handlePromptChange to only update state, not trigger API
@@ -790,6 +814,26 @@ function GenerateVideoContent({ gradientButtonStyle }) {
           </div>
         </div>
         
+        {/* Category Selector */}
+        <h2 className="text-sm font-medium">Select Video Category</h2>
+        <div className="border border-[#333] bg-[#111] rounded-md p-4">
+          <div className="flex flex-col space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm">Choose a category for your video</span>
+            </div>
+            <select 
+              value={videoData.category}
+              onChange={handleCategoryChange}
+              className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+            >
+              {videoCategories.map(category => (
+                <option key={category.value} value={category.value}>{category.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-[#777] pl-1">Categorizing your video helps viewers find your content</p>
+          </div>
+        </div>
+        
         <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
         <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
           <textarea 
@@ -814,8 +858,8 @@ For example, 'Make it look like a sunny day at the beach.'"
                 <p className="mb-2 text-green-400">Upload Successful!</p>
                 <p className="mb-1">Name: {uploadResponse.savedvideo?.name || 'None'}</p>
                 <p className="mb-1">Style: {uploadResponse.savedvideo?.style || 'None'}</p>
+                <p className="mb-1"><span className="text-[#ED5606] font-medium">Category:</span> {uploadResponse.savedvideo?.category || videoData.category || 'None'}</p>
                 <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
-                <p className="mb-1">Category: {uploadResponse.savedvideo?.category || 'None'}</p>
                 <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
                 <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoURL || uploadResponse.savedvideo?.videoURL || 'Not returned from server'}</p>
                 <p className="mb-1 break-all">Thumbnail URL: {uploadResponse.savedvideo?.thumbnailLogoUrl || 'None'}</p>
