@@ -94,18 +94,29 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
           </div>
         )}
         
-        {/* Delete button - only shown for user's own videos */}
-        {isCurrentUser && (
-          <div 
-            className={`absolute top-2 right-10 ${deleteLoading ? 'bg-red-600/50' : 'bg-red-600'} hover:bg-red-700 px-2 py-0.5 rounded text-xs text-white cursor-pointer z-10`}
-            onClick={handleDelete}
-          >
-            {deleteLoading ? 'Deleting...' : 'Delete'}
-          </div>
-        )}
-        
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
+        
+        {/* Delete icon in bottom overlay - only for user's own videos */}
+        {isCurrentUser && (
+          <div 
+            className={`absolute bottom-2 right-2 ${deleteLoading ? 'opacity-50' : 'opacity-100'} hover:text-red-500 text-white cursor-pointer z-10 transition-colors`}
+            onClick={handleDelete}
+            title="Delete video"
+          >
+            {deleteLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            )}
+          </div>
+        )}
       </div>
       {video && (
         <div className="mt-1.5 sm:mt-2">
