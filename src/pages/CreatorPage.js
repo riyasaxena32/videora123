@@ -4,8 +4,52 @@ import { Plus, User, Bell, ChevronRight, Menu, LogOut, Clock, MessageSquareShare
 import { useAuth } from '../contexts/AuthContext';
 
 // Components for consistency with other pages
-function VideoCard({ video, onClick }) {
+function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
   const [imageError, setImageError] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  
+  const handleDelete = async (e) => {
+    e.stopPropagation(); // Prevent triggering the onClick of the card
+    
+    if (!window.confirm('Are you sure you want to delete this video?')) {
+      return;
+    }
+    
+    try {
+      setDeleteLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`https://videora-ai.onrender.com/videos/delete-video/${video._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete video');
+      }
+
+      const data = await response.json();
+      console.log('Video deleted successfully:', data.message);
+      
+      // Call the onDelete function to update the UI
+      if (onDelete) {
+        onDelete(video._id);
+      }
+    } catch (err) {
+      console.error('Error deleting video:', err);
+      alert('Failed to delete video. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
   
   return (
     <div className="relative group cursor-pointer" onClick={onClick}>
@@ -47,6 +91,16 @@ function VideoCard({ video, onClick }) {
               <path d="M12 3V21M3 12H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Audio
+          </div>
+        )}
+        
+        {/* Delete button - only shown for user's own videos */}
+        {isCurrentUser && (
+          <div 
+            className={`absolute top-2 right-10 ${deleteLoading ? 'bg-red-600/50' : 'bg-red-600'} hover:bg-red-700 px-2 py-0.5 rounded text-xs text-white cursor-pointer z-10`}
+            onClick={handleDelete}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete'}
           </div>
         )}
         
@@ -452,6 +506,21 @@ function CreatorPage() {
     }
   };
 
+  // Handle video deletion and update the UI
+  const handleVideoDelete = (videoId) => {
+    // Update the creatorVideos state to remove the deleted video
+    setCreatorVideos(prevVideos => prevVideos.filter(video => video._id !== videoId));
+    
+    // Update the allVideos state as well
+    setAllVideos(prevVideos => prevVideos.filter(video => video._id !== videoId));
+    
+    // Update the creator's video count
+    setCreator(prevCreator => ({
+      ...prevCreator,
+      videoCount: prevCreator.videoCount > 0 ? prevCreator.videoCount - 1 : 0
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -803,7 +872,13 @@ function CreatorPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {creatorVideos.map((video) => (
-                  <VideoCard key={video._id} video={video} onClick={() => navigate(`/video/${video._id}`)} />
+                  <VideoCard 
+                    key={video._id} 
+                    video={video} 
+                    onClick={() => navigate(`/video/${video._id}`)} 
+                    onDelete={handleVideoDelete} 
+                    isCurrentUser={isCurrentUserProfile} 
+                  />
                 ))}
               </div>
             )}
