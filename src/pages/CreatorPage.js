@@ -187,6 +187,7 @@ function CreatorPage() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [creators, setCreators] = useState([]);
   const [apiCreators, setApiCreators] = useState([]);
+  const [followLoading, setFollowLoading] = useState(false);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -401,6 +402,47 @@ function CreatorPage() {
     
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
+
+  // Function to follow a creator
+  const followCreator = async (creatorId) => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any authorization headers if needed
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to follow creator');
+      }
+
+      const data = await response.json();
+      
+      // Update the creator state with the new follower count
+      setCreator(prevCreator => ({
+        ...prevCreator,
+        followers: data.followers
+      }));
+
+      // Show success notification (optional)
+      console.log('Successfully followed creator:', data.message);
+    } catch (err) {
+      console.error('Error following creator:', err);
+      // Show error notification (optional)
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -703,8 +745,15 @@ function CreatorPage() {
                     </button>
                     
                     {!isCurrentUserProfile ? (
-                      <button className="flex items-center gap-2 border border-white/20 px-5 py-2 rounded-full hover:bg-white/10 transition-colors">
-                        <span className="text-sm font-medium">Follow</span>
+                      <button 
+                        className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
+                        onClick={() => followCreator(creator._id)}
+                        disabled={followLoading}
+                      >
+                        <span className="text-sm font-medium">
+                          {followLoading ? 'Following...' : 'Follow'} 
+                          {creator.followers && !followLoading ? ` (${creator.followers})` : ''}
+                        </span>
                       </button>
                     ) : (
                       <button 
