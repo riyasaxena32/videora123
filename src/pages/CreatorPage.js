@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus, User, Bell, ChevronRight, Menu, LogOut, Clock, MessageSquareShare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getAccessToken, getToken } from '../lib/auth'; // Import auth helpers
 
 // Components for consistency with other pages
 function VideoCard({ video, onClick }) {
@@ -188,8 +187,6 @@ function CreatorPage() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [creators, setCreators] = useState([]);
   const [apiCreators, setApiCreators] = useState([]);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -404,111 +401,6 @@ function CreatorPage() {
     
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
-
-  // Handle follow button click
-  const handleFollow = async () => {
-    if (!creator || followLoading) return;
-    
-    try {
-      setFollowLoading(true);
-      console.log("Following creator:", creator);
-      
-      // Get creator ID from API creators list if available
-      let creatorId = creator._id;
-      if (!creatorId) {
-        // Try to find the creator in API creators list
-        const apiCreator = apiCreators.find(c => c.name.toLowerCase() === creator.name.toLowerCase());
-        if (apiCreator && apiCreator._id) {
-          creatorId = apiCreator._id;
-          console.log("Found creator ID from API creators:", creatorId);
-        } else {
-          console.error("Creator ID not found");
-          throw new Error("Creator ID not found");
-        }
-      }
-      
-      // Get the proper token using auth helpers
-      // First try access_token (OAuth token), then fall back to regular token
-      const accessToken = getAccessToken();
-      const authToken = getToken();
-      
-      // Use the first available token
-      const token = accessToken || authToken;
-      
-      console.log("Using token for authentication:", token ? "Token available" : "No token found");
-      
-      if (!token) {
-        console.error("No authentication token found");
-        throw new Error("Authentication required. Please log in again.");
-      }
-      
-      const apiUrl = `https://videora-ai.onrender.com/api/creator/${creatorId}/follow`;
-      console.log(`Making follow request to: ${apiUrl}`);
-      
-      // Make POST request to follow endpoint
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      console.log("Follow response status:", response.status);
-      
-      if (!response.ok) {
-        let errorMessage = "Failed to follow creator";
-        try {
-          const errorData = await response.json();
-          console.error("Follow error response:", errorData);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          console.error("Follow error response text:", errorText);
-        }
-        
-        if (response.status === 401 || response.status === 403) {
-          throw new Error("Your session has expired. Please log in again.");
-        }
-        
-        throw new Error(`Failed to follow creator: ${errorMessage}`);
-      }
-      
-      const data = await response.json();
-      console.log('Follow response data:', data);
-      
-      // Update UI
-      setIsFollowing(true);
-      
-      // Update follower count in creator object
-      setCreator(prev => ({
-        ...prev,
-        followers: data.followers || (prev.followers ? prev.followers + 1 : 1)
-      }));
-      
-      alert("Successfully followed creator!");
-      
-    } catch (err) {
-      console.error('Error following creator:', err);
-      
-      // If authentication error, offer to redirect to login
-      if (err.message.includes("session has expired") || err.message.includes("Authentication required")) {
-        if (confirm(`${err.message} Would you like to log in now?`)) {
-          // Clear tokens before redirecting
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('token');
-          localStorage.removeItem('userData');
-          
-          navigate('/login'); // Redirect to login page
-          return;
-        }
-      } else {
-        alert(`Failed to follow: ${err.message}`);
-      }
-    } finally {
-      setFollowLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -797,12 +689,6 @@ function CreatorPage() {
                       <span className="text-sm font-medium">Total Videos</span>
                       <span className="ml-2 text-sm font-bold">{creator.videoCount}</span>
                     </div>
-                    {creator.followers > 0 && (
-                      <div className="bg-black/30 px-3 py-1 rounded-full">
-                        <span className="text-sm font-medium">Followers</span>
-                        <span className="ml-2 text-sm font-bold">{creator.followers}</span>
-                      </div>
-                    )}
                   </div>
                   
                   {/* Description */}
@@ -817,14 +703,8 @@ function CreatorPage() {
                     </button>
                     
                     {!isCurrentUserProfile ? (
-                      <button 
-                        className={`flex items-center gap-2 ${isFollowing ? 'bg-[#ED5606]/80' : 'border border-white/20'} px-5 py-2 rounded-full hover:bg-[#ED5606]/60 transition-colors`}
-                        onClick={handleFollow}
-                        disabled={followLoading}
-                      >
-                        <span className="text-sm font-medium">
-                          {followLoading ? 'Following...' : isFollowing ? 'Following' : 'Follow'}
-                        </span>
+                      <button className="flex items-center gap-2 border border-white/20 px-5 py-2 rounded-full hover:bg-white/10 transition-colors">
+                        <span className="text-sm font-medium">Follow</span>
                       </button>
                     ) : (
                       <button 
