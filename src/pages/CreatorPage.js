@@ -675,7 +675,7 @@ function CreatorPage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a]">
                   <img 
-                    src={creator.thumbnailUrl || creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=200`} 
+                    src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=200`} 
                     alt={creator.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
