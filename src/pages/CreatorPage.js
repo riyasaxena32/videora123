@@ -379,8 +379,7 @@ function CreatorPage() {
             foundCreator = {
               ...foundCreator,
               thumbnailUrl: apiCreator.profilePic || foundCreator.thumbnailUrl,
-              followers: apiCreator.followers,
-              _id: apiCreator._id  // Make sure to store the API creator ID
+              followers: apiCreator.followers
             };
           }
           
@@ -405,65 +404,47 @@ function CreatorPage() {
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
 
-  // Handle follow/unfollow creator
-  const handleFollowCreator = async () => {
-    if (!creator || !creator._id) {
-      console.error('Cannot follow creator: missing creator ID');
-      return;
-    }
-
+  // Handle follow button click
+  const handleFollow = async () => {
+    if (!creator || !creator._id || followLoading) return;
+    
     try {
       setFollowLoading(true);
       
-      // Get access_token from localStorage
-      const accessToken = localStorage.getItem('access_token');
+      // Get authentication token
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       
-      if (!accessToken) {
-        console.error('No access token found');
-        alert('Please login to follow creators');
-        // navigate('/login');
-        return;
-      }
-
-      console.log('Using access token (first 10 chars):', accessToken.substring(0, 10) + '...');
-
+      // Make POST request to follow endpoint
       const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'access_token': accessToken
+          'Authorization': `Bearer ${token}`
         }
       });
-
-      const responseText = await response.text();
-      console.log('API Response:', response.status, responseText);
       
       if (!response.ok) {
-        if (response.status === 401) {
-          console.error('Authentication failed:', responseText);
-          alert('Authentication failed. Please login again.');
-          // You might want to refresh the token or redirect to login
-          // navigate('/login');
-          return;
-        }
-        throw new Error(`Failed to follow creator: ${response.status} - ${responseText}`);
+        throw new Error('Failed to follow creator');
       }
-
-      // Parse the response if it's JSON
-      const data = responseText ? JSON.parse(responseText) : {};
-      console.log('Follow success:', data);
       
-      // Update creator state with new followers count
-      setCreator(prevCreator => ({
-        ...prevCreator,
-        followers: data.followers || prevCreator.followers + 1
+      const data = await response.json();
+      console.log('Follow response:', data);
+      
+      // Update UI
+      setIsFollowing(true);
+      
+      // Update follower count in creator object
+      setCreator(prev => ({
+        ...prev,
+        followers: data.followers || (prev.followers ? prev.followers + 1 : 1)
       }));
       
-      setIsFollowing(true);
+      // Show success notification
+      // You can add a toast or notification here
       
     } catch (err) {
       console.error('Error following creator:', err);
-      alert('Failed to follow creator. Please try again.');
+      // Show error notification
     } finally {
       setFollowLoading(false);
     }
@@ -777,21 +758,13 @@ function CreatorPage() {
                     
                     {!isCurrentUserProfile ? (
                       <button 
-                        className={`flex items-center gap-2 ${isFollowing ? 'bg-[#ED5606]' : 'border border-white/20'} px-5 py-2 rounded-full hover:bg-[#ED5606] transition-colors relative`}
-                        onClick={handleFollowCreator}
+                        className={`flex items-center gap-2 ${isFollowing ? 'bg-[#ED5606]/80' : 'border border-white/20'} px-5 py-2 rounded-full hover:bg-[#ED5606]/60 transition-colors`}
+                        onClick={handleFollow}
                         disabled={followLoading}
                       >
-                        {followLoading ? (
-                          <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing
-                          </span>
-                        ) : (
-                          <span className="text-sm font-medium">{isFollowing ? 'Following' : 'Follow'}</span>
-                        )}
+                        <span className="text-sm font-medium">
+                          {followLoading ? 'Following...' : isFollowing ? 'Following' : 'Follow'}
+                        </span>
                       </button>
                     ) : (
                       <button 
