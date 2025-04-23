@@ -149,13 +149,8 @@ function HomePage() {
     
     // Set up scroll button visibility for each section
     const sections = [
-      // Add dynamically created category sections
-      ...categories.map(category => ({
-        scrollId: `${category}Scroll`,
-        leftBtnId: `${category}LeftBtn`,
-        rightBtnId: `${category}RightBtn`
-      })),
-      // Keep the creators section
+      { scrollId: 'topVideosScroll', leftBtnId: 'topVideosLeftBtn', rightBtnId: 'topVideosRightBtn' },
+      { scrollId: 'animeScroll', leftBtnId: 'animeLeftBtn', rightBtnId: 'animeRightBtn' },
       { scrollId: 'creatorsScroll', leftBtnId: 'creatorsLeftBtn', rightBtnId: 'creatorsRightBtn' }
     ];
     
@@ -183,7 +178,7 @@ function HomePage() {
       cleanupFunctions.forEach(cleanup => cleanup && cleanup());
       window.removeEventListener('resize', handleResize);
     };
-  }, [categories]); // Add categories as a dependency
+  }, []);
 
   // Function to handle creator selection
   const handleCreatorSelect = (creator) => {
@@ -195,25 +190,11 @@ function HomePage() {
     setSelectedCreator(null);
   };
 
-  // Get unique categories from videos
-  const categories = [...new Set(videos.map(video => video.category).filter(Boolean))];
+  // Get education videos
+  const educationVideos = videos.filter(video => video.category === 'Education');
   
-  // Create video groups by category
-  const videosByCategory = categories.reduce((acc, category) => {
-    acc[category] = videos.filter(video => video.category === category);
-    return acc;
-  }, {});
-
-  // Get videos without a category
-  const uncategorizedVideos = videos.filter(video => !video.category);
-  
-  // If there are uncategorized videos, add them to the categories and videosByCategory
-  if (uncategorizedVideos.length > 0) {
-    videosByCategory['Uncategorized'] = uncategorizedVideos;
-    if (!categories.includes('Uncategorized')) {
-      categories.push('Uncategorized');
-    }
-  }
+  // Get other category videos or use all if no specific categories
+  const otherVideos = videos.filter(video => video.category !== 'Education');
 
   // Default video if needed
   const defaultVideo = {
@@ -682,65 +663,91 @@ function HomePage() {
               )}
 
               {/* Videos Section - Based on category */}
-              {categories.length > 0 ? (
-                categories.map((category) => (
-                  <div key={category} className="px-8 py-6 relative">
-                    <div className="flex items-center mb-4">
-                      <h2 className="text-xl font-bold">{category}</h2>
-                      <div className="ml-auto flex gap-2">
-                        <button 
-                          id={`${category}LeftBtn`}
-                          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                          onClick={() => document.getElementById(`${category}Scroll`).scrollBy({left: -300, behavior: 'smooth'})}>
-                          <ChevronRight className="w-4 h-4 rotate-180" />
-                        </button>
-                        <button 
-                          id={`${category}RightBtn`}
-                          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                          onClick={() => document.getElementById(`${category}Scroll`).scrollBy({left: 300, behavior: 'smooth'})}>
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id={`${category}Scroll`}>
-                      <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                        {videosByCategory[category].map((video) => (
-                          <div 
-                            key={video._id} 
-                            className="snap-start cursor-pointer" 
-                            style={{ width: '280px', flexShrink: 0 }}
-                            onClick={() => navigate(`/video/${video._id}`)}
-                          >
-                            <VideoCard 
-                              id={video._id}
-                              title={video.caption || video.name}
-                              image={video.thumbnailLogoUrl}
-                              tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
-                            />
-                          </div>
-                        ))}
-                      </div>
+              {educationVideos.length > 0 && (
+                <div className="px-8 py-6 relative">
+                  <div className="flex items-center mb-4">
+                    <h2 className="text-xl font-bold">Education Videos</h2>
+                    <div className="ml-auto flex gap-2">
+                      <button 
+                        id="topVideosLeftBtn"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('topVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4 rotate-180" />
+                      </button>
+                      <button 
+                        id="topVideosRightBtn"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('topVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                ))
-              ) : (
-                videos.length === 0 && !loading && (
-                  <div className="px-8 py-6">
-                    <div className="flex flex-col items-center justify-center py-12 border border-[#333] bg-[#111] rounded-lg">
-                      <FilmIcon className="w-16 h-16 text-[#333] mb-4" />
-                      <h3 className="text-xl font-medium mb-2">No Videos Found</h3>
-                      <p className="text-[#999] text-sm mb-6">There are no videos available at the moment.</p>
-                      <Link 
-                        to="/create" 
-                        style={gradientButtonStyle}
-                        className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
-                      >
-                        Create a Video
-                        <Plus className="w-4 h-4" />
-                      </Link>
+                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="topVideosScroll">
+                    <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                      {educationVideos.map((video) => (
+                        <div 
+                          key={video._id} 
+                          className="snap-start cursor-pointer" 
+                          style={{ width: '280px', flexShrink: 0 }}
+                          onClick={() => navigate(`/video/${video._id}`)}
+                        >
+                          <VideoCard 
+                            id={video._id}
+                            title={video.caption || video.name}
+                            image={video.thumbnailLogoUrl}
+                            tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )
+                </div>
+              )}
+
+              {/* Other Videos Section */}
+              {(otherVideos.length > 0 || videos.length === 0) && (
+                <div className="px-8 py-6 relative">
+                  <div className="flex items-center mb-4">
+                    <h2 className="text-xl font-bold">{videos.length === 0 ? 'Videos' : 'Other Videos'}</h2>
+                    <div className="ml-auto flex gap-2">
+                      <button 
+                        id="otherVideosLeftBtn"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('otherVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4 rotate-180" />
+                      </button>
+                      <button 
+                        id="otherVideosRightBtn"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
+                        onClick={() => document.getElementById('otherVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="otherVideosScroll">
+                    <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                      {otherVideos.length > 0 ? otherVideos.map((video) => (
+                        <div 
+                          key={video._id} 
+                          className="snap-start cursor-pointer" 
+                          style={{ width: '280px', flexShrink: 0 }}
+                          onClick={() => navigate(`/video/${video._id}`)}
+                        >
+                          <VideoCard 
+                            id={video._id}
+                            title={video.caption || video.name}
+                            image={video.thumbnailLogoUrl}
+                            tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                          />
+                        </div>
+                      )) : (
+                        <div className="w-full text-center py-10">
+                          <p className="text-gray-400">No videos available</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Top Creators Section - Sorted by follower count */}
