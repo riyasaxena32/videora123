@@ -427,11 +427,11 @@ function CreatorPage() {
 
       console.log('Using access token (first 10 chars):', accessToken.substring(0, 10) + '...');
 
-      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
+      // Try sending the token as a query parameter
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow?access_token=${encodeURIComponent(accessToken)}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'access_token': accessToken
+          'Content-Type': 'application/json'
         }
       });
 
@@ -460,6 +460,7 @@ function CreatorPage() {
       }));
       
       setIsFollowing(true);
+      alert('Successfully followed creator!');
       
     } catch (err) {
       console.error('Error following creator:', err);
