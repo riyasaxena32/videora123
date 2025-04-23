@@ -600,7 +600,7 @@ function HomePage() {
                 <div className="relative h-[400px] overflow-hidden hero-rockstar">
                   <img
                     src={videos[0].thumbnailLogoUrl || "/image 28.png"}
-                    alt={videos[0].name}
+                    alt={videos[0].caption || videos[0].name}
                     width={1200}
                     height={800}
                     className="w-full h-full object-cover"
@@ -612,7 +612,7 @@ function HomePage() {
                   {/* Darker overlay gradient for better text readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 p-8 w-full z-10">
-                    <h1 className="text-6xl font-bold mb-2">{videos[0].name.toUpperCase()}</h1>
+                    <h1 className="text-6xl font-bold mb-2">{(videos[0].caption ? videos[0].caption.toUpperCase() : videos[0].name.toUpperCase())}</h1>
                     <p className="text-xl mb-6">Category: {videos[0].category}</p>
                     <div className="flex items-center gap-4">
                       <button 
@@ -693,7 +693,7 @@ function HomePage() {
                         >
                           <VideoCard 
                             id={video._id}
-                            title={video.name}
+                            title={video.caption || video.name}
                             image={video.thumbnailLogoUrl}
                             tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
                           />
@@ -735,7 +735,7 @@ function HomePage() {
                         >
                           <VideoCard 
                             id={video._id}
-                            title={video.name}
+                            title={video.caption || video.name}
                             image={video.thumbnailLogoUrl}
                             tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
                           />

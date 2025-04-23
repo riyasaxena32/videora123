@@ -488,7 +488,7 @@ function VideoPage() {
                 ) : (
                   <img 
                     src={video?.thumbnailLogoUrl || "/image 28.png"} 
-                    alt={video?.name || 'Video thumbnail'}
+                    alt={video?.caption || video?.name || 'Video thumbnail'}
                     className="w-full h-full object-contain"
                     style={{ maxHeight: '70vh' }}
                     onError={(e) => {
@@ -511,7 +511,7 @@ function VideoPage() {
             {/* Video Title */}
             <div className="mb-4">
               <h1 className="text-xl font-bold flex items-center gap-2 mb-1">
-                {video.name || video.caption || 'Untitled Video'} 
+                {video.caption || video.name || 'Untitled Video'} 
                 {video.category && (
                   <>
                     <span className="text-xs font-normal">•</span> 

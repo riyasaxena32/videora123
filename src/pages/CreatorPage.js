@@ -17,7 +17,7 @@ function VideoCard({ video, onClick }) {
         ) : (
           <img 
             src={imageError ? "/image 28.png" : (video.thumbnailUrl || video.thumbnailLogoUrl || "/image 28.png")} 
-            alt={video.name || video.caption || "Video thumbnail"} 
+            alt={video.caption || video.name || "Video thumbnail"} 
             className="w-full h-full object-cover transition-transform group-hover:scale-105" 
             onError={() => setImageError(true)}
           />
@@ -55,7 +55,7 @@ function VideoCard({ video, onClick }) {
       </div>
       {video && (
         <div className="mt-1.5 sm:mt-2">
-          <h3 className="text-xs sm:text-sm font-medium truncate">{video.name || video.caption || 'Untitled'}</h3>
+          <h3 className="text-xs sm:text-sm font-medium truncate">{video.caption || video.name || 'Untitled'}</h3>
           <p className="text-xs text-[#b0b0b0] truncate">{video.views || 0} views • {formatDateAgo(video.uploadDate)}</p>
         </div>
       )}
