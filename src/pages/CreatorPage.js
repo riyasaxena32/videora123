@@ -406,29 +406,55 @@ function CreatorPage() {
 
   // Handle follow button click
   const handleFollow = async () => {
-    if (!creator || !creator._id || followLoading) return;
+    if (!creator || followLoading) return;
     
     try {
       setFollowLoading(true);
+      console.log("Following creator:", creator);
+      
+      // Get creator ID from API creators list if available
+      let creatorId = creator._id;
+      if (!creatorId) {
+        // Try to find the creator in API creators list
+        const apiCreator = apiCreators.find(c => c.name.toLowerCase() === creator.name.toLowerCase());
+        if (apiCreator && apiCreator._id) {
+          creatorId = apiCreator._id;
+          console.log("Found creator ID from API creators:", creatorId);
+        } else {
+          console.error("Creator ID not found");
+          throw new Error("Creator ID not found");
+        }
+      }
       
       // Get authentication token
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      if (!token) {
+        console.error("No authentication token found");
+        throw new Error("Authentication token required");
+      }
+      
+      console.log(`Making follow request to: https://videora-ai.onrender.com/api/creator/${creatorId}/follow`);
       
       // Make POST request to follow endpoint
-      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        credentials: 'include'
       });
       
+      console.log("Follow response status:", response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to follow creator');
+        const errorText = await response.text();
+        console.error("Follow error response:", errorText);
+        throw new Error(`Failed to follow creator: ${response.status} ${errorText}`);
       }
       
       const data = await response.json();
-      console.log('Follow response:', data);
+      console.log('Follow response data:', data);
       
       // Update UI
       setIsFollowing(true);
@@ -439,12 +465,11 @@ function CreatorPage() {
         followers: data.followers || (prev.followers ? prev.followers + 1 : 1)
       }));
       
-      // Show success notification
-      // You can add a toast or notification here
+      alert("Successfully followed creator!");
       
     } catch (err) {
       console.error('Error following creator:', err);
-      // Show error notification
+      alert(`Failed to follow: ${err.message}`);
     } finally {
       setFollowLoading(false);
     }
