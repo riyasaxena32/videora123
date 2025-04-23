@@ -413,6 +413,7 @@ function CreatorPage() {
             id: normalizedCreatorId,
             videoCount: videos.filter(v => v.uploadedBy === userName).length,
             thumbnailUrl: apiCreator?.profilePic || user?.profilePic || '/user-avatar.png',
+            _id: apiCreator?._id || '',
             isCurrentUser: true
           };
           
@@ -432,10 +433,12 @@ function CreatorPage() {
             foundCreator = {
               ...foundCreator,
               thumbnailUrl: apiCreator.profilePic || foundCreator.thumbnailUrl,
-              followers: apiCreator.followers
+              followers: apiCreator.followers,
+              _id: apiCreator._id
             };
           }
           
+          console.log('Setting creator with data:', foundCreator);
           setCreator(foundCreator);
           const creatorVids = videos.filter(v => v.uploadedBy === foundCreator.name);
           console.log(`Found ${creatorVids.length} videos for creator: ${foundCreator.name}`);
@@ -462,6 +465,14 @@ function CreatorPage() {
     if (!user) {
       // Redirect to login if user is not authenticated
       navigate('/login');
+      return;
+    }
+
+    console.log('Attempting to follow creator with ID:', creatorId);
+    
+    if (!creatorId) {
+      console.error('Cannot follow creator: Missing valid creator ID');
+      alert('Cannot follow this creator at the moment. Please try again later.');
       return;
     }
 
@@ -824,7 +835,16 @@ function CreatorPage() {
                     {!isCurrentUserProfile ? (
                       <button 
                         className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
-                        onClick={() => followCreator(creator._id)}
+                        onClick={() => {
+                          // Make sure we have a valid _id before calling the API
+                          if (creator._id) {
+                            followCreator(creator._id);
+                            console.log("Following creator with ID:", creator._id);
+                          } else {
+                            console.error("Cannot follow creator: Missing valid creator ID");
+                            alert("Cannot follow this creator at the moment. Please try again later.");
+                          }
+                        }}
                         disabled={followLoading}
                       >
                         <span className="text-sm font-medium">
