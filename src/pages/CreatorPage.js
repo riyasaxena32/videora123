@@ -662,9 +662,25 @@ function CreatorPage() {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Creator Cover Section */}
-          <div className="relative w-full bg-gradient-to-r from-black to-[#2d0606] overflow-hidden">
-            <div className="max-w-7xl mx-auto px-6 py-10">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+          <div className="relative w-full overflow-hidden">
+            {/* Profile image as background */}
+            <div className="absolute inset-0 z-0">
+              <img 
+                src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=400`} 
+                alt={creator.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/user-avatar.png";
+                }}
+              />
+              {/* Dark gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black to-black/80"></div>
+            </div>
+            
+            {/* Content */}
+            <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+              <div className="flex flex-col">
                 {/* Creator name and stats */}
                 <div className="flex-1">
                   <h1 className="text-4xl md:text-5xl font-bold mb-2">{creator.name}</h1>
@@ -683,7 +699,7 @@ function CreatorPage() {
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-3">
                     <button className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors">
-                      <span className="text-xl font-bold">G</span>
+                      <Bell className="w-5 h-5" />
                     </button>
                     
                     {!isCurrentUserProfile ? (
@@ -703,19 +719,6 @@ function CreatorPage() {
                       <span className="text-sm font-medium">About</span>
                     </button>
                   </div>
-                </div>
-                
-                {/* Creator profile image */}
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-[#ED5606] bg-[#1a1a1a] order-first md:order-last">
-                  <img 
-                    src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=200`} 
-                    alt={creator.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/user-avatar.png";
-                    }}
-                  />
                 </div>
               </div>
             </div>
