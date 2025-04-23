@@ -147,17 +147,27 @@ function HomePage() {
       return () => scrollContainer.removeEventListener('scroll', handleScroll);
     };
     
-    // Set up scroll button visibility for each section
-    const sections = [
-      { scrollId: 'topVideosScroll', leftBtnId: 'topVideosLeftBtn', rightBtnId: 'topVideosRightBtn' },
-      { scrollId: 'animeScroll', leftBtnId: 'animeLeftBtn', rightBtnId: 'animeRightBtn' },
-      { scrollId: 'creatorsScroll', leftBtnId: 'creatorsLeftBtn', rightBtnId: 'creatorsRightBtn' }
-    ];
-    
-    // Set up listeners for each section
-    const cleanupFunctions = sections.map(({ scrollId, leftBtnId, rightBtnId }) => 
-      handleScrollButtonVisibility(scrollId, leftBtnId, rightBtnId)
-    ).filter(Boolean); // Filter out any undefined cleanups
+    // Set up scroll button visibility for the creators section (static)
+    const setupCreatorsScroll = () => {
+      return handleScrollButtonVisibility('creatorsScroll', 'creatorsLeftBtn', 'creatorsRightBtn');
+    };
+
+    // Set up dynamic scroll button visibility for all category sections
+    const setupCategoryScrolls = () => {
+      const cleanupFunctions = [];
+      
+      // Set up for each category section
+      sortedCategories.forEach(category => {
+        const scrollId = `${category.toLowerCase()}Scroll`;
+        const leftBtnId = `${category.toLowerCase()}LeftBtn`;
+        const rightBtnId = `${category.toLowerCase()}RightBtn`;
+        
+        const cleanup = handleScrollButtonVisibility(scrollId, leftBtnId, rightBtnId);
+        if (cleanup) cleanupFunctions.push(cleanup);
+      });
+      
+      return cleanupFunctions;
+    };
     
     // Add an event listener for window resize to auto-collapse sidebar on small screens
     const handleResize = () => {
@@ -173,12 +183,17 @@ function HomePage() {
     
     window.addEventListener('resize', handleResize);
     
+    // Set up scroll buttons for all sections
+    const creatorsCleanup = setupCreatorsScroll();
+    const categoryCleanups = setupCategoryScrolls();
+    
     // Clean up all event listeners
     return () => {
-      cleanupFunctions.forEach(cleanup => cleanup && cleanup());
+      if (creatorsCleanup) creatorsCleanup();
+      if (categoryCleanups) categoryCleanups.forEach(cleanup => cleanup());
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [sortedCategories]); // Add sortedCategories as dependency
 
   // Function to handle creator selection
   const handleCreatorSelect = (creator) => {
@@ -190,11 +205,25 @@ function HomePage() {
     setSelectedCreator(null);
   };
 
-  // Get education videos
-  const educationVideos = videos.filter(video => video.category === 'Education');
-  
-  // Get other category videos or use all if no specific categories
-  const otherVideos = videos.filter(video => video.category !== 'Education');
+  // Group videos by category
+  const videosByCategory = videos.reduce((acc, video) => {
+    // Handle videos with no category
+    const category = video.category || 'Uncategorized';
+    
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    
+    acc[category].push(video);
+    return acc;
+  }, {});
+
+  // Sort categories alphabetically but ensure "Trending" comes first if it exists
+  const sortedCategories = Object.keys(videosByCategory).sort((a, b) => {
+    if (a === 'Trending') return -1;
+    if (b === 'Trending') return 1;
+    return a.localeCompare(b);
+  });
 
   // Default video if needed
   const defaultVideo = {
@@ -662,29 +691,29 @@ function HomePage() {
                 </div>
               )}
 
-              {/* Videos Section - Based on category */}
-              {educationVideos.length > 0 && (
-                <div className="px-8 py-6 relative">
+              {/* Videos Sections - Organized by categories */}
+              {sortedCategories.map((category, index) => (
+                <div key={category} className="px-8 py-6 relative">
                   <div className="flex items-center mb-4">
-                    <h2 className="text-xl font-bold">Education Videos</h2>
+                    <h2 className="text-xl font-bold">{category} Videos</h2>
                     <div className="ml-auto flex gap-2">
                       <button 
-                        id="topVideosLeftBtn"
+                        id={`${category.toLowerCase()}LeftBtn`}
                         className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                        onClick={() => document.getElementById('topVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
+                        onClick={() => document.getElementById(`${category.toLowerCase()}Scroll`).scrollBy({left: -300, behavior: 'smooth'})}>
                         <ChevronRight className="w-4 h-4 rotate-180" />
                       </button>
                       <button 
-                        id="topVideosRightBtn"
+                        id={`${category.toLowerCase()}RightBtn`}
                         className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                        onClick={() => document.getElementById('topVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
+                        onClick={() => document.getElementById(`${category.toLowerCase()}Scroll`).scrollBy({left: 300, behavior: 'smooth'})}>
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="topVideosScroll">
+                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id={`${category.toLowerCase()}Scroll`}>
                     <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                      {educationVideos.map((video) => (
+                      {videosByCategory[category].map((video) => (
                         <div 
                           key={video._id} 
                           className="snap-start cursor-pointer" 
@@ -695,60 +724,14 @@ function HomePage() {
                             id={video._id}
                             title={video.caption || video.name}
                             image={video.thumbnailLogoUrl}
-                            tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                            tag={category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
                           />
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* Other Videos Section */}
-              {(otherVideos.length > 0 || videos.length === 0) && (
-                <div className="px-8 py-6 relative">
-                  <div className="flex items-center mb-4">
-                    <h2 className="text-xl font-bold">{videos.length === 0 ? 'Videos' : 'Other Videos'}</h2>
-                    <div className="ml-auto flex gap-2">
-                      <button 
-                        id="otherVideosLeftBtn"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                        onClick={() => document.getElementById('otherVideosScroll').scrollBy({left: -300, behavior: 'smooth'})}>
-                        <ChevronRight className="w-4 h-4 rotate-180" />
-                      </button>
-                      <button 
-                        id="otherVideosRightBtn"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm"
-                        onClick={() => document.getElementById('otherVideosScroll').scrollBy({left: 300, behavior: 'smooth'})}>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="otherVideosScroll">
-                    <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
-                      {otherVideos.length > 0 ? otherVideos.map((video) => (
-                        <div 
-                          key={video._id} 
-                          className="snap-start cursor-pointer" 
-                          style={{ width: '280px', flexShrink: 0 }}
-                          onClick={() => navigate(`/video/${video._id}`)}
-                        >
-                          <VideoCard 
-                            id={video._id}
-                            title={video.caption || video.name}
-                            image={video.thumbnailLogoUrl}
-                            tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
-                          />
-                        </div>
-                      )) : (
-                        <div className="w-full text-center py-10">
-                          <p className="text-gray-400">No videos available</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              ))}
 
               {/* Top Creators Section - Sorted by follower count */}
               <div className="px-8 py-6 relative">

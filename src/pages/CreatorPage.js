@@ -694,7 +694,7 @@ function CreatorPage() {
           className={`${
             sidebarCollapsed 
               ? 'w-0 opacity-0 invisible' 
-              : 'w-[80%] md:w-[190px] opacity-100 visible'
+              : 'w-[80%] md:w-[220px] lg:w-[240px] opacity-100 visible'
           } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile`}
         >
           <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
@@ -801,7 +801,7 @@ function CreatorPage() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pl-0 md:pl-4 lg:pl-6">
           {/* Creator Cover Section */}
           <div className="relative w-full overflow-hidden">
             {/* Profile image as background */}
@@ -882,7 +882,7 @@ function CreatorPage() {
           </div>
           
           {/* Videos Grid */}
-          <div className="mt-8">
+          <div className="mt-8 px-6 md:px-8 lg:px-12 max-w-[1600px] mx-auto">
             <h2 className="text-xl font-semibold mb-4">Videos</h2>
             {loading ? (
               <div className="flex justify-center items-center h-40">
@@ -901,7 +901,7 @@ function CreatorPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5">
                 {creatorVideos.map((video) => (
                   <VideoCard 
                     key={video._id} 
