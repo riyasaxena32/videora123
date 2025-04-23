@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { handleGoogleCallback } from '../lib/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AuthCallback() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { fetchUserProfile } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -25,10 +27,19 @@ export default function AuthCallback() {
           const authData = await handleGoogleCallback(code);
           console.log('Authentication successful:', authData);
           
-          // Reset query count on successful Google auth
-         
+          // After Google auth is successful, explicitly fetch the user profile
+          // This ensures the AuthContext state is updated with user data
+          const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+          if (token) {
+            await fetchUserProfile(null, token);
+            
+            // Add a small delay to ensure state updates are processed
+            console.log("Waiting for state updates to propagate...");
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
           
           // Redirect to homepage on success
+          console.log("Redirecting to home page");
           navigate('/', { replace: true });
           return;
         } catch (authError) {
@@ -52,7 +63,15 @@ export default function AuthCallback() {
         localStorage.removeItem('queryLimitReached');
         localStorage.removeItem('queryCount');
         
+        // Also fetch profile for mock login
+        await fetchUserProfile(null, 'mock_token');
+        
+        // Add a small delay to ensure state updates are processed
+        console.log("Waiting for mock state updates to propagate...");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         // Redirect to homepage on success with replace to prevent back navigation to auth page
+        console.log("Redirecting to home page with mock data");
         navigate('/', { replace: true });
       } catch (err) {
         console.error('Authentication callback error:', err);
@@ -61,7 +80,7 @@ export default function AuthCallback() {
     };
     
     handleCallback();
-  }, [location, navigate]);
+  }, [location, navigate, fetchUserProfile]);
 
   // Loading state while processing the callback
   if (error) {
