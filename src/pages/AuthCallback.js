@@ -26,10 +26,11 @@ export default function AuthCallback() {
           console.log('Authentication successful:', authData);
           
           // Reset query count on successful Google auth
-         
-          
+          window.location.href = '/';
+
+          // window.location.
           // Redirect to homepage on success
-          navigate('/', { replace: true });
+          // navigate('/', { replace: true });
           return;
         } catch (authError) {
           console.error('Official auth failed, falling back to mock:', authError);
