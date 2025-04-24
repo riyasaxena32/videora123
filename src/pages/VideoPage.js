@@ -16,6 +16,9 @@ function VideoPage() {
   const [creators, setCreators] = useState([]);
   const [apiCreators, setApiCreators] = useState([]);
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [creatorId, setCreatorId] = useState(null);
   const profileDropdownRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
@@ -125,6 +128,91 @@ function VideoPage() {
     fetchCreators();
   }, []);
 
+  // Check if the current user follows this creator
+  useEffect(() => {
+    const checkIfFollowing = async () => {
+      if (!user || !video || !video.uploadedBy || !creatorId) return;
+      
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) return;
+
+        const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/checkfollow`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFollowing(data.isFollowing || false);
+        }
+      } catch (err) {
+        console.error('Error checking follow status:', err);
+      }
+    };
+    
+    checkIfFollowing();
+  }, [user, video, creatorId]);
+
+  // Function to toggle follow/unfollow a creator
+  const toggleFollowCreator = async () => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    if (!creatorId) {
+      console.error('Cannot follow/unfollow creator: Missing valid creator ID');
+      alert('Cannot update follow status for this creator at the moment. Please try again later.');
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const endpoint = isFollowing ? 
+        `https://videora-ai.onrender.com/api/creator/${creatorId}/unfollow` : 
+        `https://videora-ai.onrender.com/api/creator/${creatorId}/follow`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
+      }
+
+      const data = await response.json();
+      
+      // Update follow state
+      setIsFollowing(!isFollowing);
+      
+      console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator:`, data.message);
+    } catch (err) {
+      console.error(`Error ${isFollowing ? 'unfollowing' : 'following'} creator:`, err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Fetch video data from API
     const fetchVideo = async () => {
@@ -176,11 +264,32 @@ function VideoPage() {
               id: creator.toLowerCase().replace(/\s+/g, '-'),
               videoCount: videos.filter(v => v.uploadedBy === creator).length,
               thumbnailUrl: creatorVideo?.thumbnailLogoUrl || '/user-avatar.png',
-              profilePic: apiCreator?.profilePic || null
+              profilePic: apiCreator?.profilePic || null,
+              _id: apiCreator?._id || null
             };
           });
         
         setCreators(uniqueCreators);
+        
+        // Find the creator of this video to get their ID
+        if (foundVideo.uploadedBy) {
+          const videoCreator = uniqueCreators.find(c => 
+            c.name.toLowerCase() === foundVideo.uploadedBy.toLowerCase()
+          );
+          
+          if (videoCreator && videoCreator._id) {
+            setCreatorId(videoCreator._id);
+          } else {
+            // Try to find in apiCreators directly
+            const apiCreator = apiCreators.find(c => 
+              c.name.toLowerCase() === foundVideo.uploadedBy.toLowerCase()
+            );
+            if (apiCreator && apiCreator._id) {
+              setCreatorId(apiCreator._id);
+            }
+          }
+        }
+        
         setLoading(false);
 
         // Preload video if possible
@@ -561,7 +670,7 @@ function VideoPage() {
                   <p className="text-xs text-gray-400">{video.views || 0} views</p>
                 </div>
                 <button 
-                  className="ml-2 text-xs text-white px-4 py-1 rounded-full"
+                  className={`ml-2 text-xs text-white px-4 py-1 rounded-full ${followLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{
                     background: `
                       linear-gradient(0deg, #270E00, #270E00),
@@ -569,8 +678,10 @@ function VideoPage() {
                     `,
                     border: '1px solid #ED5606'
                   }}
+                  onClick={toggleFollowCreator}
+                  disabled={followLoading}
                 >
-                  Follow
+                  {followLoading ? 'Processing...' : isFollowing ? 'Following' : 'Follow'}
                 </button>
               </div>
               

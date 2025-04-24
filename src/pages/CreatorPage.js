@@ -253,6 +253,7 @@ function CreatorPage() {
   const [creators, setCreators] = useState([]);
   const [apiCreators, setApiCreators] = useState([]);
   const [followLoading, setFollowLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const profileDropdownRef = useRef(null);
   const { logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -471,19 +472,50 @@ function CreatorPage() {
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
 
-  // Function to follow a creator
-  const followCreator = async (creatorId) => {
+  // Check if the current user follows this creator
+  useEffect(() => {
+    const checkIfFollowing = async () => {
+      if (!user || !creator || !creator._id) return;
+      
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) return;
+
+        const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/checkfollow`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFollowing(data.isFollowing || false);
+        }
+      } catch (err) {
+        console.error('Error checking follow status:', err);
+      }
+    };
+    
+    checkIfFollowing();
+  }, [user, creator]);
+
+  // Function to toggle follow/unfollow a creator
+  const toggleFollowCreator = async (creatorId) => {
     if (!user) {
       // Redirect to login if user is not authenticated
       navigate('/login');
       return;
     }
 
-    console.log('Attempting to follow creator with ID:', creatorId);
+    console.log(`Attempting to ${isFollowing ? 'unfollow' : 'follow'} creator with ID:`, creatorId);
     
     if (!creatorId) {
-      console.error('Cannot follow creator: Missing valid creator ID');
-      alert('Cannot follow this creator at the moment. Please try again later.');
+      console.error('Cannot follow/unfollow creator: Missing valid creator ID');
+      alert('Cannot update follow status for this creator at the moment. Please try again later.');
       return;
     }
 
@@ -496,7 +528,11 @@ function CreatorPage() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+      const endpoint = isFollowing ? 
+        `https://videora-ai.onrender.com/api/creator/${creatorId}/unfollow` : 
+        `https://videora-ai.onrender.com/api/creator/${creatorId}/follow`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -507,10 +543,13 @@ function CreatorPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to follow creator');
+        throw new Error(errorData.error || `Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
       }
 
       const data = await response.json();
+      
+      // Update follow state
+      setIsFollowing(!isFollowing);
       
       // Update the creator state with the new follower count
       setCreator(prevCreator => ({
@@ -519,9 +558,9 @@ function CreatorPage() {
       }));
 
       // Show success notification (optional)
-      console.log('Successfully followed creator:', data.message);
+      console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator:`, data.message);
     } catch (err) {
-      console.error('Error following creator:', err);
+      console.error(`Error ${isFollowing ? 'unfollowing' : 'following'} creator:`, err);
       // Show error notification (optional)
     } finally {
       setFollowLoading(false);
@@ -853,21 +892,20 @@ function CreatorPage() {
                     
                     {!isCurrentUserProfile ? (
                       <button 
-                        className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
+                        className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : isFollowing ? 'bg-[#270E00]' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
                         onClick={() => {
                           // Make sure we have a valid _id before calling the API
                           if (creator._id) {
-                            followCreator(creator._id);
-                            console.log("Following creator with ID:", creator._id);
+                            toggleFollowCreator(creator._id);
                           } else {
-                            console.error("Cannot follow creator: Missing valid creator ID");
-                            alert("Cannot follow this creator at the moment. Please try again later.");
+                            console.error("Cannot toggle follow: Missing valid creator ID");
+                            alert("Cannot update follow status for this creator at the moment. Please try again later.");
                           }
                         }}
                         disabled={followLoading}
                       >
                         <span className="text-sm font-medium">
-                          {followLoading ? 'Following...' : 'Follow'} 
+                          {followLoading ? 'Processing...' : isFollowing ? 'Following' : 'Follow'} 
                           {creator.followers && !followLoading ? ` (${creator.followers})` : ''}
                         </span>
                       </button>
