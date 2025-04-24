@@ -86,7 +86,7 @@ const UserProfile = () => {
     (async()=>{
       await fetchUserProfile();
     })()
-  }, []);
+  }, [window.location]);
 
   const fetchUserProfile = async () => {
     try {
