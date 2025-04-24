@@ -102,44 +102,29 @@ export const AuthProvider = ({ children }) => {
       });
       
       if (response.ok) {
-        // Add to local state
-        addFollowedCreator(creatorId);
+        const data = await response.json();
+        
+        // Check if the response indicates follow or unfollow action
+        if (data.message === "Unfollowed") {
+          // If unfollowed, remove from list
+          removeFollowedCreator(creatorId);
+        } else {
+          // If followed, add to list
+          addFollowedCreator(creatorId);
+        }
         return true;
       }
       return false;
     } catch (error) {
-      console.error('Error following creator:', error);
+      console.error('Error toggling follow status:', error);
       return false;
     }
   };
   
-  // Function to unfollow a creator
+  // Function to unfollow a creator - Just an alias to followCreator for backward compatibility
   const unfollowCreator = async (creatorId) => {
-    if (!creatorId) return false;
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return false;
-      
-      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/unfollow`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        // Remove from local state
-        removeFollowedCreator(creatorId);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error unfollowing creator:', error);
-      return false;
-    }
+    // Use the same endpoint as it handles both follow and unfollow
+    return await followCreator(creatorId);
   };
 
   const clearAuthData = () => {

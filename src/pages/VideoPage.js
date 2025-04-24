@@ -155,12 +155,8 @@ function VideoPage() {
     try {
       setFollowLoading(true);
       
-      let success;
-      if (isFollowing) {
-        success = await unfollowCreator(creatorId);
-      } else {
-        success = await followCreator(creatorId);
-      }
+      // Use followCreator for both actions - it detects the current status and toggles
+      const success = await followCreator(creatorId);
       
       if (success) {
         // Update local following state
