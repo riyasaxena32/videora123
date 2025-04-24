@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [followedCreators, setFollowedCreators] = useState([]);
   const navigate = useNavigate();
 
   // Check for authentication on initial load
@@ -24,6 +25,9 @@ export const AuthProvider = ({ children }) => {
         if (oauthToken || jwtToken) {
           // If either token exists, try to fetch the user profile
           await fetchUserProfile(null, oauthToken || jwtToken);
+          
+          // Also fetch followed creators
+          fetchFollowedCreators();
         } else {
           // No tokens found
           clearAuthData();
@@ -40,12 +44,111 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Fetch followed creators
+  const fetchFollowedCreators = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      
+      if (!token) return;
+      
+      const response = await fetch('https://videora-ai.onrender.com/api/creator/followed', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFollowedCreators(data.followedCreators || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch followed creators:', error);
+    }
+  };
+  
+  // Check if a creator is followed
+  const isCreatorFollowed = (creatorId) => {
+    return followedCreators.includes(creatorId);
+  };
+  
+  // Add a creator to followed list
+  const addFollowedCreator = (creatorId) => {
+    if (!followedCreators.includes(creatorId)) {
+      setFollowedCreators(prev => [...prev, creatorId]);
+    }
+  };
+  
+  // Remove a creator from followed list
+  const removeFollowedCreator = (creatorId) => {
+    setFollowedCreators(prev => prev.filter(id => id !== creatorId));
+  };
+
+  // Function to follow a creator
+  const followCreator = async (creatorId) => {
+    if (!creatorId) return false;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Add to local state
+        addFollowedCreator(creatorId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error following creator:', error);
+      return false;
+    }
+  };
+  
+  // Function to unfollow a creator
+  const unfollowCreator = async (creatorId) => {
+    if (!creatorId) return false;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/unfollow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Remove from local state
+        removeFollowedCreator(creatorId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error unfollowing creator:', error);
+      return false;
+    }
+  };
+
   const clearAuthData = () => {
     localStorage.removeItem('token'); // OAuth2 token
     localStorage.removeItem('access_token'); // JWT token
     localStorage.removeItem('userData');
     localStorage.removeItem('authType');
     setUser(null);
+    setFollowedCreators([]);
   };
 
   // Handle Google login success with credential
@@ -195,8 +298,13 @@ export const AuthProvider = ({ children }) => {
       handleGoogleLogin,
       logout,
       checkJwtToken,
-      fetchUserProfile, 
-      isAuthenticated: !!user 
+      fetchUserProfile,
+      isAuthenticated: !!user,
+      followedCreators,
+      isCreatorFollowed,
+      followCreator,
+      unfollowCreator,
+      fetchFollowedCreators
     }}>
       {children}
     </AuthContext.Provider>

@@ -22,7 +22,7 @@ function VideoPage() {
   const profileDropdownRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
-  const { logout, user } = useAuth();
+  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -130,34 +130,13 @@ function VideoPage() {
 
   // Check if the current user follows this creator
   useEffect(() => {
-    const checkIfFollowing = async () => {
-      if (!user || !video || !video.uploadedBy || !creatorId) return;
-      
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem('token');
-        
-        if (!token) return;
-
-        const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/checkfollow`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setIsFollowing(data.isFollowing || false);
-        }
-      } catch (err) {
-        console.error('Error checking follow status:', err);
-      }
+    const checkIfFollowing = () => {
+      if (!user || !creatorId) return;
+      setIsFollowing(isCreatorFollowed(creatorId));
     };
     
     checkIfFollowing();
-  }, [user, video, creatorId]);
+  }, [user, creatorId, isCreatorFollowed]);
 
   // Function to toggle follow/unfollow a creator
   const toggleFollowCreator = async () => {
@@ -175,43 +154,35 @@ function VideoPage() {
 
     try {
       setFollowLoading(true);
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
       
-      if (!token) {
-        throw new Error('No authentication token found');
+      let success;
+      if (isFollowing) {
+        success = await unfollowCreator(creatorId);
+      } else {
+        success = await followCreator(creatorId);
       }
-
-      const endpoint = isFollowing ? 
-        `https://videora-ai.onrender.com/api/creator/${creatorId}/unfollow` : 
-        `https://videora-ai.onrender.com/api/creator/${creatorId}/follow`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
+      
+      if (success) {
+        // Update local following state
+        setIsFollowing(!isFollowing);
+        console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator`);
+      } else {
+        console.error(`Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
+        alert(`Failed to ${isFollowing ? 'unfollow' : 'follow'} creator. Please try again.`);
       }
-
-      const data = await response.json();
-      
-      // Update follow state
-      setIsFollowing(!isFollowing);
-      
-      console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator:`, data.message);
     } catch (err) {
       console.error(`Error ${isFollowing ? 'unfollowing' : 'following'} creator:`, err);
     } finally {
       setFollowLoading(false);
     }
   };
+
+  // Refresh followed creators list when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchFollowedCreators();
+    }
+  }, [user, fetchFollowedCreators]);
 
   useEffect(() => {
     // Fetch video data from API

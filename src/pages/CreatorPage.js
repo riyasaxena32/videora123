@@ -255,7 +255,7 @@ function CreatorPage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const profileDropdownRef = useRef(null);
-  const { logout, user } = useAuth();
+  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Custom button styles
@@ -474,34 +474,13 @@ function CreatorPage() {
 
   // Check if the current user follows this creator
   useEffect(() => {
-    const checkIfFollowing = async () => {
+    const checkIfFollowing = () => {
       if (!user || !creator || !creator._id) return;
-      
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem('token');
-        
-        if (!token) return;
-
-        const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/checkfollow`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setIsFollowing(data.isFollowing || false);
-        }
-      } catch (err) {
-        console.error('Error checking follow status:', err);
-      }
+      setIsFollowing(isCreatorFollowed(creator._id));
     };
     
     checkIfFollowing();
-  }, [user, creator]);
+  }, [user, creator, isCreatorFollowed]);
 
   // Function to toggle follow/unfollow a creator
   const toggleFollowCreator = async (creatorId) => {
@@ -521,47 +500,33 @@ function CreatorPage() {
 
     try {
       setFollowLoading(true);
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
       
-      if (!token) {
-        throw new Error('No authentication token found');
+      let success;
+      if (isFollowing) {
+        success = await unfollowCreator(creatorId);
+      } else {
+        success = await followCreator(creatorId);
       }
-
-      const endpoint = isFollowing ? 
-        `https://videora-ai.onrender.com/api/creator/${creatorId}/unfollow` : 
-        `https://videora-ai.onrender.com/api/creator/${creatorId}/follow`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
+      
+      if (success) {
+        // Update local following state
+        setIsFollowing(!isFollowing);
+        
+        // Update the creator state with the new follower count
+        setCreator(prevCreator => ({
+          ...prevCreator,
+          followers: isFollowing 
+            ? (prevCreator.followers > 0 ? prevCreator.followers - 1 : 0) 
+            : (prevCreator.followers || 0) + 1
+        }));
+        
+        console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator`);
+      } else {
+        console.error(`Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
+        alert(`Failed to ${isFollowing ? 'unfollow' : 'follow'} creator. Please try again.`);
       }
-
-      const data = await response.json();
-      
-      // Update follow state
-      setIsFollowing(!isFollowing);
-      
-      // Update the creator state with the new follower count
-      setCreator(prevCreator => ({
-        ...prevCreator,
-        followers: data.followers
-      }));
-
-      // Show success notification (optional)
-      console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator:`, data.message);
     } catch (err) {
       console.error(`Error ${isFollowing ? 'unfollowing' : 'following'} creator:`, err);
-      // Show error notification (optional)
     } finally {
       setFollowLoading(false);
     }
@@ -581,6 +546,13 @@ function CreatorPage() {
       videoCount: prevCreator.videoCount > 0 ? prevCreator.videoCount - 1 : 0
     }));
   };
+
+  // Refresh followed creators list when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchFollowedCreators();
+    }
+  }, [user, fetchFollowedCreators]);
 
   if (loading) {
     return (
