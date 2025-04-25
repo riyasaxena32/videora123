@@ -255,7 +255,7 @@ function CreatorPage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const profileDropdownRef = useRef(null);
-  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators } = useAuth();
+  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators, followedCreators } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Custom button styles
@@ -476,11 +476,34 @@ function CreatorPage() {
   useEffect(() => {
     const checkIfFollowing = () => {
       if (!user || !creator || !creator._id) return;
-      setIsFollowing(isCreatorFollowed(creator._id));
+      
+      // Check if this creator is in the followed list
+      const isFollowed = isCreatorFollowed(creator._id);
+      console.log(`Creator ${creator.name} (${creator._id}) follow status:`, isFollowed);
+      setIsFollowing(isFollowed);
     };
     
     checkIfFollowing();
-  }, [user, creator, isCreatorFollowed]);
+  }, [user, creator, isCreatorFollowed, followedCreators]);
+
+  // Refresh followed creators list when component mounts or creator changes
+  useEffect(() => {
+    if (user) {
+      console.log("Fetching followed creators list");
+      
+      // Store creator ID in a ref to avoid dependency issues
+      const currentCreatorId = creator?._id;
+      
+      fetchFollowedCreators().then(() => {
+        // After fetching, check follow status again
+        if (currentCreatorId) {
+          const isFollowed = isCreatorFollowed(currentCreatorId);
+          console.log(`After fetch: Creator ${creator?.name} (${currentCreatorId}) follow status:`, isFollowed);
+          setIsFollowing(isFollowed);
+        }
+      });
+    }
+  }, [user, fetchFollowedCreators]);
 
   // Function to toggle follow/unfollow a creator
   const toggleFollowCreator = async (creatorId) => {
@@ -542,13 +565,6 @@ function CreatorPage() {
       videoCount: prevCreator.videoCount > 0 ? prevCreator.videoCount - 1 : 0
     }));
   };
-
-  // Refresh followed creators list when component mounts
-  useEffect(() => {
-    if (user) {
-      fetchFollowedCreators();
-    }
-  }, [user, fetchFollowedCreators]);
 
   if (loading) {
     return (
@@ -860,7 +876,13 @@ function CreatorPage() {
                     
                     {!isCurrentUserProfile ? (
                       <button 
-                        className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : isFollowing ? 'bg-[#270E00]' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
+                        className={`flex items-center gap-2 ${
+                          followLoading 
+                            ? 'bg-[#270E00]/50 cursor-not-allowed' 
+                            : isFollowing 
+                              ? 'bg-[#270E00] hover:bg-[#500000] hover:border-[#500000] transition-colors' 
+                              : 'border border-white/20 hover:bg-white/10'
+                        } px-5 py-2 rounded-full transition-colors`}
                         onClick={() => {
                           // Make sure we have a valid _id before calling the API
                           if (creator._id) {
@@ -873,7 +895,19 @@ function CreatorPage() {
                         disabled={followLoading}
                       >
                         <span className="text-sm font-medium">
-                          {followLoading ? 'Processing...' : isFollowing ? 'Following' : 'Follow'} 
+                          {followLoading 
+                            ? 'Processing...' 
+                            : isFollowing 
+                              ? (
+                                <span className="flex items-center">
+                                  Following
+                                  <svg className="ml-1 w-4 h-4 text-[#ED5606]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                  </svg>
+                                </span>
+                              ) 
+                              : 'Follow'
+                          } 
                           {creator.followers && !followLoading ? ` (${creator.followers})` : ''}
                         </span>
                       </button>

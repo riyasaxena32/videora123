@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
@@ -42,14 +42,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     checkAuth();
-  }, []);
+  }, [fetchUserProfile, fetchFollowedCreators, clearAuthData]);
 
-  // Fetch followed creators
-  const fetchFollowedCreators = async () => {
+  // Fetch followed creators - memoized
+  const fetchFollowedCreators = useCallback(async () => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
       
-      if (!token) return;
+      if (!token) return Promise.resolve([]);
       
       const response = await fetch('https://videora-ai.onrender.com/api/creator/followed', {
         method: 'GET',
@@ -60,32 +60,41 @@ export const AuthProvider = ({ children }) => {
       
       if (response.ok) {
         const data = await response.json();
-        setFollowedCreators(data.followedCreators || []);
+        const followedList = data.followedCreators || [];
+        console.log("Fetched followed creators:", followedList);
+        setFollowedCreators(followedList);
+        return followedList;
       }
+      return [];
     } catch (error) {
       console.error('Failed to fetch followed creators:', error);
+      return [];
     }
-  };
+  }, []);
   
-  // Check if a creator is followed
-  const isCreatorFollowed = (creatorId) => {
-    return followedCreators.includes(creatorId);
-  };
+  // Check if a creator is followed - memoized
+  const isCreatorFollowed = useCallback((creatorId) => {
+    if (!creatorId || !followedCreators || followedCreators.length === 0) return false;
+    
+    // Convert to string for comparison if needed
+    const creatorIdStr = String(creatorId);
+    return followedCreators.some(id => String(id) === creatorIdStr);
+  }, [followedCreators]);
   
-  // Add a creator to followed list
-  const addFollowedCreator = (creatorId) => {
+  // Add a creator to followed list - memoized
+  const addFollowedCreator = useCallback((creatorId) => {
     if (!followedCreators.includes(creatorId)) {
       setFollowedCreators(prev => [...prev, creatorId]);
     }
-  };
+  }, [followedCreators]);
   
-  // Remove a creator from followed list
-  const removeFollowedCreator = (creatorId) => {
+  // Remove a creator from followed list - memoized
+  const removeFollowedCreator = useCallback((creatorId) => {
     setFollowedCreators(prev => prev.filter(id => id !== creatorId));
-  };
+  }, []);
 
-  // Function to follow a creator
-  const followCreator = async (creatorId) => {
+  // Function to follow a creator - memoized
+  const followCreator = useCallback(async (creatorId) => {
     if (!creatorId) return false;
     
     try {
@@ -119,22 +128,23 @@ export const AuthProvider = ({ children }) => {
       console.error('Error toggling follow status:', error);
       return false;
     }
-  };
+  }, [addFollowedCreator, removeFollowedCreator]);
   
-  // Function to unfollow a creator - Just an alias to followCreator for backward compatibility
-  const unfollowCreator = async (creatorId) => {
+  // Function to unfollow a creator - Just an alias to followCreator for backward compatibility - memoized
+  const unfollowCreator = useCallback((creatorId) => {
     // Use the same endpoint as it handles both follow and unfollow
-    return await followCreator(creatorId);
-  };
+    return followCreator(creatorId);
+  }, [followCreator]);
 
-  const clearAuthData = () => {
+  // Clear auth data - memoized
+  const clearAuthData = useCallback(() => {
     localStorage.removeItem('token'); // OAuth2 token
     localStorage.removeItem('access_token'); // JWT token
     localStorage.removeItem('userData');
     localStorage.removeItem('authType');
     setUser(null);
     setFollowedCreators([]);
-  };
+  }, []);
 
   // Handle Google login success with credential
   const handleGoogleLogin = async (credentialResponse) => {
@@ -221,8 +231,8 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
-  // Add a new function to fetch user profile
-  const fetchUserProfile = async (userId, token) => {
+  // Add a new function to fetch user profile - memoized
+  const fetchUserProfile = useCallback(async (userId, token) => {
     try {
       // Get the token like in UserProfile.js
       // If token is provided, use it; otherwise get from localStorage
@@ -274,7 +284,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setAuthChecked(true);
     }
-  };
+  }, [user?.tokenType]);
 
   return (
     <AuthContext.Provider value={{ 
