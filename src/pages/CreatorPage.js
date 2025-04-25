@@ -255,7 +255,7 @@ function CreatorPage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const profileDropdownRef = useRef(null);
-  const { logout, user, isCreatorFollowed, toggleFollowCreator, fetchFollowedCreators } = useAuth();
+  const { logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Custom button styles
@@ -341,6 +341,14 @@ function CreatorPage() {
           const followersCount = Array.isArray(creator.followers) ? creator.followers.length : 
                                 (typeof creator.Totalfollowers === 'number' ? creator.Totalfollowers : 0);
           
+          // Check if current user is following this creator
+          let isUserFollowing = false;
+          if (user && Array.isArray(creator.followers)) {
+            isUserFollowing = creator.followers.some(follower => 
+              typeof follower === 'object' && follower._id === user._id
+            );
+          }
+          
           return {
             name: creator.name || 'Unknown Creator',
             id: creator.name ? creator.name.toLowerCase().replace(/\s+/g, '-') : `creator-${creator._id}`,
@@ -348,7 +356,8 @@ function CreatorPage() {
             followers: followersCount,
             about: creator.about || '',
             _id: creator._id || '',
-            profilePic: profilePicUrl
+            profilePic: profilePicUrl,
+            isFollowing: isUserFollowing
           };
         });
         
@@ -359,7 +368,7 @@ function CreatorPage() {
     };
     
     fetchCreators();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     // Fetch all videos from API
@@ -368,48 +377,40 @@ function CreatorPage() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        // Replace spaces with hyphens and make lowercase for URL-friendly format
+        const normalizedCreatorId = creatorId.toLowerCase();
         
+        // Fetch videos first
+        const response = await fetch('https://videora-ai.onrender.com/videos/get-videos');
         if (!response.ok) {
           throw new Error('Failed to fetch videos');
         }
-        
         const data = await response.json();
         const videos = data.video || [];
-        setAllVideos(videos);
         
-        console.log('API response videos:', videos);
+        console.log(`Found ${videos.length} videos total`);
         
-        // Extract unique creators from videos based on uploadedBy field
-        const uniqueCreators = Array.from(new Set(
-          videos
-            .filter(v => v.uploadedBy) // Filter out videos without uploadedBy
-            .map(v => v.uploadedBy)
-        ))
-        .map(creatorName => {
-          // Find all videos by this creator
-          const creatorVideos = videos.filter(v => v.uploadedBy === creatorName);
-          // Use the first video for thumbnail
-          const firstVideo = creatorVideos[0];
-          
-          // Try to find this creator in the API creators list
-          const apiCreator = apiCreators.find(c => c.name.toLowerCase() === creatorName.toLowerCase());
-          
-          return {
-            name: creatorName,
-            id: creatorName.toLowerCase().replace(/\s+/g, '-'),
-            videoCount: creatorVideos.length,
-            thumbnailUrl: firstVideo?.thumbnailLogoUrl || '/user-avatar.png',
-            profilePic: apiCreator?.profilePic || null
-          };
-        });
+        // Extract unique creators from videos
+        const uniqueCreators = Array.from(new Set(videos.map(v => v.uploadedBy)))
+          .filter(Boolean)
+          .map(creator => {
+            // Find all videos by this creator
+            const creatorVideos = videos.filter(v => v.uploadedBy === creator);
+            const firstVideo = creatorVideos[0];
+            
+            return {
+              name: creator,
+              id: creator.toLowerCase().replace(/\s+/g, '-'),
+              videoCount: creatorVideos.length,
+              uploadedVideos: creatorVideos,
+              thumbnailUrl: firstVideo?.thumbnailLogoUrl || '/user-avatar.png',
+              isCurrentUser: user && creator === user.name
+            };
+          });
         
         setCreators(uniqueCreators);
         
-        // Find the creator based on the URL parameter
-        const normalizedCreatorId = creatorId.toLowerCase();
-        
-        // Try to find by ID first
+        // Try to find the creator by ID
         let foundCreator = uniqueCreators.find(c => c.id === normalizedCreatorId);
         
         // If not found, use profile for current user
@@ -435,7 +436,7 @@ function CreatorPage() {
           const userVideos = videos.filter(v => v.uploadedBy === userName);
           console.log(`Found ${userVideos.length} videos for user: ${userName}`);
           setCreatorVideos(userVideos);
-        } 
+        }
         // Regular creator profile
         else if (foundCreator) {
           // Try to find this creator in API creators for additional info
@@ -446,8 +447,12 @@ function CreatorPage() {
               ...foundCreator,
               thumbnailUrl: apiCreator.profilePic || foundCreator.thumbnailUrl,
               followers: apiCreator.followers,
-              _id: apiCreator._id
+              _id: apiCreator._id,
+              isFollowing: apiCreator.isFollowing
             };
+            
+            // Set following state
+            setIsFollowing(apiCreator.isFollowing || false);
           }
           
           console.log('Setting creator with data:', foundCreator);
@@ -472,59 +477,61 @@ function CreatorPage() {
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
 
-  // Check if the current user follows this creator
-  useEffect(() => {
-    const checkIfFollowing = () => {
-      if (!user || !creator || !creator._id) return;
-      
-      const followed = isCreatorFollowed(creator._id);
-      console.log(`Creator ${creator.name} (${creator._id}) follow status: ${followed}`);
-      setIsFollowing(followed);
-    };
-    
-    checkIfFollowing();
-  }, [user, creator, isCreatorFollowed]);
-
-  // Function to toggle follow/unfollow a creator
-  const handleToggleFollow = async (creatorId) => {
+  // Function to follow a creator
+  const followCreator = async (creatorId) => {
     if (!user) {
       // Redirect to login if user is not authenticated
       navigate('/login');
       return;
     }
 
-    console.log(`Attempting to toggle follow status for creator with ID:`, creatorId);
+    console.log('Attempting to follow creator with ID:', creatorId);
     
     if (!creatorId) {
-      console.error('Cannot toggle follow: Missing valid creator ID');
-      alert('Cannot update follow status for this creator at the moment. Please try again later.');
+      console.error('Cannot follow creator: Missing valid creator ID');
+      alert('Cannot follow this creator at the moment. Please try again later.');
       return;
     }
 
     try {
       setFollowLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
       
-      const result = await toggleFollowCreator(creatorId);
-      
-      if (result.success) {
-        // Update local following state
-        setIsFollowing(result.isFollowing);
-        
-        // Update the creator state with the new follower count
-        setCreator(prevCreator => ({
-          ...prevCreator,
-          followers: result.isFollowing
-            ? (prevCreator.followers || 0) + 1
-            : (prevCreator.followers > 0 ? prevCreator.followers - 1 : 0)
-        }));
-        
-        console.log(`Successfully ${result.isFollowing ? 'followed' : 'unfollowed'} creator`);
-      } else {
-        console.error(`Failed to toggle follow status for creator`);
-        alert(`Failed to update follow status. Please try again.`);
+      if (!token) {
+        throw new Error('No authentication token found');
       }
+
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to follow creator');
+      }
+
+      const data = await response.json();
+      
+      // Update the creator state with the new follower count
+      setCreator(prevCreator => ({
+        ...prevCreator,
+        followers: data.followers
+      }));
+
+      // Toggle following state
+      setIsFollowing(prev => !prev);
+
+      // Show success notification (optional)
+      console.log('Successfully followed creator:', data.message);
     } catch (err) {
-      console.error(`Error toggling follow status:`, err);
+      console.error('Error following creator:', err);
+      // Show error notification (optional)
     } finally {
       setFollowLoading(false);
     }
@@ -544,13 +551,6 @@ function CreatorPage() {
       videoCount: prevCreator.videoCount > 0 ? prevCreator.videoCount - 1 : 0
     }));
   };
-
-  // Refresh user profile when component mounts to get latest follow data
-  useEffect(() => {
-    if (user) {
-      fetchFollowedCreators();
-    }
-  }, [user, fetchFollowedCreators]);
 
   if (loading) {
     return (
@@ -862,20 +862,25 @@ function CreatorPage() {
                     
                     {!isCurrentUserProfile ? (
                       <button 
-                        className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : isFollowing ? 'bg-[#270E00]' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
+                        className={`flex items-center gap-2 ${followLoading ? 'bg-[#270E00]/50' : 'border border-white/20'} px-5 py-2 rounded-full ${followLoading ? 'cursor-not-allowed' : 'hover:bg-white/10'} transition-colors`}
                         onClick={() => {
                           // Make sure we have a valid _id before calling the API
                           if (creator._id) {
-                            handleToggleFollow(creator._id);
+                            followCreator(creator._id);
+                            console.log("Following creator with ID:", creator._id);
                           } else {
-                            console.error("Cannot toggle follow: Missing valid creator ID");
-                            alert("Cannot update follow status for this creator at the moment. Please try again later.");
+                            console.error("Cannot follow creator: Missing valid creator ID");
+                            alert("Cannot follow this creator at the moment. Please try again later.");
                           }
                         }}
                         disabled={followLoading}
+                        style={{
+                          backgroundColor: isFollowing ? '#333333' : 'transparent',
+                          borderColor: isFollowing ? '#555555' : 'rgba(255, 255, 255, 0.2)'
+                        }}
                       >
                         <span className="text-sm font-medium">
-                          {followLoading ? 'Processing...' : isFollowing ? 'Following' : 'Follow'} 
+                          {followLoading ? 'Processing...' : (isFollowing ? 'Following' : 'Follow')}
                           {creator.followers && !followLoading ? ` (${creator.followers})` : ''}
                         </span>
                       </button>

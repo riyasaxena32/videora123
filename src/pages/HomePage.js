@@ -41,19 +41,21 @@ function HomePage() {
         setLoading(true);
         
         // Fetch videos
-        const videosResponse = await fetch('https://videora-ai.onrender.com/videos/get-videos');
-        if (!videosResponse.ok) {
+        const responseVideos = await fetch('https://videora-ai.onrender.com/videos/get-videos');
+        if (!responseVideos.ok) {
           throw new Error('Failed to fetch videos');
         }
-        const videosData = await videosResponse.json();
-        const videoData = videosData.video || [];
-        setVideos(videoData);
+        
+        const dataVideos = await responseVideos.json();
+        const videos = dataVideos.video || [];
+        
+        console.log(`Found ${videos.length} videos`);
         
         // Group videos by category
         const groupedVideos = {};
         const categorySet = new Set();
 
-        videoData.forEach(video => {
+        videos.forEach(video => {
           // Use "Uncategorized" if no category is specified
           const category = video.category || "Uncategorized";
           categorySet.add(category);
@@ -67,13 +69,14 @@ function HomePage() {
         setVideosByCategory(groupedVideos);
         setCategories(Array.from(categorySet));
         
-        // Fetch creators
-        const creatorsResponse = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
-        if (!creatorsResponse.ok) {
+        // Get creators from API
+        const responseCreators = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
+        if (!responseCreators.ok) {
           throw new Error('Failed to fetch creators');
         }
-        const creatorsData = await creatorsResponse.json();
-        const creatorsList = creatorsData.creator || [];
+        
+        const dataCreators = await responseCreators.json();
+        const creatorsList = dataCreators.creator || [];
         
         // Map creators with additional info
         const mappedCreators = creatorsList.map(creator => {
@@ -87,6 +90,14 @@ function HomePage() {
           const followersCount = Array.isArray(creator.followers) ? creator.followers.length : 
                                 (typeof creator.Totalfollowers === 'number' ? creator.Totalfollowers : 0);
           
+          // Check if current user is following this creator
+          let isUserFollowing = false;
+          if (user && Array.isArray(creator.followers)) {
+            isUserFollowing = creator.followers.some(follower => 
+              typeof follower === 'object' && follower._id === user._id
+            );
+          }
+          
           return {
             name: creator.name || 'Unknown Creator',
             id: creator.name ? creator.name.toLowerCase().replace(/\s+/g, '-') : `creator-${creator._id}`,
@@ -94,7 +105,8 @@ function HomePage() {
             followers: followersCount,
             about: creator.about || '',
             _id: creator._id || '',
-            profilePic: profilePicUrl
+            profilePic: profilePicUrl,
+            isFollowing: isUserFollowing
           };
         });
         
@@ -108,7 +120,7 @@ function HomePage() {
     };
     
     fetchData();
-  }, []);
+  }, [user]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -776,6 +788,7 @@ function HomePage() {
                               videos={creator.videoCount}
                               _id={creator._id}
                               profilePic={creator.profilePic}
+                              isFollowing={creator.isFollowing}
                             />
                           </div>
                         )) : (
@@ -823,7 +836,66 @@ function VideoCard({ title, image, tag, id }) {
   );
 }
 
-function CreatorCard({ name, image, followers, videos, _id, profilePic }) {
+function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollowing }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isFollow, setIsFollow] = useState(isFollowing || false);
+  
+  // Function to follow a creator
+  const followCreator = async (creatorId, event) => {
+    // Stop click propagation to parent elements
+    event.stopPropagation(); 
+    
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    if (!creatorId) {
+      console.error('Cannot follow creator: Missing valid creator ID');
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to follow creator');
+      }
+
+      const data = await response.json();
+      
+      // Toggle following state
+      setIsFollow(prev => !prev);
+
+      // Show success notification (optional)
+      console.log('Successfully followed creator:', data.message);
+    } catch (err) {
+      console.error('Error following creator:', err);
+      // Show error notification (optional)
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
@@ -839,10 +911,28 @@ function CreatorCard({ name, image, followers, videos, _id, profilePic }) {
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
-      <div className="mt-2">
-        <h3 className="text-sm font-medium">{name}</h3>
-        <p className="text-xs text-[#b0b0b0]">{typeof followers === 'number' ? followers : 0} followers</p>
-        <p className="text-xs text-[#b0b0b0]">{typeof videos === 'number' ? videos : 0} videos</p>
+      <div className="mt-2 flex justify-between items-start">
+        <div>
+          <h3 className="text-sm font-medium">{name}</h3>
+          <p className="text-xs text-[#b0b0b0]">{typeof followers === 'number' ? followers : 0} followers</p>
+          <p className="text-xs text-[#b0b0b0]">{typeof videos === 'number' ? videos : 0} videos</p>
+        </div>
+        {user && _id && (
+          <button 
+            className={`text-xs px-3 py-1 rounded-full ${followLoading ? 'opacity-70' : ''}`}
+            style={{
+              background: isFollow ? 
+                `#333333` : 
+                `linear-gradient(0deg, #270E00, #270E00),
+                conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)`,
+              border: isFollow ? '1px solid #555555' : '1px solid #ED5606'
+            }}
+            onClick={(e) => followCreator(_id, e)}
+            disabled={followLoading}
+          >
+            {followLoading ? '...' : (isFollow ? 'Following' : 'Follow')}
+          </button>
+        )}
       </div>
     </div>
   );
