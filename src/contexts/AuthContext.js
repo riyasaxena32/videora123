@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
@@ -12,74 +12,25 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [followedCreators, setFollowedCreators] = useState([]);
   const navigate = useNavigate();
-
-  // Check for authentication on initial load
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // First check for OAuth2 token
-        const oauthToken = localStorage.getItem('token');
-        // Then check for JWT access token
-        const jwtToken = localStorage.getItem('access_token');
-        
-        if (oauthToken || jwtToken) {
-          // If either token exists, try to fetch the user profile
-          await fetchUserProfile(null, oauthToken || jwtToken);
-          
-          // Also fetch followed creators
-          fetchFollowedCreators();
-        } else {
-          // No tokens found
-          clearAuthData();
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        clearAuthData();
-      } finally {
-        
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [fetchUserProfile, fetchFollowedCreators, clearAuthData]);
-
-  // Fetch followed creators - memoized
-  const fetchFollowedCreators = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      
-      if (!token) return Promise.resolve([]);
-      
-      const response = await fetch('https://videora-ai.onrender.com/api/creator/followed', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const followedList = data.followedCreators || [];
-        console.log("Fetched followed creators:", followedList);
-        setFollowedCreators(followedList);
-        return followedList;
-      }
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch followed creators:', error);
-      return [];
-    }
+  
+  // Use refs to break circular dependencies
+  const followCreatorRef = useRef(null);
+  const fetchFollowedCreatorsRef = useRef(null);
+  const clearAuthDataRef = useRef(null);
+  const fetchUserProfileRef = useRef(null);
+  
+  // Clear auth data - defined early
+  const clearAuthData = useCallback(() => {
+    localStorage.removeItem('token'); // OAuth2 token
+    localStorage.removeItem('access_token'); // JWT token
+    localStorage.removeItem('userData');
+    localStorage.removeItem('authType');
+    setUser(null);
+    setFollowedCreators([]);
   }, []);
   
-  // Check if a creator is followed - memoized
-  const isCreatorFollowed = useCallback((creatorId) => {
-    if (!creatorId || !followedCreators || followedCreators.length === 0) return false;
-    
-    // Convert to string for comparison if needed
-    const creatorIdStr = String(creatorId);
-    return followedCreators.some(id => String(id) === creatorIdStr);
-  }, [followedCreators]);
+  // Store in ref
+  clearAuthDataRef.current = clearAuthData;
   
   // Add a creator to followed list - memoized
   const addFollowedCreator = useCallback((creatorId) => {
@@ -92,145 +43,7 @@ export const AuthProvider = ({ children }) => {
   const removeFollowedCreator = useCallback((creatorId) => {
     setFollowedCreators(prev => prev.filter(id => id !== creatorId));
   }, []);
-
-  // Function to follow a creator - memoized
-  const followCreator = useCallback(async (creatorId) => {
-    if (!creatorId) return false;
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return false;
-      
-      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Check if the response indicates follow or unfollow action
-        if (data.message === "Unfollowed") {
-          // If unfollowed, remove from list
-          removeFollowedCreator(creatorId);
-        } else {
-          // If followed, add to list
-          addFollowedCreator(creatorId);
-        }
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error toggling follow status:', error);
-      return false;
-    }
-  }, [addFollowedCreator, removeFollowedCreator]);
   
-  // Function to unfollow a creator - Just an alias to followCreator for backward compatibility - memoized
-  const unfollowCreator = useCallback((creatorId) => {
-    // Use the same endpoint as it handles both follow and unfollow
-    return followCreator(creatorId);
-  }, [followCreator]);
-
-  // Clear auth data - memoized
-  const clearAuthData = useCallback(() => {
-    localStorage.removeItem('token'); // OAuth2 token
-    localStorage.removeItem('access_token'); // JWT token
-    localStorage.removeItem('userData');
-    localStorage.removeItem('authType');
-    setUser(null);
-    setFollowedCreators([]);
-  }, []);
-
-  // Handle Google login success with credential
-  const handleGoogleLogin = async (credentialResponse) => {
-    try {
-      // Google OAuth returns a JWT token
-      const decoded = jwtDecode(credentialResponse.credential);
-      
-      // Store the JWT token
-      localStorage.setItem('access_token', credentialResponse.credential);
-      localStorage.setItem('authType', 'google');
-      
-      setUser({
-        ...decoded,
-        token: credentialResponse.credential,
-        tokenType: 'jwt'
-      });
-      
-      navigate('/');
-    } catch (error) {
-      console.error('Login failed:', error);
-      clearAuthData();
-    }
-  };
-
-  // Handle logout
-  const logout = async () => {
-    try {
-      const token = user?.tokenType === 'jwt' ? 
-        localStorage.getItem('access_token') : 
-        localStorage.getItem('token');
-      
-        localStorage.clear("access_token")
-        localStorage.clear("token")
-
-      // Make API call to logout endpoint with appropriate token
-      await fetch('https://api.videora.ai/api/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    } finally {
-      clearAuthData();
-      navigate('/login');
-    }
-  };
-
-  // Modify the checkJwtToken function to fetch profile data after JWT validation
-  const checkJwtToken = async () => {
-    const token = sessionStorage.getItem('jwt') || localStorage.getItem('access_token');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        const currentTime = Date.now() / 1000;
-        
-        if (decoded.exp < currentTime) {
-          // Token expired
-          sessionStorage.removeItem('jwt');
-          localStorage.removeItem('access_token');
-          setUser(null);
-          setIsAuthenticated(false);
-          setAuthChecked(true);
-          return false;
-        } else {
-          // Valid token - fetch user details from API
-          await fetchUserProfile(decoded.id, token);
-          return true;
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-        sessionStorage.removeItem('jwt');
-        localStorage.removeItem('access_token');
-        setUser(null);
-        setIsAuthenticated(false);
-        setAuthChecked(true);
-        return false;
-      }
-    }
-    setAuthChecked(true);
-    return false;
-  };
-
   // Add a new function to fetch user profile - memoized
   const fetchUserProfile = useCallback(async (userId, token) => {
     try {
@@ -285,6 +98,210 @@ export const AuthProvider = ({ children }) => {
       setAuthChecked(true);
     }
   }, [user?.tokenType]);
+  
+  // Store in ref
+  fetchUserProfileRef.current = fetchUserProfile;
+  
+  // Fetch followed creators - memoized
+  const fetchFollowedCreators = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      
+      if (!token) return Promise.resolve([]);
+      
+      const response = await fetch('https://videora-ai.onrender.com/api/creator/followed', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const followedList = data.followedCreators || [];
+        console.log("Fetched followed creators:", followedList);
+        setFollowedCreators(followedList);
+        return followedList;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch followed creators:', error);
+      return [];
+    }
+  }, []);
+  
+  // Store in ref
+  fetchFollowedCreatorsRef.current = fetchFollowedCreators;
+  
+  // Check if a creator is followed - memoized
+  const isCreatorFollowed = useCallback((creatorId) => {
+    if (!creatorId || !followedCreators || followedCreators.length === 0) return false;
+    
+    // Convert to string for comparison if needed
+    const creatorIdStr = String(creatorId);
+    return followedCreators.some(id => String(id) === creatorIdStr);
+  }, [followedCreators]);
+  
+  // Function to follow a creator - memoized
+  const followCreator = useCallback(async (creatorId) => {
+    if (!creatorId) return false;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      
+      const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Check if the response indicates follow or unfollow action
+        if (data.message === "Unfollowed") {
+          // If unfollowed, remove from list
+          removeFollowedCreator(creatorId);
+        } else {
+          // If followed, add to list
+          addFollowedCreator(creatorId);
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error toggling follow status:', error);
+      return false;
+    }
+  }, [addFollowedCreator, removeFollowedCreator]);
+  
+  // Store in ref
+  followCreatorRef.current = followCreator;
+  
+  // Function to unfollow a creator - Just an alias to followCreator
+  const unfollowCreator = useCallback((creatorId) => {
+    // Use the same endpoint as it handles both follow and unfollow
+    return followCreatorRef.current(creatorId);
+  }, []);
+  
+  // Check for authentication on initial load - use refs to avoid circular dependencies
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // First check for OAuth2 token
+        const oauthToken = localStorage.getItem('token');
+        // Then check for JWT access token
+        const jwtToken = localStorage.getItem('access_token');
+        
+        if (oauthToken || jwtToken) {
+          // If either token exists, try to fetch the user profile
+          await fetchUserProfileRef.current(null, oauthToken || jwtToken);
+          
+          // Also fetch followed creators
+          fetchFollowedCreatorsRef.current();
+        } else {
+          // No tokens found
+          clearAuthDataRef.current();
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        clearAuthDataRef.current();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Handle Google login success with credential
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      // Google OAuth returns a JWT token
+      const decoded = jwtDecode(credentialResponse.credential);
+      
+      // Store the JWT token
+      localStorage.setItem('access_token', credentialResponse.credential);
+      localStorage.setItem('authType', 'google');
+      
+      setUser({
+        ...decoded,
+        token: credentialResponse.credential,
+        tokenType: 'jwt'
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Login failed:', error);
+      clearAuthData();
+    }
+  };
+
+  // Handle logout
+  const logout = async () => {
+    try {
+      const token = user?.tokenType === 'jwt' ? 
+        localStorage.getItem('access_token') : 
+        localStorage.getItem('token');
+      
+      localStorage.clear("access_token");
+      localStorage.clear("token");
+
+      // Make API call to logout endpoint with appropriate token
+      await fetch('https://api.videora.ai/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    } finally {
+      clearAuthData();
+      navigate('/login');
+    }
+  };
+
+  // Modify the checkJwtToken function to fetch profile data after JWT validation
+  const checkJwtToken = async () => {
+    const token = sessionStorage.getItem('jwt') || localStorage.getItem('access_token');
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        
+        if (decoded.exp < currentTime) {
+          // Token expired
+          sessionStorage.removeItem('jwt');
+          localStorage.removeItem('access_token');
+          setUser(null);
+          setIsAuthenticated(false);
+          setAuthChecked(true);
+          return false;
+        } else {
+          // Valid token - fetch user details from API
+          await fetchUserProfile(decoded.id, token);
+          return true;
+        }
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        sessionStorage.removeItem('jwt');
+        localStorage.removeItem('access_token');
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+        return false;
+      }
+    }
+    setAuthChecked(true);
+    return false;
+  };
 
   return (
     <AuthContext.Provider value={{ 
