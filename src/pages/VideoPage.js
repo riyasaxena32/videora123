@@ -22,7 +22,7 @@ function VideoPage() {
   const profileDropdownRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
-  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators, followedCreators } = useAuth();
+  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -130,36 +130,44 @@ function VideoPage() {
 
   // Check if the current user follows this creator
   useEffect(() => {
-    const checkIfFollowing = () => {
+    const checkIfFollowing = async () => {
       if (!user || !creatorId) return;
       
-      // Check if this creator is in the followed list
+      // First check the local state in auth context
       const isFollowed = isCreatorFollowed(creatorId);
-      console.log(`Video page: Creator ID ${creatorId} follow status:`, isFollowed);
       setIsFollowing(isFollowed);
+      
+      // If we have a token, also verify with the API
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        // Make a direct API call to check follow status
+        const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/checkfollow`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Update the state based on the API response
+          setIsFollowing(data.isFollowing || false);
+          
+          // If there's a mismatch between our local state and the API,
+          // refresh our followed creators list
+          if (isFollowed !== data.isFollowing) {
+            fetchFollowedCreators();
+          }
+        }
+      } catch (err) {
+        console.error('Error verifying follow status with API:', err);
+      }
     };
     
     checkIfFollowing();
-  }, [user, creatorId, isCreatorFollowed, followedCreators]);
-
-  // Refresh followed creators list when component mounts or creator changes
-  useEffect(() => {
-    if (user) {
-      console.log("Video page: Fetching followed creators list");
-      
-      // Store creator ID in a variable to avoid dependency issues
-      const currentCreatorId = creatorId;
-      
-      fetchFollowedCreators().then(() => {
-        // After fetching, check follow status again
-        if (currentCreatorId) {
-          const isFollowed = isCreatorFollowed(currentCreatorId);
-          console.log(`Video page after fetch: Creator ID ${currentCreatorId} follow status:`, isFollowed);
-          setIsFollowing(isFollowed);
-        }
-      });
-    }
-  }, [user, fetchFollowedCreators]);
+  }, [user, creatorId, isCreatorFollowed, fetchFollowedCreators]);
 
   // Function to toggle follow/unfollow a creator
   const toggleFollowCreator = async () => {
@@ -195,6 +203,13 @@ function VideoPage() {
       setFollowLoading(false);
     }
   };
+
+  // Refresh followed creators list when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchFollowedCreators();
+    }
+  }, [user, fetchFollowedCreators]);
 
   useEffect(() => {
     // Fetch video data from API
@@ -653,37 +668,18 @@ function VideoPage() {
                   <p className="text-xs text-gray-400">{video.views || 0} views</p>
                 </div>
                 <button 
-                  className={`ml-2 text-xs text-white px-4 py-1 rounded-full ${
-                    followLoading 
-                      ? 'opacity-70 cursor-not-allowed' 
-                      : isFollowing 
-                        ? 'bg-[#270E00] hover:bg-[#500000] transition-colors' 
-                        : ''
-                  }`}
+                  className={`ml-2 text-xs text-white px-4 py-1 rounded-full ${followLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{
-                    background: isFollowing 
-                      ? `linear-gradient(0deg, #270E00, #270E00),
-                         conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)`
-                      : `linear-gradient(0deg, #270E00, #270E00),
-                         conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)`,
+                    background: `
+                      linear-gradient(0deg, #270E00, #270E00),
+                      conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)
+                    `,
                     border: '1px solid #ED5606'
                   }}
                   onClick={toggleFollowCreator}
                   disabled={followLoading}
                 >
-                  {followLoading 
-                    ? 'Processing...' 
-                    : isFollowing 
-                      ? (
-                        <span className="flex items-center">
-                          Following
-                          <svg className="ml-1 w-3 h-3 text-[#ED5606]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 6L9 17l-5-5"/>
-                          </svg>
-                        </span>
-                      ) 
-                      : 'Follow'
-                  }
+                  {followLoading ? 'Processing...' : isFollowing ? 'Following' : 'Follow'}
                 </button>
               </div>
               

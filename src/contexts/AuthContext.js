@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
@@ -12,102 +12,44 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [followedCreators, setFollowedCreators] = useState([]);
   const navigate = useNavigate();
-  
-  // Use refs to break circular dependencies
-  const followCreatorRef = useRef(null);
-  const fetchFollowedCreatorsRef = useRef(null);
-  const clearAuthDataRef = useRef(null);
-  const fetchUserProfileRef = useRef(null);
-  
-  // Clear auth data - defined early
-  const clearAuthData = useCallback(() => {
-    localStorage.removeItem('token'); // OAuth2 token
-    localStorage.removeItem('access_token'); // JWT token
-    localStorage.removeItem('userData');
-    localStorage.removeItem('authType');
-    setUser(null);
-    setFollowedCreators([]);
-  }, []);
-  
-  // Store in ref
-  clearAuthDataRef.current = clearAuthData;
-  
-  // Add a creator to followed list - memoized
-  const addFollowedCreator = useCallback((creatorId) => {
-    if (!followedCreators.includes(creatorId)) {
-      setFollowedCreators(prev => [...prev, creatorId]);
-    }
-  }, [followedCreators]);
-  
-  // Remove a creator from followed list - memoized
-  const removeFollowedCreator = useCallback((creatorId) => {
-    setFollowedCreators(prev => prev.filter(id => id !== creatorId));
-  }, []);
-  
-  // Add a new function to fetch user profile - memoized
-  const fetchUserProfile = useCallback(async (userId, token) => {
-    try {
-      // Get the token like in UserProfile.js
-      // If token is provided, use it; otherwise get from localStorage
-      const authToken = token || (user?.tokenType === 'jwt' ? 
-        localStorage.getItem('access_token') : 
-        localStorage.getItem('token'));
-      
-      // Fetch user details from API using axios
-      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
+
+  // Check for authentication on initial load
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // First check for OAuth2 token
+        const oauthToken = localStorage.getItem('token');
+        // Then check for JWT access token
+        const jwtToken = localStorage.getItem('access_token');
+        
+        if (oauthToken || jwtToken) {
+          // If either token exists, try to fetch the user profile
+          await fetchUserProfile(null, oauthToken || jwtToken);
+          
+          // Also fetch followed creators
+          fetchFollowedCreators();
+        } else {
+          // No tokens found
+          clearAuthData();
         }
-      });
-      
-      const profileData = response.data.user;
-      
-      // Set user data including profile picture
-      setUser({
-        ...profileData,
-        name: profileData.name || '',
-        email: profileData.email || '',
-        profilePic: profileData.profilePic || '',
-        PhoneNumber: profileData.PhoneNumber || '',
-        Address: profileData.Address || '',
-        username: profileData.username || ''
-      });
-      
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      // Fallback to token data if we have a token
-      if (token) {
-        try {
-          const decoded = jwtDecode(token);
-          setUser({
-            id: decoded.id,
-            email: decoded.email
-          });
-          setIsAuthenticated(true);
-        } catch (decodeError) {
-          console.error("Error decoding token:", decodeError);
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        clearAuthData();
+      } finally {
+        
+        setLoading(false);
       }
-    } finally {
-      setAuthChecked(true);
-    }
-  }, [user?.tokenType]);
-  
-  // Store in ref
-  fetchUserProfileRef.current = fetchUserProfile;
-  
-  // Fetch followed creators - memoized
-  const fetchFollowedCreators = useCallback(async () => {
+    };
+
+    checkAuth();
+  }, []);
+
+  // Fetch followed creators
+  const fetchFollowedCreators = async () => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
       
-      if (!token) return Promise.resolve([]);
+      if (!token) return;
       
       const response = await fetch('https://videora-ai.onrender.com/api/creator/followed', {
         method: 'GET',
@@ -118,32 +60,44 @@ export const AuthProvider = ({ children }) => {
       
       if (response.ok) {
         const data = await response.json();
-        const followedList = data.followedCreators || [];
-        console.log("Fetched followed creators:", followedList);
-        setFollowedCreators(followedList);
-        return followedList;
+        // Store the creator IDs from the response
+        setFollowedCreators(data.followedCreators || []);
       }
-      return [];
     } catch (error) {
       console.error('Failed to fetch followed creators:', error);
-      return [];
     }
-  }, []);
+  };
   
-  // Store in ref
-  fetchFollowedCreatorsRef.current = fetchFollowedCreators;
-  
-  // Check if a creator is followed - memoized
-  const isCreatorFollowed = useCallback((creatorId) => {
-    if (!creatorId || !followedCreators || followedCreators.length === 0) return false;
+  // Check if a creator is followed
+  const isCreatorFollowed = (creatorId) => {
+    // First check if the user object has following property
+    if (user && user.following && Array.isArray(user.following)) {
+      // Check if creator is in user's following array
+      return user.following.some(followedCreator => 
+        // Handle both object with _id or simple id in the array
+        (followedCreator._id && followedCreator._id === creatorId) || 
+        followedCreator === creatorId
+      );
+    }
     
-    // Convert to string for comparison if needed
-    const creatorIdStr = String(creatorId);
-    return followedCreators.some(id => String(id) === creatorIdStr);
-  }, [followedCreators]);
+    // Fallback to the followedCreators state
+    return followedCreators.includes(creatorId);
+  };
   
-  // Function to follow a creator - memoized
-  const followCreator = useCallback(async (creatorId) => {
+  // Add a creator to followed list
+  const addFollowedCreator = (creatorId) => {
+    if (!followedCreators.includes(creatorId)) {
+      setFollowedCreators(prev => [...prev, creatorId]);
+    }
+  };
+  
+  // Remove a creator from followed list
+  const removeFollowedCreator = (creatorId) => {
+    setFollowedCreators(prev => prev.filter(id => id !== creatorId));
+  };
+
+  // Function to follow a creator
+  const followCreator = async (creatorId) => {
     if (!creatorId) return false;
     
     try {
@@ -166,9 +120,34 @@ export const AuthProvider = ({ children }) => {
         if (data.message === "Unfollowed") {
           // If unfollowed, remove from list
           removeFollowedCreator(creatorId);
+          
+          // Also update the user's following array if it exists
+          if (user && user.following) {
+            setUser(prevUser => ({
+              ...prevUser,
+              following: prevUser.following.filter(item => {
+                if (typeof item === 'object' && item._id) {
+                  return item._id !== creatorId;
+                }
+                return item !== creatorId;
+              })
+            }));
+          }
         } else {
           // If followed, add to list
           addFollowedCreator(creatorId);
+          
+          // Also update the user's following array if it exists
+          if (user) {
+            setUser(prevUser => ({
+              ...prevUser,
+              following: [
+                ...(prevUser.following || []),
+                // Add as an object with _id to match schema format
+                { _id: creatorId, ref: 'creator' }
+              ]
+            }));
+          }
         }
         return true;
       }
@@ -177,46 +156,22 @@ export const AuthProvider = ({ children }) => {
       console.error('Error toggling follow status:', error);
       return false;
     }
-  }, [addFollowedCreator, removeFollowedCreator]);
+  };
   
-  // Store in ref
-  followCreatorRef.current = followCreator;
-  
-  // Function to unfollow a creator - Just an alias to followCreator
-  const unfollowCreator = useCallback((creatorId) => {
+  // Function to unfollow a creator - Just an alias to followCreator for backward compatibility
+  const unfollowCreator = async (creatorId) => {
     // Use the same endpoint as it handles both follow and unfollow
-    return followCreatorRef.current(creatorId);
-  }, []);
-  
-  // Check for authentication on initial load - use refs to avoid circular dependencies
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // First check for OAuth2 token
-        const oauthToken = localStorage.getItem('token');
-        // Then check for JWT access token
-        const jwtToken = localStorage.getItem('access_token');
-        
-        if (oauthToken || jwtToken) {
-          // If either token exists, try to fetch the user profile
-          await fetchUserProfileRef.current(null, oauthToken || jwtToken);
-          
-          // Also fetch followed creators
-          fetchFollowedCreatorsRef.current();
-        } else {
-          // No tokens found
-          clearAuthDataRef.current();
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        clearAuthDataRef.current();
-      } finally {
-        setLoading(false);
-      }
-    };
+    return await followCreator(creatorId);
+  };
 
-    checkAuth();
-  }, []);
+  const clearAuthData = () => {
+    localStorage.removeItem('token'); // OAuth2 token
+    localStorage.removeItem('access_token'); // JWT token
+    localStorage.removeItem('userData');
+    localStorage.removeItem('authType');
+    setUser(null);
+    setFollowedCreators([]);
+  };
 
   // Handle Google login success with credential
   const handleGoogleLogin = async (credentialResponse) => {
@@ -248,8 +203,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
-      localStorage.clear("access_token");
-      localStorage.clear("token");
+        localStorage.clear("access_token")
+        localStorage.clear("token")
 
       // Make API call to logout endpoint with appropriate token
       await fetch('https://api.videora.ai/api/logout', {
@@ -301,6 +256,70 @@ export const AuthProvider = ({ children }) => {
     }
     setAuthChecked(true);
     return false;
+  };
+
+  // Add a new function to fetch user profile
+  const fetchUserProfile = async (userId, token) => {
+    try {
+      // Get the token like in UserProfile.js
+      // If token is provided, use it; otherwise get from localStorage
+      const authToken = token || (user?.tokenType === 'jwt' ? 
+        localStorage.getItem('access_token') : 
+        localStorage.getItem('token'));
+      
+      // Fetch user details from API using axios
+      const response = await axios.get('https://videora-ai.onrender.com/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      const profileData = response.data.user;
+      
+      // Set user data including profile picture and following list
+      setUser({
+        ...profileData,
+        name: profileData.name || '',
+        email: profileData.email || '',
+        profilePic: profileData.profilePic || '',
+        PhoneNumber: profileData.PhoneNumber || '',
+        Address: profileData.Address || '',
+        username: profileData.username || '',
+        following: profileData.following || [] // Make sure to capture the following list
+      });
+      
+      // If we have following data in the profile, update the followedCreators state
+      if (profileData.following && Array.isArray(profileData.following)) {
+        const followedIds = profileData.following.map(item => 
+          typeof item === 'object' && item._id ? item._id : item
+        );
+        setFollowedCreators(followedIds);
+      }
+      
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      // Fallback to token data if we have a token
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setUser({
+            id: decoded.id,
+            email: decoded.email
+          });
+          setIsAuthenticated(true);
+        } catch (decodeError) {
+          console.error("Error decoding token:", decodeError);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } finally {
+      setAuthChecked(true);
+    }
   };
 
   return (
