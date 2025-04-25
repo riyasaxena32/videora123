@@ -22,7 +22,7 @@ function VideoPage() {
   const profileDropdownRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
-  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator, fetchFollowedCreators } = useAuth();
+  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator } = useAuth();
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -128,6 +128,34 @@ function VideoPage() {
     fetchCreators();
   }, []);
 
+  // Refresh user profile on initial load
+  useEffect(() => {
+    if (user) {
+      // Refreshes user profile data when component mounts
+      const refreshUserProfile = async () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const response = await fetch('https://videora-ai.onrender.com/user/profile', {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (!response.ok) {
+              console.error('Failed to refresh user profile');
+            }
+          } catch (err) {
+            console.error('Error refreshing user profile:', err);
+          }
+        }
+      };
+      
+      refreshUserProfile();
+    }
+  }, [user]);
+
   // Check if the current user follows this creator
   useEffect(() => {
     const checkIfFollowing = async () => {
@@ -154,12 +182,6 @@ function VideoPage() {
           const data = await response.json();
           // Update the state based on the API response
           setIsFollowing(data.isFollowing || false);
-          
-          // If there's a mismatch between our local state and the API,
-          // refresh our followed creators list
-          if (isFollowed !== data.isFollowing) {
-            fetchFollowedCreators();
-          }
         }
       } catch (err) {
         console.error('Error verifying follow status with API:', err);
@@ -167,7 +189,7 @@ function VideoPage() {
     };
     
     checkIfFollowing();
-  }, [user, creatorId, isCreatorFollowed, fetchFollowedCreators]);
+  }, [user, creatorId, isCreatorFollowed]);
 
   // Function to toggle follow/unfollow a creator
   const toggleFollowCreator = async () => {
@@ -203,13 +225,6 @@ function VideoPage() {
       setFollowLoading(false);
     }
   };
-
-  // Refresh followed creators list when component mounts
-  useEffect(() => {
-    if (user) {
-      fetchFollowedCreators();
-    }
-  }, [user, fetchFollowedCreators]);
 
   useEffect(() => {
     // Fetch video data from API

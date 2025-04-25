@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  const [followedCreators, setFollowedCreators] = useState([]);
   const navigate = useNavigate();
 
   // Check for authentication on initial load
@@ -25,9 +24,6 @@ export const AuthProvider = ({ children }) => {
         if (oauthToken || jwtToken) {
           // If either token exists, try to fetch the user profile
           await fetchUserProfile(null, oauthToken || jwtToken);
-          
-          // Also fetch followed creators
-          fetchFollowedCreators();
         } else {
           // No tokens found
           clearAuthData();
@@ -36,64 +32,27 @@ export const AuthProvider = ({ children }) => {
         console.error('Auth check failed:', error);
         clearAuthData();
       } finally {
-        
         setLoading(false);
       }
     };
 
     checkAuth();
   }, []);
-
-  // Fetch followed creators
-  const fetchFollowedCreators = async () => {
-    try {
-      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      
-      if (!token) return;
-      
-      const response = await fetch('https://videora-ai.onrender.com/api/creator/followed', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Store the creator IDs from the response
-        setFollowedCreators(data.followedCreators || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch followed creators:', error);
-    }
-  };
   
   // Check if a creator is followed
   const isCreatorFollowed = (creatorId) => {
-    // First check if the user object has following property
+    // Check if the user object has following property
     if (user && user.following && Array.isArray(user.following)) {
       // Check if creator is in user's following array
-      return user.following.some(followedCreator => 
-        // Handle both object with _id or simple id in the array
-        (followedCreator._id && followedCreator._id === creatorId) || 
-        followedCreator === creatorId
-      );
+      return user.following.some(followedCreator => {
+        if (typeof followedCreator === 'object') {
+          return followedCreator._id === creatorId;
+        }
+        return followedCreator === creatorId;
+      });
     }
     
-    // Fallback to the followedCreators state
-    return followedCreators.includes(creatorId);
-  };
-  
-  // Add a creator to followed list
-  const addFollowedCreator = (creatorId) => {
-    if (!followedCreators.includes(creatorId)) {
-      setFollowedCreators(prev => [...prev, creatorId]);
-    }
-  };
-  
-  // Remove a creator from followed list
-  const removeFollowedCreator = (creatorId) => {
-    setFollowedCreators(prev => prev.filter(id => id !== creatorId));
+    return false;
   };
 
   // Function to follow a creator
@@ -118,10 +77,7 @@ export const AuthProvider = ({ children }) => {
         
         // Check if the response indicates follow or unfollow action
         if (data.message === "Unfollowed") {
-          // If unfollowed, remove from list
-          removeFollowedCreator(creatorId);
-          
-          // Also update the user's following array if it exists
+          // If unfollowed, update the user's following array if it exists
           if (user && user.following) {
             setUser(prevUser => ({
               ...prevUser,
@@ -134,10 +90,7 @@ export const AuthProvider = ({ children }) => {
             }));
           }
         } else {
-          // If followed, add to list
-          addFollowedCreator(creatorId);
-          
-          // Also update the user's following array if it exists
+          // If followed, update the user's following array if it exists
           if (user) {
             setUser(prevUser => ({
               ...prevUser,
@@ -149,6 +102,10 @@ export const AuthProvider = ({ children }) => {
             }));
           }
         }
+        
+        // Refresh user profile to ensure latest following data
+        await fetchUserProfile();
+        
         return true;
       }
       return false;
@@ -170,7 +127,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('userData');
     localStorage.removeItem('authType');
     setUser(null);
-    setFollowedCreators([]);
   };
 
   // Handle Google login success with credential
@@ -288,14 +244,6 @@ export const AuthProvider = ({ children }) => {
         following: profileData.following || [] // Make sure to capture the following list
       });
       
-      // If we have following data in the profile, update the followedCreators state
-      if (profileData.following && Array.isArray(profileData.following)) {
-        const followedIds = profileData.following.map(item => 
-          typeof item === 'object' && item._id ? item._id : item
-        );
-        setFollowedCreators(followedIds);
-      }
-      
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -331,11 +279,9 @@ export const AuthProvider = ({ children }) => {
       checkJwtToken,
       fetchUserProfile,
       isAuthenticated: !!user,
-      followedCreators,
       isCreatorFollowed,
       followCreator,
-      unfollowCreator,
-      fetchFollowedCreators
+      unfollowCreator
     }}>
       {children}
     </AuthContext.Provider>
