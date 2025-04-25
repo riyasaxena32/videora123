@@ -255,7 +255,7 @@ function CreatorPage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const profileDropdownRef = useRef(null);
-  const { logout, user, isCreatorFollowed, followCreator, unfollowCreator } = useAuth();
+  const { logout, user, isCreatorFollowed, toggleFollowCreator, fetchFollowedCreators } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Custom button styles
@@ -472,81 +472,31 @@ function CreatorPage() {
     fetchVideos();
   }, [creatorId, user?.name, apiCreators]);
 
-  // Refresh user profile on initial load
-  useEffect(() => {
-    if (user) {
-      // Refreshes user profile data when component mounts
-      const refreshUserProfile = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            const response = await fetch('https://videora-ai.onrender.com/user/profile', {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            
-            if (!response.ok) {
-              console.error('Failed to refresh user profile');
-            }
-          } catch (err) {
-            console.error('Error refreshing user profile:', err);
-          }
-        }
-      };
-      
-      refreshUserProfile();
-    }
-  }, [user]);
-
   // Check if the current user follows this creator
   useEffect(() => {
-    const checkIfFollowing = async () => {
+    const checkIfFollowing = () => {
       if (!user || !creator || !creator._id) return;
       
-      // First check the local state in auth context
-      const isFollowed = isCreatorFollowed(creator._id);
-      setIsFollowing(isFollowed);
-      
-      // If we have a token, also verify with the API
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        
-        // Make a direct API call to check follow status
-        const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/checkfollow`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Update the state based on the API response
-          setIsFollowing(data.isFollowing || false);
-        }
-      } catch (err) {
-        console.error('Error verifying follow status with API:', err);
-      }
+      const followed = isCreatorFollowed(creator._id);
+      console.log(`Creator ${creator.name} (${creator._id}) follow status: ${followed}`);
+      setIsFollowing(followed);
     };
     
     checkIfFollowing();
   }, [user, creator, isCreatorFollowed]);
 
   // Function to toggle follow/unfollow a creator
-  const toggleFollowCreator = async (creatorId) => {
+  const handleToggleFollow = async (creatorId) => {
     if (!user) {
       // Redirect to login if user is not authenticated
       navigate('/login');
       return;
     }
 
-    console.log(`Attempting to ${isFollowing ? 'unfollow' : 'follow'} creator with ID:`, creatorId);
+    console.log(`Attempting to toggle follow status for creator with ID:`, creatorId);
     
     if (!creatorId) {
-      console.error('Cannot follow/unfollow creator: Missing valid creator ID');
+      console.error('Cannot toggle follow: Missing valid creator ID');
       alert('Cannot update follow status for this creator at the moment. Please try again later.');
       return;
     }
@@ -554,28 +504,27 @@ function CreatorPage() {
     try {
       setFollowLoading(true);
       
-      // Use followCreator for both actions - it detects the current status and toggles
-      const success = await followCreator(creatorId);
+      const result = await toggleFollowCreator(creatorId);
       
-      if (success) {
+      if (result.success) {
         // Update local following state
-        setIsFollowing(!isFollowing);
+        setIsFollowing(result.isFollowing);
         
         // Update the creator state with the new follower count
         setCreator(prevCreator => ({
           ...prevCreator,
-          followers: isFollowing 
-            ? (prevCreator.followers > 0 ? prevCreator.followers - 1 : 0) 
-            : (prevCreator.followers || 0) + 1
+          followers: result.isFollowing
+            ? (prevCreator.followers || 0) + 1
+            : (prevCreator.followers > 0 ? prevCreator.followers - 1 : 0)
         }));
         
-        console.log(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} creator`);
+        console.log(`Successfully ${result.isFollowing ? 'followed' : 'unfollowed'} creator`);
       } else {
-        console.error(`Failed to ${isFollowing ? 'unfollow' : 'follow'} creator`);
-        alert(`Failed to ${isFollowing ? 'unfollow' : 'follow'} creator. Please try again.`);
+        console.error(`Failed to toggle follow status for creator`);
+        alert(`Failed to update follow status. Please try again.`);
       }
     } catch (err) {
-      console.error(`Error ${isFollowing ? 'unfollowing' : 'following'} creator:`, err);
+      console.error(`Error toggling follow status:`, err);
     } finally {
       setFollowLoading(false);
     }
@@ -595,6 +544,13 @@ function CreatorPage() {
       videoCount: prevCreator.videoCount > 0 ? prevCreator.videoCount - 1 : 0
     }));
   };
+
+  // Refresh user profile when component mounts to get latest follow data
+  useEffect(() => {
+    if (user) {
+      fetchFollowedCreators();
+    }
+  }, [user, fetchFollowedCreators]);
 
   if (loading) {
     return (
@@ -910,7 +866,7 @@ function CreatorPage() {
                         onClick={() => {
                           // Make sure we have a valid _id before calling the API
                           if (creator._id) {
-                            toggleFollowCreator(creator._id);
+                            handleToggleFollow(creator._id);
                           } else {
                             console.error("Cannot toggle follow: Missing valid creator ID");
                             alert("Cannot update follow status for this creator at the moment. Please try again later.");

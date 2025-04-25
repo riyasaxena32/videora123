@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [followedCreators, setFollowedCreators] = useState([]);
   const navigate = useNavigate();
 
   // Check for authentication on initial load
@@ -24,6 +25,9 @@ export const AuthProvider = ({ children }) => {
         if (oauthToken || jwtToken) {
           // If either token exists, try to fetch the user profile
           await fetchUserProfile(null, oauthToken || jwtToken);
+          
+          // Also fetch followed creators
+          fetchFollowedCreators();
         } else {
           // No tokens found
           clearAuthData();
@@ -32,36 +36,64 @@ export const AuthProvider = ({ children }) => {
         console.error('Auth check failed:', error);
         clearAuthData();
       } finally {
+        
         setLoading(false);
       }
     };
 
     checkAuth();
   }, []);
+
+  // Fetch followed creators
+  const fetchFollowedCreators = async () => {
+    // This function is not needed anymore as we'll check status from user profile
+    // But we'll keep it as a no-op for compatibility
+    console.log('Using user profile data for follow status instead');
+  };
   
   // Check if a creator is followed
   const isCreatorFollowed = (creatorId) => {
-    // Check if the user object has following property
-    if (user && user.following && Array.isArray(user.following)) {
-      // Check if creator is in user's following array
-      return user.following.some(followedCreator => {
-        if (typeof followedCreator === 'object') {
-          return followedCreator._id === creatorId;
-        }
-        return followedCreator === creatorId;
-      });
+    // Check if the user has a following list
+    if (!user || !creatorId) return false;
+    
+    // Handle different possible structures of the following data
+    // 1. If following is an array of IDs
+    if (Array.isArray(user.following)) {
+      return user.following.includes(creatorId);
     }
+    
+    // 2. If following is an array of objects with _id field
+    if (Array.isArray(user.followingCreators)) {
+      return user.followingCreators.some(creator => creator._id === creatorId);
+    }
+    
+    // 3. If there's a specific format in the API response
+    if (user.creators && Array.isArray(user.creators.following)) {
+      return user.creators.following.includes(creatorId);
+    }
+    
+    // Log the user object to debug followed creators structure
+    console.log('User profile structure for debugging follow status:', 
+      JSON.stringify({
+        hasFollowing: !!user.following,
+        hasFollowingCreators: !!user.followingCreators,
+        hasCreators: !!user.creators,
+        userKeys: Object.keys(user)
+      })
+    );
     
     return false;
   };
 
-  // Function to follow a creator
-  const followCreator = async (creatorId) => {
-    if (!creatorId) return false;
+  // Toggle follow status for a creator (both follow and unfollow)
+  const toggleFollowCreator = async (creatorId) => {
+    if (!creatorId || !user) return { success: false };
     
     try {
       const token = localStorage.getItem('token');
-      if (!token) return false;
+      if (!token) return { success: false };
+      
+      console.log(`Attempting to toggle follow for creator ${creatorId}`);
       
       const response = await fetch(`https://videora-ai.onrender.com/api/creator/${creatorId}/follow`, {
         method: 'POST',
@@ -74,51 +106,29 @@ export const AuthProvider = ({ children }) => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Toggle follow response:', data);
         
-        // Check if the response indicates follow or unfollow action
-        if (data.message === "Unfollowed") {
-          // If unfollowed, update the user's following array if it exists
-          if (user && user.following) {
-            setUser(prevUser => ({
-              ...prevUser,
-              following: prevUser.following.filter(item => {
-                if (typeof item === 'object' && item._id) {
-                  return item._id !== creatorId;
-                }
-                return item !== creatorId;
-              })
-            }));
-          }
-        } else {
-          // If followed, update the user's following array if it exists
-          if (user) {
-            setUser(prevUser => ({
-              ...prevUser,
-              following: [
-                ...(prevUser.following || []),
-                // Add as an object with _id to match schema format
-                { _id: creatorId, ref: 'creator' }
-              ]
-            }));
-          }
-        }
-        
-        // Refresh user profile to ensure latest following data
+        // Update user profile after toggle
         await fetchUserProfile();
         
-        return true;
+        // Check if the creator is now in the followed list
+        const nowFollowing = isCreatorFollowed(creatorId);
+        
+        console.log(`Creator ${creatorId} followed status after toggle: ${nowFollowing}`);
+        
+        // Return whether user is now following
+        return { 
+          success: true, 
+          isFollowing: nowFollowing
+        };
       }
-      return false;
+      
+      console.error('API response not OK when toggling follow status');
+      return { success: false };
     } catch (error) {
       console.error('Error toggling follow status:', error);
-      return false;
+      return { success: false };
     }
-  };
-  
-  // Function to unfollow a creator - Just an alias to followCreator for backward compatibility
-  const unfollowCreator = async (creatorId) => {
-    // Use the same endpoint as it handles both follow and unfollow
-    return await followCreator(creatorId);
   };
 
   const clearAuthData = () => {
@@ -127,6 +137,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('userData');
     localStorage.removeItem('authType');
     setUser(null);
+    setFollowedCreators([]);
   };
 
   // Handle Google login success with credential
@@ -232,7 +243,18 @@ export const AuthProvider = ({ children }) => {
       
       const profileData = response.data.user;
       
-      // Set user data including profile picture and following list
+      // Log profile data structure to debug following information
+      console.log('User profile data structure:', {
+        hasFollowing: !!profileData.following,
+        hasFollowingCreators: !!profileData.followingCreators,
+        hasCreators: !!profileData.creators,
+        userKeys: Object.keys(profileData),
+        following: profileData.following,
+        followingCreators: profileData.followingCreators,
+        creators: profileData.creators
+      });
+      
+      // Set user data including profile picture
       setUser({
         ...profileData,
         name: profileData.name || '',
@@ -240,8 +262,7 @@ export const AuthProvider = ({ children }) => {
         profilePic: profileData.profilePic || '',
         PhoneNumber: profileData.PhoneNumber || '',
         Address: profileData.Address || '',
-        username: profileData.username || '',
-        following: profileData.following || [] // Make sure to capture the following list
+        username: profileData.username || ''
       });
       
       setIsAuthenticated(true);
@@ -280,8 +301,8 @@ export const AuthProvider = ({ children }) => {
       fetchUserProfile,
       isAuthenticated: !!user,
       isCreatorFollowed,
-      followCreator,
-      unfollowCreator
+      toggleFollowCreator,
+      fetchFollowedCreators // keep for compatibility
     }}>
       {children}
     </AuthContext.Provider>
