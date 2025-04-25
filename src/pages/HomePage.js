@@ -542,20 +542,62 @@ function HomePage() {
                     }}
                     title={creator.name}
                   >
-                    <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
-                      <img 
-                        src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=30`} 
-                        alt={`${creator.name} avatar`} 
-                        width={20} 
-                        height={20} 
-                        className="rounded-full" 
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = "/user-avatar.png";
-                        }}
-                      />
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
+                          <img 
+                            src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=30`} 
+                            alt={`${creator.name} avatar`} 
+                            width={20} 
+                            height={20} 
+                            className="rounded-full" 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/user-avatar.png";
+                            }}
+                          />
+                        </div>
+                        <span className="sidebar-text">{creator.name}</span>
+                      </div>
+                      {user && creator._id && (user.name !== creator.name && user.userName !== creator.name) && (
+                        <button 
+                          className="text-xs text-white px-2 py-0.5 rounded-full text-[10px]"
+                          style={{
+                            background: creator.isFollowing ? 
+                              '#333333' : 
+                              'linear-gradient(0deg, #270E00, #270E00), conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)',
+                            border: creator.isFollowing ? '1px solid #555555' : '1px solid #ED5606'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Update the creators list in the state
+                            const newFollowState = !creator.isFollowing;
+                            setCreators(prevCreators =>
+                              prevCreators.map(c =>
+                                c._id === creator._id ? { ...c, isFollowing: newFollowState } : c
+                              )
+                            );
+                            
+                            // Call follow API
+                            fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                              },
+                              credentials: 'include'
+                            }).catch(err => console.error('Error following creator:', err));
+                          }}
+                        >
+                          {creator.isFollowing ? 'Following' : 'Follow'}
+                        </button>
+                      )}
+                      {user && creator._id && (user.name === creator.name || user.userName === creator.name) && (
+                        <span className="text-xs text-white px-2 py-0.5 rounded-full text-[10px] bg-[#270E00] border border-[#ED5606]">
+                          You
+                        </span>
+                      )}
                     </div>
-                    <span className="sidebar-text">{creator.name}</span>
                   </a>
                 )) : (
                   <div className="text-xs text-[#777] px-2 py-1">No creators found</div>
@@ -772,8 +814,9 @@ function HomePage() {
                 <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="creatorsScroll">
                   <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
                     {creators.length > 0 ? 
-                      // Sort creators by follower count (highest first)
+                      // Sort creators by follower count (highest first) and filter out current user
                       [...creators]
+                        .filter(creator => !user || (user.name !== creator.name && user.userName !== creator.name))
                         .sort((a, b) => b.followers - a.followers)
                         .map((creator) => (
                           <div 
@@ -789,6 +832,14 @@ function HomePage() {
                               _id={creator._id}
                               profilePic={creator.profilePic}
                               isFollowing={creator.isFollowing}
+                              onFollowChange={(creatorId, newFollowState) => {
+                                // Update the creators list in the state
+                                setCreators(prevCreators =>
+                                  prevCreators.map(c =>
+                                    c._id === creatorId ? { ...c, isFollowing: newFollowState } : c
+                                  )
+                                );
+                              }}
                             />
                           </div>
                         )) : (
@@ -836,11 +887,14 @@ function VideoCard({ title, image, tag, id }) {
   );
 }
 
-function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollowing }) {
+function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollowing, onFollowChange }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollow, setIsFollow] = useState(isFollowing || false);
+  
+  // Check if this creator is the current user
+  const isCurrentUser = user && (user.name === name || user.userName === name);
   
   // Function to follow a creator
   const followCreator = async (creatorId, event) => {
@@ -884,7 +938,13 @@ function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollow
       const data = await response.json();
       
       // Toggle following state
-      setIsFollow(prev => !prev);
+      const newFollowState = !isFollow;
+      setIsFollow(newFollowState);
+      
+      // Notify parent component about the change
+      if (onFollowChange) {
+        onFollowChange(creatorId, newFollowState);
+      }
 
       // Show success notification (optional)
       console.log('Successfully followed creator:', data.message);
@@ -917,7 +977,7 @@ function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollow
           <p className="text-xs text-[#b0b0b0]">{typeof followers === 'number' ? followers : 0} followers</p>
           <p className="text-xs text-[#b0b0b0]">{typeof videos === 'number' ? videos : 0} videos</p>
         </div>
-        {user && _id && (
+        {user && _id && !isCurrentUser && (
           <button 
             className={`text-xs px-3 py-1 rounded-full ${followLoading ? 'opacity-70' : ''}`}
             style={{
@@ -931,6 +991,17 @@ function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollow
             disabled={followLoading}
           >
             {followLoading ? '...' : (isFollow ? 'Following' : 'Follow')}
+          </button>
+        )}
+        {isCurrentUser && (
+          <button 
+            className="text-xs px-3 py-1 rounded-full bg-[#270E00] border border-[#ED5606]"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/create');
+            }}
+          >
+            My Page
           </button>
         )}
       </div>
