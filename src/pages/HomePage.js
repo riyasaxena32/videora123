@@ -68,6 +68,7 @@ function HomePage() {
         
         setVideosByCategory(groupedVideos);
         setCategories(Array.from(categorySet));
+        setVideos(videos);
         
         // Get creators from API
         const responseCreators = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
@@ -642,71 +643,96 @@ function HomePage() {
 
           {!loading && !error && (
             <>
-              {/* Hero Section - Use first video if available */}
-              {videos.length > 0 && (
-                <div className="relative h-[400px] overflow-hidden hero-rockstar">
-                  <img
-                    src={videos[0].thumbnailLogoUrl || "/image 28.png"}
-                    alt={videos[0].caption || videos[0].name}
-                    width={1200}
-                    height={800}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/image 28.png";
-                    }}
-                  />
-                  {/* Darker overlay gradient for better text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 p-8 w-full z-10">
-                    <h1 className="text-6xl font-bold mb-2">{(videos[0].caption ? videos[0].caption.toUpperCase() : videos[0].name.toUpperCase())}</h1>
-                    <p className="text-xl mb-6">Category: {videos[0].category || "Uncategorized"}</p>
-                    <div className="flex items-center gap-4">
-                      <button 
-                        className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium"
-                        onClick={() => navigate(`/video/${videos[0]._id}`)}
-                      >
-                        <PlayIcon className="w-5 h-5" />
-                        Play
-                      </button>
-                      <button className="flex items-center gap-2 bg-[#2f2f2f] hover:bg-[#414141] text-white px-6 py-2 rounded-full transition-colors">
-                        <Info className="w-5 h-5" />
-                        More Info.
-                      </button>
-                      <button className="flex items-center gap-2 bg-transparent hover:bg-[#2f2f2f] text-white px-6 py-2 rounded-full border border-[#545454] transition-colors">
-                        <Plus className="w-5 h-5" />
-                        Add to List
-                      </button>
-                    </div>
-                    <div className="flex items-center mt-4 gap-2">
-                      <p className="text-sm text-[#b0b0b0]">Created by:</p>
-                      {videos[0].uploadedBy && (
-                        <div className="flex items-center gap-2">
-                          {(() => {
-                            // Find creator in the creators list
-                            const creator = creators.find(c => 
-                              c.name.toLowerCase() === videos[0].uploadedBy.toLowerCase()
-                            );
-                            return (
-                              <img
-                                src={creator?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(videos[0].uploadedBy)}&background=ED5606&color=fff&size=40`}
-                                alt={videos[0].uploadedBy}
-                                width={24}
-                                height={24}
-                                className="rounded-full"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = "/user-avatar.png";
-                                }}
-                              />
-                            );
-                          })()}
-                          <span className="text-sm">{videos[0].uploadedBy}</span>
+              {/* Hero Section - Feature video from top creator if available */}
+              {!loading && !error && (
+                <>
+                  {videos.length > 0 && creators.length > 0 && (
+                    (() => {
+                      // Sort creators by follower count (highest first)
+                      const sortedCreators = [...creators].sort((a, b) => b.followers - a.followers);
+                      const topCreator = sortedCreators[0];
+                      
+                      // Find a video by the top creator
+                      let featuredVideo = videos.find(video => 
+                        video.uploadedBy && video.uploadedBy.toLowerCase() === topCreator.name.toLowerCase()
+                      );
+                      
+                      // If no video found from top creator, use the first video
+                      if (!featuredVideo && videos.length > 0) {
+                        featuredVideo = videos[0];
+                      }
+                      
+                      return featuredVideo ? (
+                        <div className="relative h-[400px] overflow-hidden hero-rockstar">
+                          <img
+                            src={featuredVideo.thumbnailLogoUrl || "/image 28.png"}
+                            alt={featuredVideo.caption || featuredVideo.name}
+                            width={1200}
+                            height={800}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/image 28.png";
+                            }}
+                          />
+                          {/* Darker overlay gradient for better text readability */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+                          <div className="absolute bottom-0 left-0 p-8 w-full z-10">
+                            <h1 className="text-6xl font-bold mb-2">{(featuredVideo.caption ? featuredVideo.caption.toUpperCase() : featuredVideo.name.toUpperCase())}</h1>
+                            <p className="text-xl mb-6">Category: {featuredVideo.category || "Uncategorized"}</p>
+                            <div className="flex items-center gap-4">
+                              <button 
+                                className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium"
+                                onClick={() => navigate(`/video/${featuredVideo._id}`)}
+                              >
+                                <PlayIcon className="w-5 h-5" />
+                                Play
+                              </button>
+                              <button className="flex items-center gap-2 bg-[#2f2f2f] hover:bg-[#414141] text-white px-6 py-2 rounded-full transition-colors">
+                                <Info className="w-5 h-5" />
+                                More Info.
+                              </button>
+                              <button className="flex items-center gap-2 bg-transparent hover:bg-[#2f2f2f] text-white px-6 py-2 rounded-full border border-[#545454] transition-colors">
+                                <Plus className="w-5 h-5" />
+                                Add to List
+                              </button>
+                            </div>
+                            <div className="flex items-center mt-4 gap-2">
+                              <p className="text-sm text-[#b0b0b0]">Featured from top creator:</p>
+                              {featuredVideo.uploadedBy && (
+                                <div className="flex items-center gap-2">
+                                  {(() => {
+                                    // Find creator in the creators list
+                                    const creator = creators.find(c => 
+                                      c.name.toLowerCase() === featuredVideo.uploadedBy.toLowerCase()
+                                    ) || topCreator;
+                                    return (
+                                      <>
+                                        <img
+                                          src={creator?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(featuredVideo.uploadedBy)}&background=ED5606&color=fff&size=40`}
+                                          alt={featuredVideo.uploadedBy}
+                                          width={24}
+                                          height={24}
+                                          className="rounded-full"
+                                          onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "/user-avatar.png";
+                                          }}
+                                        />
+                                        <span className="text-sm">{featuredVideo.uploadedBy}</span>
+                                        <span className="text-xs text-[#ED5606] ml-2">Top Creator</span>
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                      ) : null;
+                    })()
+                  )}
+                </>
               )}
 
               {/* Videos Sections - One per category */}
