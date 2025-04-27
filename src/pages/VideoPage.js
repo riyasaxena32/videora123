@@ -169,8 +169,14 @@ function VideoPage() {
         // Set the video
         setVideo(foundVideo);
         
-        // Set related videos (all other videos)
-        setRelatedVideos(videos.filter(v => v._id !== videoId));
+        // Set related videos (videos from the same creator)
+        const creatorVideos = videos.filter(v => 
+          v._id !== videoId && 
+          v.uploadedBy && 
+          foundVideo.uploadedBy && 
+          v.uploadedBy.toLowerCase() === foundVideo.uploadedBy.toLowerCase()
+        );
+        setRelatedVideos(creatorVideos);
         
         // Extract unique creators from videos
         const uniqueCreators = Array.from(new Set(videos.map(v => v.uploadedBy)))
@@ -498,35 +504,41 @@ function VideoPage() {
               </div>
             ))}
             
-            <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mt-4 mb-2">Related Videos</h3>
-            {relatedVideos.map((relVideo) => (
-              <div 
-                key={relVideo._id}
-                className="relative cursor-pointer mb-2"
-                onClick={() => navigate(`/video/${relVideo._id}`)}
-              >
-                <div className="aspect-video w-full overflow-hidden">
-                  <img 
-                    src={relVideo.thumbnailLogoUrl || "/image 28.png"} 
-                    alt={relVideo.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/image 28.png";
-                    }}
-                  />
+            <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mt-4 mb-2">
+              {video.uploadedBy ? `${video.uploadedBy}'s Videos` : 'Related Videos'}
+            </h3>
+            {relatedVideos.length > 0 ? (
+              relatedVideos.map((relVideo) => (
+                <div 
+                  key={relVideo._id}
+                  className="relative cursor-pointer mb-2"
+                  onClick={() => navigate(`/video/${relVideo._id}`)}
+                >
+                  <div className="aspect-video w-full overflow-hidden">
+                    <img 
+                      src={relVideo.thumbnailLogoUrl || "/image 28.png"} 
+                      alt={relVideo.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/image 28.png";
+                      }}
+                    />
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-1 px-2">
+                    <p className="text-[10px] text-white truncate">{relVideo.name}</p>
+                  </div>
+                  <div className="absolute top-1 right-1 bg-black/70 text-[8px] px-1 rounded text-white">
+                    {Math.floor(relVideo.duration / 60)}:{String(relVideo.duration % 60).padStart(2, '0')}
+                  </div>
+                  <div className="absolute bottom-6 left-1 text-[8px] bg-black/70 px-1 rounded text-white">
+                    {relVideo.category}
+                  </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-1 px-2">
-                  <p className="text-[10px] text-white truncate">{relVideo.name}</p>
-                </div>
-                <div className="absolute top-1 right-1 bg-black/70 text-[8px] px-1 rounded text-white">
-                  {Math.floor(relVideo.duration / 60)}:{String(relVideo.duration % 60).padStart(2, '0')}
-                </div>
-                <div className="absolute bottom-6 left-1 text-[8px] bg-black/70 px-1 rounded text-white">
-                  {relVideo.category}
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-xs text-gray-400">No other videos from this creator</p>
+            )}
           </div>
         </div>
         
