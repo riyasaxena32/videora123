@@ -559,39 +559,6 @@ function HomePage() {
                         </div>
                         <span className="sidebar-text">{creator.name}</span>
                       </div>
-                      {user && creator._id && (user.name !== creator.name && user.userName !== creator.name) && (
-                        <button 
-                          className="text-xs text-white px-2 py-0.5 rounded-full text-[10px]"
-                          style={{
-                            background: creator.isFollowing ? 
-                              '#333333' : 
-                              'linear-gradient(0deg, #270E00, #270E00), conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)',
-                            border: creator.isFollowing ? '1px solid #555555' : '1px solid #ED5606'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Update the creators list in the state
-                            const newFollowState = !creator.isFollowing;
-                            setCreators(prevCreators =>
-                              prevCreators.map(c =>
-                                c._id === creator._id ? { ...c, isFollowing: newFollowState } : c
-                              )
-                            );
-                            
-                            // Call follow API
-                            fetch(`https://videora-ai.onrender.com/api/creator/${creator._id}/follow`, {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('token')}`
-                              },
-                              credentials: 'include'
-                            }).catch(err => console.error('Error following creator:', err));
-                          }}
-                        >
-                          {creator.isFollowing ? 'Following' : 'Follow'}
-                        </button>
-                      )}
                       {user && creator._id && (user.name === creator.name || user.userName === creator.name) && (
                         <span className="text-xs text-white px-2 py-0.5 rounded-full text-[10px] bg-[#270E00] border border-[#ED5606]">
                           You
