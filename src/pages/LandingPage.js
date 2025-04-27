@@ -157,7 +157,7 @@ const LandingPage = () => {
           {/* Top row */}
           <StyleTile 
             name="Animated" 
-            imageSrc="/style-animated.png" 
+            imageSrc="/image 57.png" 
             large={false} 
           />
           <div className="bg-black flex items-center justify-center p-6 text-center text-xs text-gray-400">
@@ -165,14 +165,14 @@ const LandingPage = () => {
           </div>
           <StyleTile 
             name="Retro" 
-            imageSrc="/style-retro.png" 
+            imageSrc="/image 59.png" 
             large={false} 
           />
 
           {/* Middle row */}
           <StyleTile 
             name="Cinematic" 
-            imageSrc="/style-cinematic.png" 
+            imageSrc="/image 58.png" 
             large={false} 
           />
           <StyleTile 
@@ -182,7 +182,7 @@ const LandingPage = () => {
           />
           <StyleTile 
             name="Cyberpunk" 
-            imageSrc="/style-cyberpunk.png" 
+            imageSrc="/image 61.png" 
             large={false} 
           />
 
