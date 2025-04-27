@@ -177,7 +177,7 @@ const LandingPage = () => {
           />
           <StyleTile 
             name="Sketch" 
-            imageSrc="/style-sketch.png" 
+            imageSrc="/image 60.png" 
             large={false} 
           />
           <StyleTile 
