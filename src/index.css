@@ -35,6 +35,22 @@ body {
   background: #555;
 }
 
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  .hero-rockstar {
+    height: 70vh;
+    max-height: 450px;
+  }
+  
+  .video-card .title {
+    font-size: 0.875rem;
+  }
+  
+  .video-card .subtitle {
+    font-size: 0.75rem;
+  }
+}
+
 /* Custom hover effects */
 .video-card:hover img {
   transform: scale(1.05);
@@ -47,6 +63,16 @@ a[href]:hover {
 
 button {
   transition: all 0.2s ease;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari and Opera */
 }
 
 /* Active navigation styles */
@@ -134,16 +160,6 @@ button {
   background: linear-gradient(135deg, rgba(255, 69, 0, 0.15), transparent 70%);
   z-index: 1;
   pointer-events: none;
-}
-
-/* Hide scrollbar but keep functionality */
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;             /* Chrome, Safari and Opera */
 }
 
 /* Hover effects for scrollable sections */
@@ -275,4 +291,37 @@ button {
   .content-with-collapsed-sidebar {
     padding-left: 60px;
   }
+}
+
+/* Improved touch targets for mobile */
+@media (max-width: 640px) {
+  button, 
+  a[role="button"],
+  .interactive-element {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .small-touch-target {
+    min-height: 32px;
+    min-width: 32px;
+  }
+}
+
+/* Specific styles for the mobile dot indicators */
+.dot-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.dot-indicator .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.dot-indicator .dot.active {
+  background-color: white;
 } 

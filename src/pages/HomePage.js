@@ -327,8 +327,8 @@ function HomePage() {
       )}
 
       {/* Top Navbar - Full Width */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#1a1a1a] w-full bg-black sticky top-0 z-40">
+        <div className="flex items-center gap-2">
           <button 
             className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
             onClick={toggleSidebar}
@@ -341,7 +341,7 @@ function HomePage() {
           </Link>
         </div>
 
-        {/* Center navigation links */}
+        {/* Center navigation links - hidden on mobile */}
         <div className="hidden md:flex items-center justify-center flex-1">
           <nav className="flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
@@ -367,20 +367,22 @@ function HomePage() {
           </nav>
         </div>
         
-        <div className="flex items-center gap-3">
+        {/* Right side controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Create Button - Text hidden on mobile */}
           <button 
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
+            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-4 sm:py-1.5 text-sm transition-colors rounded-full sm:rounded-full font-medium"
             onClick={() => navigate('/create')}
           >
-            Create
-            <Plus className="w-3.5 h-3.5 ml-0.5" />
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline ml-1">Create</span>
           </button>
           
           {/* Profile dropdown */}
           <div className="relative" ref={profileDropdownRef}>
             <button 
-              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
               onClick={toggleProfileDropdown}
             >
               <img
@@ -414,8 +416,13 @@ function HomePage() {
             )}
           </div>
           
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
-            <Bell className="w-4 h-4" />
+          {/* Menu button (right side) - mobile only */}
+          <button className="flex md:hidden items-center justify-center w-8 h-8 text-white">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="6" r="2" fill="white"/>
+              <circle cx="12" cy="12" r="2" fill="white"/>
+              <circle cx="12" cy="18" r="2" fill="white"/>
+            </svg>
           </button>
         </div>
       </header>
@@ -436,10 +443,10 @@ function HomePage() {
             sidebarCollapsed 
               ? 'w-0 opacity-0 invisible' 
               : 'w-[80%] md:w-[190px] opacity-100 visible'
-          } fixed md:static left-0 top-[57px] h-[calc(100vh-57px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 sidebar-mobile`}
+          } fixed md:static left-0 top-[49px] h-[calc(100vh-49px)] md:h-auto border-r border-[#1a1a1a] flex-shrink-0 overflow-y-auto bg-black transition-all duration-300 z-50 sidebar-mobile`}
         >
-          <div className={`p-5 space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
-            <div className="space-y-4">
+          <div className={`p-4 sm:p-5 space-y-6 sm:space-y-8 whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>
+            <div className="space-y-3 sm:space-y-4">
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
               <nav className="space-y-1">
                 {[
@@ -458,7 +465,7 @@ function HomePage() {
                   <a
                     key={item.name}
                     href="#"
-                    className={`flex items-center gap-3 py-2 text-sm transition-colors sidebar-item ${
+                    className={`flex items-center gap-2 sm:gap-3 py-2 text-sm transition-colors sidebar-item ${
                       activeSidebarItem === item.name
                         ? "text-white bg-[#270E00] rounded-md px-2 font-medium sidebar-item-active"
                         : "text-[#b0b0b0] hover:text-white px-2"
@@ -486,7 +493,7 @@ function HomePage() {
               </nav>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">Explore</h3>
               <nav className="space-y-1">
                 {[
@@ -496,7 +503,7 @@ function HomePage() {
                   <a
                     key={item.name}
                     href="#"
-                    className={`flex items-center gap-3 py-2 text-sm transition-colors sidebar-item ${
+                    className={`flex items-center gap-2 sm:gap-3 py-2 text-sm transition-colors sidebar-item ${
                       activeSidebarItem === item.name
                         ? "text-white bg-[#270E00] rounded-md px-2 font-medium sidebar-item-active"
                         : "text-[#b0b0b0] hover:text-white px-2"
@@ -625,7 +632,7 @@ function HomePage() {
         </aside>
 
         {/* Main Content */}
-        <div className={`flex-1 overflow-y-auto bg-black transition-all duration-300`}>
+        <div className={`flex-1 overflow-y-auto bg-black transition-all duration-300 pb-16`}>
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center h-64">
@@ -644,95 +651,67 @@ function HomePage() {
           {!loading && !error && (
             <>
               {/* Hero Section - Feature video from top creator if available */}
-              {!loading && !error && (
-                <>
-                  {videos.length > 0 && creators.length > 0 && (
-                    (() => {
-                      // Sort creators by follower count (highest first)
-                      const sortedCreators = [...creators].sort((a, b) => b.followers - a.followers);
-                      const topCreator = sortedCreators[0];
-                      
-                      // Find a video by the top creator
-                      let featuredVideo = videos.find(video => 
-                        video.uploadedBy && video.uploadedBy.toLowerCase() === topCreator.name.toLowerCase()
-                      );
-                      
-                      // If no video found from top creator, use the first video
-                      if (!featuredVideo && videos.length > 0) {
-                        featuredVideo = videos[0];
-                      }
-                      
-                      return featuredVideo ? (
-                        <div className="relative h-[400px] overflow-hidden hero-rockstar">
-                          <img
-                            src={featuredVideo.thumbnailLogoUrl || "/image 28.png"}
-                            alt={featuredVideo.caption || featuredVideo.name}
-                            width={1200}
-                            height={800}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "/image 28.png";
-                            }}
-                          />
-                          {/* Darker overlay gradient for better text readability */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
-                          <div className="absolute bottom-0 left-0 p-8 w-full z-10">
-                            <h1 className="text-6xl font-bold mb-2">{(featuredVideo.caption ? featuredVideo.caption.toUpperCase() : featuredVideo.name.toUpperCase())}</h1>
-                            <p className="text-xl mb-6">Category: {featuredVideo.category || "Uncategorized"}</p>
-                            <div className="flex items-center gap-4">
-                              <button 
-                                className="flex items-center gap-2 bg-[#FF4500] hover:bg-[#e03e00] text-white px-6 py-2 rounded-full transition-colors font-medium"
-                                onClick={() => navigate(`/video/${featuredVideo._id}`)}
-                              >
-                                <PlayIcon className="w-5 h-5" />
-                                Play
-                              </button>
-                              <button className="flex items-center gap-2 bg-[#2f2f2f] hover:bg-[#414141] text-white px-6 py-2 rounded-full transition-colors">
-                                <Info className="w-5 h-5" />
-                                More Info.
-                              </button>
-                              <button className="flex items-center gap-2 bg-transparent hover:bg-[#2f2f2f] text-white px-6 py-2 rounded-full border border-[#545454] transition-colors">
-                                <Plus className="w-5 h-5" />
-                                Add to List
-                              </button>
-                            </div>
-                            <div className="flex items-center mt-4 gap-2">
-                              <p className="text-sm text-[#b0b0b0]">Featured from top creator:</p>
-                              {featuredVideo.uploadedBy && (
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    // Find creator in the creators list
-                                    const creator = creators.find(c => 
-                                      c.name.toLowerCase() === featuredVideo.uploadedBy.toLowerCase()
-                                    ) || topCreator;
-                                    return (
-                                      <>
-                                        <img
-                                          src={creator?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(featuredVideo.uploadedBy)}&background=ED5606&color=fff&size=40`}
-                                          alt={featuredVideo.uploadedBy}
-                                          width={24}
-                                          height={24}
-                                          className="rounded-full"
-                                          onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = "/user-avatar.png";
-                                          }}
-                                        />
-                                        <span className="text-sm">{featuredVideo.uploadedBy}</span>
-                                        <span className="text-xs text-[#ED5606] ml-2">Top Creator</span>
-                                      </>
-                                    );
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+              {videos.length > 0 && creators.length > 0 && (
+                (() => {
+                  // Sort creators by follower count (highest first)
+                  const sortedCreators = [...creators].sort((a, b) => b.followers - a.followers);
+                  const topCreator = sortedCreators[0];
+                  
+                  // Find a video by the top creator
+                  let featuredVideo = videos.find(video => 
+                    video.uploadedBy && video.uploadedBy.toLowerCase() === topCreator.name.toLowerCase()
+                  );
+                  
+                  // If no video found from top creator, use the first video
+                  if (!featuredVideo && videos.length > 0) {
+                    featuredVideo = videos[0];
+                  }
+                  
+                  return featuredVideo ? (
+                    <div className="relative h-[300px] sm:h-[400px] overflow-hidden hero-rockstar">
+                      <img
+                        src={featuredVideo.thumbnailLogoUrl || "/image 28.png"}
+                        alt={featuredVideo.caption || featuredVideo.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "/image 28.png";
+                        }}
+                      />
+                      {/* Darker overlay gradient for better text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 p-4 sm:p-8 w-full z-10">
+                        <h1 className="text-4xl sm:text-6xl font-bold mb-1 sm:mb-2">
+                          {(featuredVideo.caption ? featuredVideo.caption.toUpperCase() : featuredVideo.name.toUpperCase())}
+                        </h1>
+                        <p className="text-sm sm:text-xl mb-3 sm:mb-6">
+                          Vibe: {featuredVideo.category || "Retro"}
+                        </p>
+                        <div className="flex items-center gap-2 sm:gap-4">
+                          <button 
+                            className="flex items-center justify-center w-8 h-8 bg-transparent text-white border border-white/30 rounded-full"
+                            onClick={() => navigate(`/video/${featuredVideo._id}/info`)}
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm sm:text-base">More Info.</span>
+                          <button className="flex items-center justify-center w-8 h-8 bg-transparent text-white border border-white/30 rounded-full ml-3">
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm sm:text-base">Add to List</span>
                         </div>
-                      ) : null;
-                    })()
-                  )}
-                </>
+                        
+                        {/* Mobile indicator dots */}
+                        <div className="flex justify-center mt-4 sm:mt-6 gap-1">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null;
+                })()
               )}
 
               {/* Videos Sections - One per category */}
@@ -743,9 +722,10 @@ function HomePage() {
                 const categoryId = category.replace(/\s+/g, '');
                 
                 return (
-                  <div key={category} className="px-8 py-6 relative">
-                    <div className="flex items-center mb-4">
-                      <h2 className="text-xl font-bold">{category} Videos</h2>
+                  <div key={category} className="px-4 sm:px-8 py-4 sm:py-6 relative">
+                    <div className="flex items-center mb-3 sm:mb-4">
+                      <h2 className="text-lg sm:text-xl font-bold">Top Videos</h2>
+                      <ChevronRight className="w-4 h-4 ml-1" />
                       <div className="ml-auto flex gap-2">
                         <button 
                           id={`${categoryId}LeftBtn`}
@@ -762,12 +742,12 @@ function HomePage() {
                       </div>
                     </div>
                     <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id={`${categoryId}Scroll`}>
-                      <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                      <div className="flex gap-3 sm:gap-4 snap-x" style={{ minWidth: 'max-content' }}>
                         {categoryVideos.map((video) => (
                           <div 
                             key={video._id} 
                             className="snap-start cursor-pointer" 
-                            style={{ width: '280px', flexShrink: 0 }}
+                            style={{ width: '220px', flexShrink: 0 }}
                             onClick={() => navigate(`/video/${video._id}`)}
                           >
                             <VideoCard 
@@ -785,10 +765,10 @@ function HomePage() {
               })}
 
               {/* Top Creators Section - Sorted by follower count */}
-              <div className="px-8 py-6 relative">
-                <div className="flex items-center mb-4">
-                  <h2 className="text-xl font-bold">Top Creators</h2>
-                  <ChevronRight className="w-5 h-5 ml-2" />
+              <div className="px-4 sm:px-8 py-4 sm:py-6 relative">
+                <div className="flex items-center mb-3 sm:mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold">Top Creators</h2>
+                  <ChevronRight className="w-4 h-4 ml-1" />
                   <div className="ml-auto flex gap-2">
                     <button 
                       id="creatorsLeftBtn"
@@ -805,7 +785,7 @@ function HomePage() {
                   </div>
                 </div>
                 <div className="overflow-x-auto pb-4 hide-scrollbar scroll-smooth" id="creatorsScroll">
-                  <div className="flex gap-4 snap-x" style={{ minWidth: 'max-content' }}>
+                  <div className="flex gap-3 sm:gap-4 snap-x" style={{ minWidth: 'max-content' }}>
                     {creators.length > 0 ? 
                       // Sort creators by follower count (highest first) and filter out current user
                       [...creators]
@@ -815,7 +795,7 @@ function HomePage() {
                           <div 
                             key={creator._id} 
                             className="snap-start cursor-pointer" 
-                            style={{ width: '280px', flexShrink: 0 }}
+                            style={{ width: '220px', flexShrink: 0 }}
                             onClick={() => navigate(`/creator/${creator.id}`)}
                           >
                             <CreatorCard 
@@ -842,6 +822,33 @@ function HomePage() {
                         )
                     }
                   </div>
+                </div>
+              </div>
+
+              {/* Mobile Navigation - Fixed bottom navigation for mobile */}
+              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#1a1a1a] z-30">
+                <div className="flex justify-around py-2">
+                  {[
+                    { name: "Home", icon: <HomeIcon className="w-5 h-5" />, active: true },
+                    { name: "Search", icon: <SearchIcon className="w-5 h-5" /> },
+                    { name: "Library", icon: <FilmIcon className="w-5 h-5" /> },
+                    { name: "Profile", icon: <User className="w-5 h-5" /> }
+                  ].map((item) => (
+                    <a
+                      key={item.name}
+                      href="#"
+                      className={`flex flex-col items-center justify-center px-3 py-1 ${
+                        item.active ? "text-[#ED5606]" : "text-[#777]"
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Handle navigation
+                      }}
+                    >
+                      {item.icon}
+                      <span className="text-[10px] mt-1">{item.name}</span>
+                    </a>
+                  ))}
                 </div>
               </div>
             </>
@@ -873,8 +880,8 @@ function VideoCard({ title, image, tag, id }) {
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
       <div className="mt-2">
-        <h3 className="text-sm font-medium">{title}</h3>
-        <p className="text-xs text-[#b0b0b0]">{tag || "Unknown"}</p>
+        <h3 className="text-sm font-medium truncate">{title}</h3>
+        <p className="text-xs text-[#b0b0b0] truncate">{tag || "Unknown"}</p>
       </div>
     </div>
   );
@@ -950,8 +957,8 @@ function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollow
   };
 
   return (
-    <div className="relative group cursor-pointer video-card">
-      <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
+    <div className="relative group cursor-pointer video-card bg-[#111] rounded-md overflow-hidden">
+      <div className="aspect-square overflow-hidden">
         <img 
           src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ED5606&color=fff&size=200`} 
           alt={name} 
@@ -961,42 +968,41 @@ function CreatorCard({ name, image, followers, videos, _id, profilePic, isFollow
             e.target.src = "/user-avatar.png";
           }}
         />
-        {/* Gradient overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
-      <div className="mt-2 flex justify-between items-start">
-        <div>
-          <h3 className="text-sm font-medium">{name}</h3>
-          <p className="text-xs text-[#b0b0b0]">{typeof followers === 'number' ? followers : 0} followers</p>
-          <p className="text-xs text-[#b0b0b0]">{typeof videos === 'number' ? videos : 0} videos</p>
+      <div className="p-2 sm:p-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-sm font-medium truncate mb-0.5">{name}</h3>
+            <p className="text-xs text-[#b0b0b0]">{typeof followers === 'number' ? followers : 0} followers</p>
+          </div>
+          {user && _id && !isCurrentUser && (
+            <button 
+              className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full ${followLoading ? 'opacity-70' : ''}`}
+              style={{
+                background: isFollow ? 
+                  `#333333` : 
+                  `linear-gradient(0deg, #270E00, #270E00),
+                  conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)`,
+                border: isFollow ? '1px solid #555555' : '1px solid #ED5606'
+              }}
+              onClick={(e) => followCreator(_id, e)}
+              disabled={followLoading}
+            >
+              {followLoading ? '...' : (isFollow ? 'Following' : 'Follow')}
+            </button>
+          )}
+          {isCurrentUser && (
+            <button 
+              className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-[#270E00] border border-[#ED5606]"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/create');
+              }}
+            >
+              My Page
+            </button>
+          )}
         </div>
-        {user && _id && !isCurrentUser && (
-          <button 
-            className={`text-xs px-3 py-1 rounded-full ${followLoading ? 'opacity-70' : ''}`}
-            style={{
-              background: isFollow ? 
-                `#333333` : 
-                `linear-gradient(0deg, #270E00, #270E00),
-                conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)`,
-              border: isFollow ? '1px solid #555555' : '1px solid #ED5606'
-            }}
-            onClick={(e) => followCreator(_id, e)}
-            disabled={followLoading}
-          >
-            {followLoading ? '...' : (isFollow ? 'Following' : 'Follow')}
-          </button>
-        )}
-        {isCurrentUser && (
-          <button 
-            className="text-xs px-3 py-1 rounded-full bg-[#270E00] border border-[#ED5606]"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate('/create');
-            }}
-          >
-            My Page
-          </button>
-        )}
       </div>
     </div>
   );
@@ -1050,6 +1056,24 @@ function ErrorIcon(props) {
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function HomeIcon(props) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+  );
+}
+
+function SearchIcon(props) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
     </svg>
   );
 }
