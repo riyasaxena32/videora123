@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, ArrowRight } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -24,13 +25,24 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-[#222]">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#222]">
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold">
-            <img src="/Play.png" alt="VIDEORA" className="h-8" />
+            <img src="/Play.png" alt="VIDEORA" className="h-6 sm:h-8" />
           </Link>
         </div>
         
+        {/* Mobile menu button */}
+        <div className="md:hidden">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-white focus:outline-none"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+        
+        {/* Desktop navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/about" className="text-sm text-gray-400 hover:text-white transition-colors">
             About
@@ -46,20 +58,74 @@ const LandingPage = () => {
           </Link>
         </nav>
         
-        <div>
+        {/* Get Started button - hidden on smallest screens, visible on small+ */}
+        <div className="hidden sm:block">
           <Link 
             to="/home"
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-4 py-2 text-sm transition-colors font-medium"
+            className="flex items-center gap-2 text-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition-colors font-medium"
           >
             Get Started
-            <ArrowUpRight className="w-4 h-4" />
+            <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
           </Link>
         </div>
       </header>
 
+      {/* Mobile Navigation Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col justify-center items-center md:hidden">
+          <button 
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute top-4 right-4 text-white"
+          >
+            <X size={24} />
+          </button>
+          
+          <nav className="flex flex-col items-center space-y-6">
+            <Link 
+              to="/about" 
+              className="text-lg text-gray-200 hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link 
+              to="/playground" 
+              className="text-lg text-gray-200 hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Playground
+            </Link>
+            <Link 
+              to="/studio" 
+              className="text-lg text-gray-200 hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Studio
+            </Link>
+            <Link 
+              to="/community" 
+              className="text-lg text-gray-200 hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Community
+            </Link>
+            
+            <Link 
+              to="/home"
+              style={gradientButtonStyle}
+              className="flex items-center gap-2 text-white px-6 py-2 text-sm transition-colors font-medium mt-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Get Started
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </nav>
+        </div>
+      )}
+
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center px-6 text-center py-12 md:py-16">
+      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 text-center py-8 sm:py-12 md:py-16">
         {/* Checkered background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
@@ -71,12 +137,12 @@ const LandingPage = () => {
           <div className="absolute inset-0 bg-black opacity-50"></div>
         </div>
         
-        <div className="relative z-10 max-w-4xl mx-auto pt-6 md:pt-12">
-          <h1 className="text-5xl md:text-7xl font-bold mb-0 text-white tracking-wider uppercase drop-shadow-md">VIDEORA</h1>
-          <p className="text-sm text-gray-200 mb-6 md:mb-8 tracking-wide drop-shadow-md">Where AI Meets Creativity</p>
+        <div className="relative z-10 max-w-4xl mx-auto pt-4 sm:pt-6 md:pt-12">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-0 text-white tracking-wider uppercase drop-shadow-md">VIDEORA</h1>
+          <p className="text-xs sm:text-sm text-gray-200 mb-4 sm:mb-6 md:mb-8 tracking-wide drop-shadow-md">Where AI Meets Creativity</p>
           
           {/* Anime girl image */}
-          <div className="relative mx-auto h-64 sm:h-72 md:h-96 flex items-center justify-center">
+          <div className="relative mx-auto h-48 sm:h-64 md:h-96 flex items-center justify-center">
             <img 
               src="/image 66.png" 
               alt="AI Creator" 
@@ -87,21 +153,21 @@ const LandingPage = () => {
       </section>
 
       {/* Make the Story Section */}
-      <section className="py-20 px-6 bg-black">
-        <h2 className="text-3xl font-bold mb-12 max-w-7xl mx-auto text-[#E5B992]">Make the Story Truly Yours</h2>
+      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 bg-black">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8 sm:mb-12 max-w-7xl mx-auto text-[#E5B992]">Make the Story Truly Yours</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {/* AI Video Playground Card */}
           <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors">
-            <div className="p-6">
-              <div className="flex justify-center mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-center mb-3 sm:mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Playground</span>
               </div>
-              <h3 className="text-xl font-bold text-center mb-4">AI Video Playground</h3>
-              <div className="text-xs text-center text-[#ED5606] mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-center mb-3 sm:mb-4">AI Video Playground</h3>
+              <div className="text-xs text-center text-[#ED5606] mb-3 sm:mb-4">
                 <span>Edit</span> • <span>Transform</span> • <span>Share Videos</span>
               </div>
-              <p className="text-sm text-gray-400 mb-4 text-center">
+              <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4 text-center">
                 Dive into a <span className="text-[#ED5606]">creative space</span> where you can craft videos, 
                 add voice-overs using prompts, and change the vibe 
                 of your content with AI-powered tools.
@@ -111,15 +177,15 @@ const LandingPage = () => {
           
           {/* Video Streaming Card */}
           <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors">
-            <div className="p-6">
-              <div className="flex justify-center mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-center mb-3 sm:mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Studio</span>
               </div>
-              <h3 className="text-xl font-bold text-center mb-4">Video Streaming</h3>
-              <div className="text-xs text-center text-[#ED5606] mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-center mb-3 sm:mb-4">Video Streaming</h3>
+              <div className="text-xs text-center text-[#ED5606] mb-3 sm:mb-4">
                 <span>Watch</span> • <span>Engage</span> • <span>Interact</span>
               </div>
-              <p className="text-sm text-gray-400 mb-4 text-center">
+              <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4 text-center">
                 Stream AI-generated videos in real-time, interact with
                 creators through in-video chat, and explore a world of
                 innovative content.
@@ -129,15 +195,15 @@ const LandingPage = () => {
           
           {/* Creators Community Card */}
           <div className="bg-[#0C0500] rounded-lg overflow-hidden border border-[#1a1a1a] group hover:border-[#2a2a2a] transition-colors">
-            <div className="p-6">
-              <div className="flex justify-center mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-center mb-3 sm:mb-4">
                 <span className="bg-[#1A1207] text-[#ED5606] text-xs px-3 py-1 rounded-full">Community</span>
               </div>
-              <h3 className="text-xl font-bold text-center mb-4">Creators Community</h3>
-              <div className="text-xs text-center text-[#ED5606] mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-center mb-3 sm:mb-4">Creators Community</h3>
+              <div className="text-xs text-center text-[#ED5606] mb-3 sm:mb-4">
                 <span>Connect</span> • <span>Collaborate</span> • <span>Grow</span>
               </div>
-              <p className="text-sm text-gray-400 mb-4 text-center">
+              <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4 text-center">
                 Join a vibrant <span className="text-[#ED5606]">community</span> of creators, share your
                 work, get feedback, and explore endless possibilities
                 with AI-driven video content.
@@ -148,28 +214,30 @@ const LandingPage = () => {
       </section>
 
       {/* Infinite Styles Section */}
-      <section className="py-16 px-6 bg-black">
-        <h2 className="text-3xl font-bold mb-10 max-w-7xl mx-auto text-[#E5B992]">
-          <span className="inline-block text-left">Infinite Styles, Endless Creativity</span>
+      <section className="py-10 sm:py-16 px-4 sm:px-6 bg-black">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-10 max-w-7xl mx-auto text-[#E5B992]">
+          <span className="inline-block text-left">Infinite Styles, <br className="sm:hidden" />Endless Creativity</span>
         </h2>
         
-        <div className="grid grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
-          {/* Top row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
+          {/* Mobile layout is different - 2 columns instead of 3 */}
           <StyleTile 
             name="Animated" 
             imageSrc="/image 57.png" 
             large={false} 
           />
-          <div className="bg-black flex items-center justify-center p-6 text-center text-xs text-gray-400">
-            <p>Customize the look and feel of your videos with AI-powered styles.</p>
-          </div>
           <StyleTile 
             name="Retro" 
             imageSrc="/image 59.png" 
             large={false} 
           />
 
-          {/* Middle row */}
+          {/* Text block only visible on larger screens */}
+          <div className="hidden sm:flex bg-black items-center justify-center p-6 text-center text-xs text-gray-400">
+            <p>Customize the look and feel of your videos with AI-powered styles.</p>
+          </div>
+
+          {/* More style tiles */}
           <StyleTile 
             name="Cinematic" 
             imageSrc="/image 58.png" 
@@ -180,20 +248,25 @@ const LandingPage = () => {
             imageSrc="/image 60.png" 
             large={false} 
           />
+          
+          {/* Mobile text block - only visible on small screens */}
+          <div className="sm:hidden col-span-2 bg-black flex items-center justify-center p-4 text-center text-xs text-gray-400">
+            <p>Customize the look and feel of your videos with AI-powered styles.</p>
+          </div>
+
+          {/* Last row - different on mobile */}
+          <div className="hidden sm:block bg-black"></div>
           <StyleTile 
             name="Cyberpunk" 
             imageSrc="/image 61.png" 
             large={false} 
           />
-
-          {/* Bottom row */}
-          <div className="bg-black"></div>
           <StyleTile 
             name="Custom" 
             imageSrc="/style-custom.png" 
             large={false} 
           />
-          <div className="bg-black"></div>
+          <div className="hidden sm:block bg-black"></div>
 
           {/* Corner dots - larger and positioned outside the grid */}
           <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
@@ -204,7 +277,7 @@ const LandingPage = () => {
       </section>
 
       {/* Smart Captions Section */}
-      <section className="py-20 px-6 relative">
+      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 relative">
         {/* Checkered background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
@@ -217,10 +290,10 @@ const LandingPage = () => {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="flex items-start">
-            <div className="w-[45%] pt-8">
-              <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Smart Captions & Seamless<br />Voice Integration</h2>
-              <p className="text-gray-300 mb-8">Edit captions without affecting voice continuity.</p>
+          <div className="flex flex-col md:flex-row items-center md:items-start">
+            <div className="w-full md:w-[45%] text-center md:text-left pt-0 md:pt-8 mb-6 md:mb-0">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-5 text-[#E5B992]">Smart Captions & <br className="hidden sm:inline" />Seamless Voice Integration</h2>
+              <p className="text-sm text-gray-300 mb-6 sm:mb-8">Edit captions without affecting voice continuity.</p>
               
               <Link 
                 to="/playground"
@@ -236,11 +309,11 @@ const LandingPage = () => {
               </Link>
             </div>
             
-            <div className="w-[55%] pl-10">
+            <div className="w-full md:w-[55%] md:pl-10">
               <img 
                 src="/Frame 182.png" 
                 alt="Live Caption Interface" 
-                className="w-full h-auto max-w-md ml-auto"
+                className="w-full h-auto max-w-md mx-auto md:ml-auto"
               />
             </div>
           </div>
@@ -248,7 +321,7 @@ const LandingPage = () => {
       </section>
 
       {/* Discover Content Section */}
-      <section className="py-20 px-6 relative">
+      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 relative">
         {/* Background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
@@ -261,8 +334,8 @@ const LandingPage = () => {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="flex items-start justify-between">
-            <div className="w-[55%]">
+          <div className="flex flex-col-reverse md:flex-row items-center md:items-start md:justify-between">
+            <div className="w-full md:w-[55%] mt-6 md:mt-0">
               <div className="rounded-lg overflow-hidden shadow-xl">
                 <img 
                   src="/91605 1.png" 
@@ -272,9 +345,9 @@ const LandingPage = () => {
               </div>
             </div>
             
-            <div className="w-[40%] pt-8">
-              <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Discover & Watch<br />AI-Created Content</h2>
-              <p className="text-gray-300 mb-8">Explore a library of AI-generated videos from the community.</p>
+            <div className="w-full md:w-[40%] text-center md:text-left pt-0 md:pt-8">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-5 text-[#E5B992]">Discover & Watch<br />AI-Created Content</h2>
+              <p className="text-sm text-gray-300 mb-6 sm:mb-8">Explore a library of AI-generated videos from the community.</p>
               
               <button 
                 onClick={() => {
@@ -297,7 +370,7 @@ const LandingPage = () => {
       </section>
 
       {/* Join Community Section */}
-      <section className="py-20 px-6 relative">
+      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 relative">
         {/* Background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
@@ -310,10 +383,10 @@ const LandingPage = () => {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="flex items-start flex-col md:flex-row">
-            <div className="md:w-[45%] mb-10 md:mb-0 pt-8">
-              <h2 className="text-3xl font-bold mb-5 text-[#E5B992]">Join a Thriving<br />Creator Community</h2>
-              <p className="text-gray-300 mb-8">Create, share, and get feedback from like-minded creators.</p>
+          <div className="flex flex-col md:flex-row items-center md:items-start">
+            <div className="w-full md:w-[45%] text-center md:text-left mb-6 md:mb-0 pt-0 md:pt-8">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-5 text-[#E5B992]">Join a Thriving<br />Creator Community</h2>
+              <p className="text-sm text-gray-300 mb-6 sm:mb-8">Create, share, and get feedback from like-minded creators.</p>
               
               <Link 
                 to="/join"
@@ -329,13 +402,13 @@ const LandingPage = () => {
               </Link>
             </div>
             
-            <div className="md:w-[55%] md:pl-10">
+            <div className="w-full md:w-[55%] md:pl-10">
               <div className="bg-[#111] rounded-lg overflow-hidden shadow-xl border border-[#333]">
-                <div className="p-4 border-b border-[#333]">
-                  <h3 className="text-xl font-bold">Creator</h3>
+                <div className="p-3 sm:p-4 border-b border-[#333]">
+                  <h3 className="text-lg sm:text-xl font-bold">Creator</h3>
                 </div>
                 
-                <div className="bg-black p-4">
+                <div className="bg-black p-3 sm:p-4">
                   <img 
                     src="/creator-preview.png" 
                     alt="Creator Preview" 
@@ -343,9 +416,9 @@ const LandingPage = () => {
                   />
                 </div>
                 
-                <div className="p-4 grid grid-cols-4 gap-2">
+                <div className="p-3 sm:p-4 grid grid-cols-4 gap-2">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-black h-16 rounded-md overflow-hidden">
+                    <div key={i} className="bg-black h-12 sm:h-16 rounded-md overflow-hidden">
                       <img src={`/creator-thumb-${i}.png`} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
@@ -357,7 +430,7 @@ const LandingPage = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 px-6 text-center border-t border-[#222] relative">
+      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 text-center border-t border-[#222] relative">
         {/* Background pattern */}
         <div className="absolute inset-0 overflow-hidden z-0">
           <img 
@@ -370,8 +443,8 @@ const LandingPage = () => {
         </div>
         
         <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-2 text-[#E5B992]">Start Creating with Videora Today</h2>
-          <p className="text-gray-300 mb-10 max-w-2xl mx-auto">Experience the future of AI-powered video generation.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-[#E5B992]">Start Creating with <br className="sm:hidden" />Videora Today</h2>
+          <p className="text-sm text-gray-300 mb-8 sm:mb-10 max-w-2xl mx-auto">Experience the future of AI-powered video generation.</p>
           
           <Link 
             to="/create"
@@ -380,7 +453,7 @@ const LandingPage = () => {
               borderRadius: '4px',
               display: 'inline-flex'
             }}
-            className="items-center gap-2 text-white py-2 px-4 text-sm font-medium"
+            className="items-center gap-2 text-white py-2 px-4 text-sm font-medium mx-auto"
           >
             Generate Your First Video
             <ArrowUpRight className="w-4 h-4" />
@@ -389,7 +462,7 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 px-6 border-t border-[#222] text-center text-gray-500 text-sm">
+      <footer className="py-8 sm:py-10 px-4 sm:px-6 border-t border-[#222] text-center text-gray-500 text-xs sm:text-sm">
         <p>© 2024 Videora. All rights reserved.</p>
       </footer>
     </div>
@@ -409,14 +482,14 @@ const StyleTile = ({ name, imageSrc, large, wide }) => {
   return (
     <div className={tileClassNames}>
       {/* Corner dots */}
-      <div className="absolute top-2 left-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
-      <div className="absolute top-2 right-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
-      <div className="absolute bottom-2 left-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
-      <div className="absolute bottom-2 right-2 w-1 h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute top-1 sm:top-2 left-1 sm:left-2 w-0.5 sm:w-1 h-0.5 sm:h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute top-1 sm:top-2 right-1 sm:right-2 w-0.5 sm:w-1 h-0.5 sm:h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 w-0.5 sm:w-1 h-0.5 sm:h-1 bg-[#E5B992] rounded-full"></div>
+      <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 w-0.5 sm:w-1 h-0.5 sm:h-1 bg-[#E5B992] rounded-full"></div>
       
       <img src={imageSrc} alt={name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
       <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-      <div className="absolute bottom-4 left-4 text-white font-medium">{name}</div>
+      <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-xs sm:text-sm text-white font-medium">{name}</div>
     </div>
   );
 };
