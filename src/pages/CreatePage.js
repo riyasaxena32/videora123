@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, HelpCircle, ArrowUpRight, ArrowLeft, ChevronRight, User, LogOut, Plus } from 'lucide-react';
+import { Upload, UploadCloud, ChevronDown, Edit3, Upload as UploadIcon, Mic, HelpCircle, ArrowUpRight, ArrowLeft, ChevronRight, User, LogOut, Plus, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
@@ -15,6 +15,7 @@ function CreatePage() {
   const { logout, user } = useAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Custom button styles
   const gradientButtonStyle = {
@@ -32,6 +33,10 @@ function CreatePage() {
 
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   const handleLogout = () => {
@@ -69,15 +74,23 @@ function CreatePage() {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a]">
+      <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-[#1a1a1a]">
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold flex items-center">
-            <img src="/Play.png" alt="VIDEORA x PLAYGROUND" className="h-12" />
+            <img src="/Play.png" alt="VIDEORA" className="h-8 md:h-12" />
           </Link>
         </div>
         
-        {/* Center the navigation items */}
-        <div className="flex-1 flex justify-center">
+        {/* Hamburger menu for mobile */}
+        <button 
+          className="md:hidden text-white p-1"
+          onClick={toggleMobileMenu}
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+        
+        {/* Center navigation items - hide on mobile */}
+        <div className="hidden md:flex flex-1 justify-center">
           <nav className="flex">
             {['Generate Video', 'AI Video Edit', 'Video Narration'].map((tab) => (
               <button
@@ -93,7 +106,8 @@ function CreatePage() {
           </nav>
         </div>
         
-        <div className="flex items-center gap-4">
+        {/* Profile and create buttons - hide on mobile when menu closed */}
+        <div className="hidden md:flex items-center gap-4">
           <button 
             style={gradientButtonStyle}
             className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
@@ -140,6 +154,42 @@ function CreatePage() {
           </div>
         </div>
       </header>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-[#111] border-b border-[#333] z-40">
+          <nav className="flex flex-col py-2">
+            {['Generate Video', 'AI Video Edit', 'Video Narration'].map((tab) => (
+              <button
+                key={tab}
+                className={`px-4 py-3 text-left text-sm transition-colors ${
+                  activeTab === tab ? 'text-[#ED5606] bg-[#1A1A1A]' : 'text-[#b0b0b0] hover:text-white'
+                }`}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+            <div className="border-t border-[#333] my-2"></div>
+            <div className="flex items-center justify-between px-4 py-2">
+              <Link to="/profile" className="flex items-center gap-2 text-sm text-white">
+                <User className="w-4 h-4" />
+                Profile
+              </Link>
+              <button 
+                style={gradientButtonStyle}
+                className="flex items-center gap-1 text-white px-3 py-1 text-xs transition-colors font-medium"
+              >
+                Create
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
 
       {/* Main Content */}
       {renderContent()}
@@ -684,312 +734,350 @@ function GenerateVideoContent({ gradientButtonStyle }) {
   };
 
   return (
-    <div className="flex-1 grid grid-cols-3 gap-6 p-6">
-      {/* Left Panel: Upload Media */}
-      <div className="flex flex-col space-y-6">
-        <h2 className="text-sm font-medium">Upload Your Media (Video or Image)</h2>
-        <div className="flex-1 border border-[#333] bg-[#111] rounded-md flex flex-col items-center justify-center p-6">
-          <div 
-            onClick={triggerVideoInput}
-            className="w-full h-36 border-2 border-dashed border-[#333] rounded-md flex flex-col items-center justify-center mb-4 cursor-pointer hover:border-[#ED5606] transition-colors"
-          >
-            {videoFile ? (
-              <div className="flex flex-col items-center">
-                {videoFile.type.startsWith('video/') ? (
-                  <video className="h-24 max-w-full" controls>
-                    <source src={videoData.videoURL} />
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <img 
-                    src={videoData.videoURL} 
-                    alt="Image preview" 
-                    className="h-24 max-w-full object-cover" 
-                  />
-                )}
-                <p className="text-xs text-[#ED5606] mt-2">{videoFile.name}</p>
-              </div>
-            ) : (
-              <>
-                <UploadCloud className="w-8 h-8 text-[#666] mb-2" />
-                <button type="button" className="mt-2 text-[#666]">
-                  <Upload className="w-5 h-5" />
-                </button>
-              </>
-            )}
-          </div>
-          <input 
-            ref={videoInputRef}
-            type="file" 
-            accept="video/*,image/*" 
-            className="hidden"
-            onChange={handleVideoSelect}
-          />
-          <p className="text-xs text-[#777] text-center">
-            Drag and drop your video or image here, or click here to upload.
-          </p>
-          
-          {/* Add thumbnail upload button */}
-          <div className="w-full mt-4">
+    <div className="flex-1 p-4 md:p-6">
+      <div className="flex flex-col md:grid md:grid-cols-3 md:gap-6">
+        {/* Left Panel: Upload Media - Full width on mobile */}
+        <div className="flex flex-col space-y-4 md:space-y-6 mb-6 md:mb-0">
+          <h2 className="text-sm font-medium">Upload Your Media</h2>
+          <div className="flex-1 border border-[#333] bg-[#111] rounded-md flex flex-col items-center justify-center p-4 md:p-6">
             <div 
-              onClick={triggerThumbnailInput}
-              className="w-full h-16 border-2 border-dashed border-[#333] rounded-md flex items-center justify-between px-4 py-2 cursor-pointer hover:border-[#ED5606] transition-colors"
+              onClick={triggerVideoInput}
+              className="w-full h-36 border-2 border-dashed border-[#333] rounded-md flex flex-col items-center justify-center mb-4 cursor-pointer hover:border-[#ED5606] transition-colors"
             >
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-[#191919] rounded overflow-hidden flex-shrink-0 flex items-center justify-center mr-3">
-                  {thumbnailFile ? (
-                    <img 
-                      src={videoData.thumbnailLogoUrl} 
-                      alt="Thumbnail preview" 
-                      className="w-full h-full object-cover" 
-                    />
+              {videoFile ? (
+                <div className="flex flex-col items-center">
+                  {videoFile.type.startsWith('video/') ? (
+                    <video className="h-24 max-w-full" controls>
+                      <source src={videoData.videoURL} />
+                      Your browser does not support the video tag.
+                    </video>
                   ) : (
-                    <UploadIcon className="w-4 h-4 text-[#666]" />
+                    <img 
+                      src={videoData.videoURL} 
+                      alt="Image preview" 
+                      className="h-24 max-w-full object-cover" 
+                    />
                   )}
+                  <p className="text-xs text-[#ED5606] mt-2 truncate max-w-full px-2">{videoFile.name}</p>
                 </div>
-                <div>
-                  <p className="text-xs font-medium">
-                    {thumbnailFile ? 'Change thumbnail' : 'Upload custom thumbnail'}
+              ) : (
+                <>
+                  <UploadCloud className="w-8 h-8 text-[#666] mb-2" />
+                  <p className="text-xs text-center text-[#777] px-2">
+                    Drag and drop your video or image here, or click here to upload.
                   </p>
-                  <p className="text-[10px] text-[#777]">
-                    {thumbnailFile ? thumbnailFile.name : 'JPG, PNG, or WebP (max 5MB)'}
-                  </p>
-                </div>
-              </div>
-              <button 
-                type="button" 
-                className="bg-[#191919] rounded px-2 py-1 text-xs hover:bg-[#333]"
+                </>
+              )}
+            </div>
+            <input 
+              ref={videoInputRef}
+              type="file" 
+              accept="video/*,image/*" 
+              className="hidden"
+              onChange={handleVideoSelect}
+            />
+            
+            {/* Add thumbnail upload button */}
+            <div className="w-full mt-4">
+              <div 
+                onClick={triggerThumbnailInput}
+                className="w-full h-16 border-2 border-dashed border-[#333] rounded-md flex items-center justify-between px-4 py-2 cursor-pointer hover:border-[#ED5606] transition-colors"
               >
-                {thumbnailFile ? 'Change' : 'Upload'}
-              </button>
-            </div>
-            <input 
-              ref={thumbnailInputRef}
-              type="file" 
-              accept="image/*" 
-              className="hidden"
-              onChange={handleThumbnailSelect}
-            />
-          </div>
-        </div>
-        
-        {/* Camera Movements */}
-        <h2 className="text-sm font-medium">Choose Camera Movements</h2>
-        <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2 text-xs text-[#888] border border-[#333] bg-[#191919] rounded px-3 py-2">
-              <ChevronDown className="w-4 h-4" />
-              <span>Click to add camera movement</span>
-            </div>
-            <div className="text-xs text-[#888] border border-[#333] bg-[#191919] rounded px-2 py-2">
-              Set camera movement timing
-            </div>
-          </div>
-          <div className="h-20 flex items-center justify-center">
-            <p className="text-xs text-[#777] text-center">
-              Your selected camera movements and timing will appear here
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Middle Panel: Creative Prompt */}
-      <div className="flex flex-col space-y-6">
-        <h2 className="text-sm font-medium">Pick Your Style</h2>
-        <div className="border border-[#333] bg-[#111] rounded-md p-4">
-          <div className="flex flex-col space-y-3">
-          <div className="flex items-center justify-between mb-2">
-              <span className="text-sm">Select a style for your video</span>
-            </div>
-            <select 
-              value={selectedStyle}
-              onChange={handleStyleChange}
-              className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
-            >
-              {videoStyles.map(style => (
-                <option key={style.name} value={style.name}>{style.label}</option>
-              ))}
-            </select>
-            <p className="text-xs text-[#777] pl-1">Choose a style that matches your video's desired look and feel</p>
-          </div>
-        </div>
-        
-        {/* Category Selector */}
-        <h2 className="text-sm font-medium">Select Video Category</h2>
-        <div className="border border-[#333] bg-[#111] rounded-md p-4">
-          <div className="flex flex-col space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm">Choose a category for your video</span>
-            </div>
-            <select 
-              value={videoData.category}
-              onChange={handleCategoryChange}
-              className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
-            >
-              {videoCategories.map(category => (
-                <option key={category.value} value={category.value}>{category.label}</option>
-              ))}
-            </select>
-            <p className="text-xs text-[#777] pl-1">Categorizing your video helps viewers find your content</p>
-          </div>
-        </div>
-        
-        <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
-        <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
-          <textarea 
-            className="w-full h-[300px] bg-transparent border-none text-[#999] text-sm focus:outline-none resize-none"
-            placeholder="Type what you want in your video.
-
-For example, 'Make it look like a sunny day at the beach.'"
-            value={creativePrompt}
-            onChange={handlePromptChange}
-          ></textarea>
-        </div>
-      </div>
-
-      {/* Right Panel: Audio & Caption */}
-      <div className="flex flex-col space-y-6">
-        <h2 className="text-sm font-medium">Add Audio</h2>
-        <div className="border border-[#333] bg-[#111] rounded-md p-4">
-          <h3 className="text-sm font-medium mb-2">Caption</h3>
-          <div className="h-40 border border-[#222] bg-[#0a0a0a] rounded p-3 text-xs text-[#777]">
-            {uploadResponse ? (
-              <div className="h-full overflow-y-auto">
-                <p className="mb-2 text-green-400">Upload Successful!</p>
-                <p className="mb-1">Name: {uploadResponse.savedvideo?.name || 'None'}</p>
-                <p className="mb-1">Style: {uploadResponse.savedvideo?.style || 'None'}</p>
-                <p className="mb-1"><span className="text-[#ED5606] font-medium">Category:</span> {uploadResponse.savedvideo?.category || videoData.category || 'None'}</p>
-                <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
-                <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
-                <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoURL || uploadResponse.savedvideo?.videoURL || 'Not returned from server'}</p>
-                <p className="mb-1 break-all">Thumbnail URL: {uploadResponse.savedvideo?.thumbnailLogoUrl || 'None'}</p>
-                <p className="mb-1 break-all">Voice URL: {uploadResponse.savedvideo?.voiceURL || 'None'}</p>
-                <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
-                <p className="mb-1 break-all">Status: {uploadResponse.message || 'Unknown'}</p>
-                <p className="mt-3 text-xs text-yellow-400">Note: If Video URL is missing in the response, check your backend schema.</p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-[#191919] rounded overflow-hidden flex-shrink-0 flex items-center justify-center mr-3">
+                    {thumbnailFile ? (
+                      <img 
+                        src={videoData.thumbnailLogoUrl} 
+                        alt="Thumbnail preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      <UploadIcon className="w-4 h-4 text-[#666]" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium">
+                      {thumbnailFile ? 'Change thumbnail' : 'Upload custom thumbnail'}
+                    </p>
+                    <p className="text-[10px] text-[#777]">
+                      {thumbnailFile ? thumbnailFile.name : 'JPG, PNG, or WebP (max 5MB)'}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  className="bg-[#191919] rounded px-2 py-1 text-xs hover:bg-[#333]"
+                >
+                  {thumbnailFile ? 'Change' : 'Upload'}
+                </button>
               </div>
-            ) : (
-              <>
-                <textarea
-                  className="w-full h-full bg-transparent border-none resize-none text-white focus:outline-none"
-                  placeholder="Enter a caption for your video"
-                  value={caption}
-                  onChange={handleCaptionChange}
-                ></textarea>
-              </>
-            )}
-          </div>
-          
-          {/* Voice recording controls */}
-          {audioURL && (
-            <div className="mt-3 border border-[#222] bg-[#111] rounded p-2">
-              <audio ref={audioRef} src={audioURL} className="w-full h-8 mt-1" controls />
-            </div>
-          )}
-          
-          {recordingError && (
-            <div className="mt-2 text-red-400 text-xs">
-              {recordingError}
-            </div>
-          )}
-          
-          <div className="flex justify-end mt-4 gap-2">
-            <button type="button" className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
-              <Edit3 className="w-3 h-3" />
-              Edit Text
-            </button>
-            <button 
-              type="button" 
-              className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs"
-              onClick={triggerVoiceInput}
-            >
-              <UploadIcon className="w-3 h-3" />
-              {voiceFile && !isRecording && !audioURL ? voiceFile.name.substring(0, 15) + '...' : 'Upload Voice'}
-            </button>
-            <input 
-              ref={voiceInputRef}
-              type="file" 
-              accept="audio/*" 
-              className="hidden"
-              onChange={handleVoiceSelect}
-            />
-            <button 
-              type="button" 
-              onClick={isRecording ? stopRecording : startRecording}
-              className={`flex items-center gap-1 ${isRecording ? 'bg-red-700 hover:bg-red-800' : 'bg-[#222] hover:bg-[#333]'} text-white py-1 px-3 rounded text-xs`}
-            >
-              <Mic className={`w-3 h-3 ${isRecording ? 'animate-pulse' : ''}`} />
-              {isRecording ? `Recording ${formatTime(recordingTime)}...` : 'Record Voice'}
-            </button>
-          </div>
-        </div>
-        
-        {/* Error message */}
-        {errorMessage && (
-          <div className="mt-4 p-3 bg-red-900 bg-opacity-30 border border-red-800 rounded-md text-red-200 text-xs">
-            <div className="font-medium mb-1">Error:</div>
-            {errorMessage}
-          </div>
-        )}
-        
-        {/* Upload progress */}
-        {uploading && (
-          <div className="mt-4 p-3 bg-[#1A1A1A] border border-[#333] rounded-md">
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-[#999]">
-                {uploadProgress < 100 ? 
-                  (videoFile && !videoData.videoURL ? 'Uploading to Cloudinary...' : 'Processing...') 
-                  : 'Finalizing...'}
-              </span>
-              <span className="text-[#ED5606]">{uploadProgress}%</span>
-            </div>
-            <div className="w-full bg-[#333] h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-[#ED5606] h-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
+              <input 
+                ref={thumbnailInputRef}
+                type="file" 
+                accept="image/*" 
+                className="hidden"
+                onChange={handleThumbnailSelect}
               />
             </div>
           </div>
-        )}
-        
-        {/* Success message */}
-        {uploadSuccess && !errorMessage && (
-          <div className="mt-4 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
-            <div className="font-medium mb-1">Success!</div>
-            <p>Video uploaded successfully to Cloudinary and saved to Videora.</p>
-            <p className="mt-1">You can view the details in the caption box.</p>
+          
+          {/* Style Selector - Visible on mobile, hidden on desktop (duplicate) */}
+          <div className="md:hidden">
+            <h2 className="text-sm font-medium">Pick Your Style</h2>
+            <div className="border border-[#333] bg-[#111] rounded-md p-4 mt-2">
+              <div className="flex flex-col space-y-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">Select a style for your video</span>
+                </div>
+                <select 
+                  value={selectedStyle}
+                  onChange={handleStyleChange}
+                  className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+                >
+                  {videoStyles.map(style => (
+                    <option key={style.name} value={style.name}>{style.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-[#777] pl-1">Choose a style that matches your video's desired look and feel</p>
+              </div>
+            </div>
           </div>
-        )}
-        
-        {/* Generate Button */}
-        <div className="flex justify-end mt-auto pt-4 gap-2">
-          {uploadResponse && (
-            <button 
-              onClick={handleResetForm}
-              className="flex items-center gap-2 text-white bg-[#333] px-4 py-2 rounded-full text-sm font-medium hover:bg-[#444] transition-colors"
-            >
-              Upload New Video
-            </button>
+        </div>
+
+        {/* Middle Panel: Creative Prompt - Hidden on mobile in this position */}
+        <div className="hidden md:flex md:flex-col space-y-6">
+          <h2 className="text-sm font-medium">Pick Your Style</h2>
+          <div className="border border-[#333] bg-[#111] rounded-md p-4">
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Select a style for your video</span>
+              </div>
+              <select 
+                value={selectedStyle}
+                onChange={handleStyleChange}
+                className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+              >
+                {videoStyles.map(style => (
+                  <option key={style.name} value={style.name}>{style.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-[#777] pl-1">Choose a style that matches your video's desired look and feel</p>
+            </div>
+          </div>
+          
+          {/* Category Selector */}
+          <h2 className="text-sm font-medium">Select Video Category</h2>
+          <div className="border border-[#333] bg-[#111] rounded-md p-4">
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Choose a category for your video</span>
+              </div>
+              <select 
+                value={videoData.category}
+                onChange={handleCategoryChange}
+                className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+              >
+                {videoCategories.map(category => (
+                  <option key={category.value} value={category.value}>{category.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-[#777] pl-1">Categorizing your video helps viewers find your content</p>
+            </div>
+          </div>
+          
+          <h2 className="text-sm font-medium">Add Your Creative Prompt</h2>
+          <div className="flex-1 border border-[#333] bg-[#111] rounded-md p-4">
+            <textarea 
+              className="w-full h-[300px] bg-transparent border-none text-[#999] text-sm focus:outline-none resize-none"
+              placeholder="Type what you want in your video.
+
+For example, 'Make it look like a sunny day at the beach.'"
+              value={creativePrompt}
+              onChange={handlePromptChange}
+            ></textarea>
+          </div>
+        </div>
+
+        {/* Category Selector - Mobile only */}
+        <div className="md:hidden mb-6">
+          <h2 className="text-sm font-medium">Select Video Category</h2>
+          <div className="border border-[#333] bg-[#111] rounded-md p-4 mt-2">
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Choose a category for your video</span>
+              </div>
+              <select 
+                value={videoData.category}
+                onChange={handleCategoryChange}
+                className="w-full bg-[#191919] border border-[#333] rounded-md p-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+              >
+                {videoCategories.map(category => (
+                  <option key={category.value} value={category.value}>{category.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-[#777] pl-1">Categorizing your video helps viewers find your content</p>
+            </div>
+          </div>
+          
+          <h2 className="text-sm font-medium mt-4">Add Your Creative Prompt</h2>
+          <div className="border border-[#333] bg-[#111] rounded-md p-4 mt-2">
+            <textarea 
+              className="w-full h-[150px] bg-transparent border-none text-[#999] text-sm focus:outline-none resize-none"
+              placeholder="Type what you want in your video.
+
+For example, 'Make it look like a sunny day at the beach.'"
+              value={creativePrompt}
+              onChange={handlePromptChange}
+            ></textarea>
+          </div>
+        </div>
+
+        {/* Right Panel: Audio & Caption */}
+        <div className="flex flex-col space-y-4 md:space-y-6">
+          <h2 className="text-sm font-medium">Add Audio</h2>
+          <div className="border border-[#333] bg-[#111] rounded-md p-4">
+            <h3 className="text-sm font-medium mb-2">Caption</h3>
+            <div className="h-40 border border-[#222] bg-[#0a0a0a] rounded p-3 text-xs text-[#777]">
+              {uploadResponse ? (
+                <div className="h-full overflow-y-auto">
+                  <p className="mb-2 text-green-400">Upload Successful!</p>
+                  <p className="mb-1">Name: {uploadResponse.savedvideo?.name || 'None'}</p>
+                  <p className="mb-1">Style: {uploadResponse.savedvideo?.style || 'None'}</p>
+                  <p className="mb-1"><span className="text-[#ED5606] font-medium">Category:</span> {uploadResponse.savedvideo?.category || videoData.category || 'None'}</p>
+                  <p className="mb-1">Caption: {uploadResponse.savedvideo?.caption || 'None'}</p>
+                  <p className="mb-1">ID: {uploadResponse.savedvideo?._id || 'Unknown'}</p>
+                  <p className="mb-1 break-all">Video URL: {uploadResponse.savedvideo?.videoURL || uploadResponse.savedvideo?.videoURL || 'Not returned from server'}</p>
+                  <p className="mb-1 break-all">Thumbnail URL: {uploadResponse.savedvideo?.thumbnailLogoUrl || 'None'}</p>
+                  <p className="mb-1 break-all">Voice URL: {uploadResponse.savedvideo?.voiceURL || 'None'}</p>
+                  <p className="mb-1">Upload Date: {uploadResponse.savedvideo?.uploadDate ? new Date(uploadResponse.savedvideo.uploadDate).toLocaleString() : 'Unknown'}</p>
+                  <p className="mb-1 break-all">Status: {uploadResponse.message || 'Unknown'}</p>
+                  <p className="mt-3 text-xs text-yellow-400">Note: If Video URL is missing in the response, check your backend schema.</p>
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    className="w-full h-full bg-transparent border-none resize-none text-white focus:outline-none"
+                    placeholder="Enter a caption for your video"
+                    value={caption}
+                    onChange={handleCaptionChange}
+                  ></textarea>
+                </>
+              )}
+            </div>
+            
+            {/* Voice recording controls */}
+            {audioURL && (
+              <div className="mt-3 border border-[#222] bg-[#111] rounded p-2">
+                <audio ref={audioRef} src={audioURL} className="w-full h-8 mt-1" controls />
+              </div>
+            )}
+            
+            {recordingError && (
+              <div className="mt-2 text-red-400 text-xs">
+                {recordingError}
+              </div>
+            )}
+            
+            <div className="flex flex-wrap justify-end mt-4 gap-2">
+              <button type="button" className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs">
+                <Edit3 className="w-3 h-3" />
+                Edit Text
+              </button>
+              <button 
+                type="button" 
+                className="flex items-center gap-1 bg-[#222] hover:bg-[#333] text-white py-1 px-3 rounded text-xs"
+                onClick={triggerVoiceInput}
+              >
+                <UploadIcon className="w-3 h-3" />
+                {voiceFile && !isRecording && !audioURL ? 
+                  (window.innerWidth < 768 ? voiceFile.name.substring(0, 8) + '...' : voiceFile.name.substring(0, 15) + '...') 
+                  : 'Upload Voice'}
+              </button>
+              <input 
+                ref={voiceInputRef}
+                type="file" 
+                accept="audio/*" 
+                className="hidden"
+                onChange={handleVoiceSelect}
+              />
+              <button 
+                type="button" 
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`flex items-center gap-1 ${isRecording ? 'bg-red-700 hover:bg-red-800' : 'bg-[#222] hover:bg-[#333]'} text-white py-1 px-3 rounded text-xs`}
+              >
+                <Mic className={`w-3 h-3 ${isRecording ? 'animate-pulse' : ''}`} />
+                {isRecording ? `Recording ${formatTime(recordingTime)}...` : 'Record Voice'}
+              </button>
+            </div>
+          </div>
+          
+          {/* Error message */}
+          {errorMessage && (
+            <div className="mt-2 p-3 bg-red-900 bg-opacity-30 border border-red-800 rounded-md text-red-200 text-xs">
+              <div className="font-medium mb-1">Error:</div>
+              {errorMessage}
+            </div>
           )}
           
-          <button 
-            onClick={handleUpload}
-            disabled={uploading || !videoFile || uploadResponse}
-            style={gradientButtonStyle}
-            className={`flex items-center gap-2 text-white px-6 py-2 text-sm font-medium ${(uploading || !videoFile || uploadResponse) ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {uploading ? (
-              <>
-                <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
-                Uploading {uploadProgress > 0 ? `(${uploadProgress}%)` : '...'}
-              </>
-            ) : (
-              <>
-                {uploadResponse ? 'Uploaded' : 'Upload Media'}
-                {!uploadResponse && <ArrowUpRight className="w-4 h-4" />}
-              </>
+          {/* Upload progress */}
+          {uploading && (
+            <div className="mt-2 p-3 bg-[#1A1A1A] border border-[#333] rounded-md">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-[#999]">
+                  {uploadProgress < 100 ? 
+                    (videoFile && !videoData.videoURL ? 'Uploading to Cloudinary...' : 'Processing...') 
+                    : 'Finalizing...'}
+                </span>
+                <span className="text-[#ED5606]">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-[#333] h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-[#ED5606] h-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Success message */}
+          {uploadSuccess && !errorMessage && (
+            <div className="mt-2 p-3 bg-green-900 bg-opacity-30 border border-green-800 rounded-md text-green-200 text-xs">
+              <div className="font-medium mb-1">Success!</div>
+              <p>Video uploaded successfully to Cloudinary and saved to Videora.</p>
+              <p className="mt-1">You can view the details in the caption box.</p>
+            </div>
+          )}
+          
+          {/* Generate Button */}
+          <div className="flex justify-center md:justify-end mt-4 md:mt-auto pt-4 gap-2">
+            {uploadResponse && (
+              <button 
+                onClick={handleResetForm}
+                className="flex items-center gap-2 text-white bg-[#333] px-4 py-2 rounded-full text-sm font-medium hover:bg-[#444] transition-colors"
+              >
+                Upload New Video
+              </button>
             )}
-          </button>
+            
+            <button 
+              onClick={handleUpload}
+              disabled={uploading || !videoFile || uploadResponse}
+              style={gradientButtonStyle}
+              className={`flex items-center gap-2 text-white px-6 py-2 text-sm font-medium ${(uploading || !videoFile || uploadResponse) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {uploading ? (
+                <>
+                  <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                  Uploading {uploadProgress > 0 ? `(${uploadProgress}%)` : '...'}
+                </>
+              ) : (
+                <>
+                  {uploadResponse ? 'Uploaded' : 'Upload Media'}
+                  {!uploadResponse && <ArrowUpRight className="w-4 h-4" />}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -999,9 +1087,31 @@ For example, 'Make it look like a sunny day at the beach.'"
 // AI Video Edit Tab Content
 function AIVideoEditContent({ gradientButtonStyle }) {
   return (
-    <div className="flex-1 p-6">
-      <h2 className="text-xl font-bold mb-4">AI Video Edit</h2>
-      <p className="text-sm text-[#999]">This feature is coming soon.</p>
+    <div className="flex-1 p-4 md:p-6">
+      <div className="text-center md:text-left">
+        <h2 className="text-xl font-bold mb-4">AI Video Edit</h2>
+        <p className="text-sm text-[#999]">This feature is coming soon.</p>
+        
+        <div className="mt-8 p-6 border border-[#333] bg-[#111] rounded-md max-w-lg mx-auto md:mx-0">
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 bg-[#1A1A1A] rounded-full flex items-center justify-center mb-4">
+              <Edit3 className="w-8 h-8 text-[#666]" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">AI Video Editing</h3>
+            <p className="text-sm text-center text-[#777] mb-6">
+              Automatically enhance your videos with AI-powered editing features. 
+              Trim, add effects, and more with just a few clicks.
+            </p>
+            <button 
+              style={gradientButtonStyle}
+              className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+              disabled
+            >
+              Coming Soon
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1014,11 +1124,11 @@ function VideoNarrationContent({ gradientButtonStyle }) {
   return (
     <div className="flex-1 flex flex-col bg-black">
       {/* Main content area */}
-      <div className="flex flex-1 max-h-[calc(100vh-4.5rem)]">
+      <div className="flex flex-col md:flex-row flex-1 max-h-[calc(100vh-4.5rem)]">
         {/* Left side - Video player */}
-        <div className="w-3/5 p-3 flex flex-col">
+        <div className="w-full md:w-3/5 p-3 flex flex-col">
           {/* Video preview */}
-          <div className="relative bg-[#0A0A0A] rounded-md overflow-hidden" style={{ height: '36vh' }}>
+          <div className="relative bg-[#0A0A0A] rounded-md overflow-hidden" style={{ height: 'min(30vh, 300px)' }}>
             <img 
               src="/image 28.png" 
               alt="Video preview" 
@@ -1099,7 +1209,7 @@ function VideoNarrationContent({ gradientButtonStyle }) {
         </div>
         
         {/* Right side - Narration details */}
-        <div className="w-2/5 border-l border-[#222] flex flex-col">
+        <div className="w-full md:w-2/5 border-t md:border-t-0 md:border-l border-[#222] flex flex-col">
           <div className="p-3">
             <h2 className="text-xs font-medium">Details</h2>
             <div className="mt-2">
@@ -1116,7 +1226,7 @@ function VideoNarrationContent({ gradientButtonStyle }) {
                 <label className="block text-[9px] text-[#777] mb-1">Provide Your video description here...</label>
                 <textarea 
                   className="w-full bg-[#151515] border border-[#333] rounded p-2 text-xs text-white focus:outline-none focus:border-[#ED5606] resize-none"
-                  style={{ height: '14vh' }}
+                  style={{ height: '10vh' }}
                   placeholder="Enter video description..."
                 ></textarea>
               </div>

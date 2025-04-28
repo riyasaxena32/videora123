@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 function VideoPage() {
@@ -12,12 +12,14 @@ function VideoPage() {
   const [error, setError] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
+  const [showChat, setShowChat] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [creators, setCreators] = useState([]);
   const [apiCreators, setApiCreators] = useState([]);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [mobileRelatedOpen, setMobileRelatedOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
@@ -43,6 +45,14 @@ function VideoPage() {
 
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const toggleChat = () => {
+    setShowChat(!showChat);
+  };
+
+  const toggleMobileRelated = () => {
+    setMobileRelatedOpen(!mobileRelatedOpen);
   };
 
   const handleLogout = () => {
@@ -384,8 +394,8 @@ function VideoPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-[#1a1a1a] w-full bg-black sticky top-0 z-50">
+        <div className="flex items-center gap-2 md:gap-3">
           <button 
             className="p-1 hover:bg-[#1a1a1a] rounded-md transition-colors" 
             onClick={toggleSidebar}
@@ -398,7 +408,7 @@ function VideoPage() {
           </Link>
         </div>
         
-        {/* Center navigation links */}
+        {/* Center navigation links - Only visible on desktop */}
         <div className="hidden md:flex items-center justify-center flex-1">
           <nav className="flex items-center gap-8">
             {["Home", "Trending", "Genre", "Browse"].map((item) => (
@@ -423,19 +433,29 @@ function VideoPage() {
           </nav>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Create button - different display on mobile */}
           <button 
             style={gradientButtonStyle}
-            className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
+            className="hidden md:flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
             onClick={() => navigate('/create')}
           >
             Create <Plus className="w-4 h-4" />
           </button>
           
+          {/* Mobile Create Button */}
+          <button 
+            style={gradientButtonStyle}
+            className="flex md:hidden items-center justify-center w-8 h-8 text-white rounded-full text-sm"
+            onClick={() => navigate('/create')}
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+          
           {/* Profile dropdown */}
           <div className="relative" ref={profileDropdownRef}>
             <button 
-              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
               onClick={toggleProfileDropdown}
             >
               <img
@@ -469,15 +489,15 @@ function VideoPage() {
             )}
           </div>
           
-          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
+          <button className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
             <Bell className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-60px)]">
-        {/* Left Sidebar - Creator's Videos Only */}
-        <div className="w-[120px] md:w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-60px)]">
+        {/* Left Sidebar - Only visible on desktop */}
+        <div className="w-[220px] border-r border-[#222] overflow-y-auto bg-black hidden md:block">
           <div className="p-3">
             <h3 className="text-xs font-medium text-[#b0b0b0] uppercase mb-2">
               {video.uploadedBy ? `${video.uploadedBy}'s Videos` : 'Related Videos'}
@@ -489,7 +509,7 @@ function VideoPage() {
                   className="relative cursor-pointer mb-2"
                   onClick={() => navigate(`/video/${relVideo._id}`)}
                 >
-                  <div className="aspect-video w-full overflow-hidden">
+                  <div className="aspect-video w-full overflow-hidden rounded-md">
                     <img 
                       src={relVideo.thumbnailLogoUrl || "/image 28.png"} 
                       alt={relVideo.name}
@@ -520,16 +540,15 @@ function VideoPage() {
         {/* Main Video Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Video Player */}
-          <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
+          <div className="w-full bg-black relative">
             {!loading && (video.videoURL || video.videoUrl) ? (
-              <div className="video-container" style={{ maxHeight: '70vh' }}>
+              <div className="video-container">
                 <video
                   ref={videoRef}
                   src={video.videoURL || video.videoUrl}
                   poster={video.thumbnailLogoUrl || "/image 28.png"}
                   controls
                   className="w-full h-full object-contain"
-                  style={{ maxHeight: '70vh' }}
                   playsInline
                   preload="auto"
                   onLoadedData={() => console.log('Video loaded successfully')}
@@ -563,7 +582,6 @@ function VideoPage() {
                     src={video?.thumbnailLogoUrl || "/image 28.png"} 
                     alt={video?.caption || video?.name || 'Video thumbnail'}
                     className="w-full h-full object-contain"
-                    style={{ maxHeight: '70vh' }}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "/image 28.png";
@@ -575,134 +593,160 @@ function VideoPage() {
           </div>
 
           {/* Video Info */}
-          <div className="p-6 max-w-[1200px] mx-auto">
+          <div className="px-4 md:px-6 py-4 max-w-[1200px] mx-auto">
             {/* Days ago indicator */}
             <div className="text-xs text-gray-400 mb-2">
-              {formatDateAgo(video.uploadDate)}
+              {video.uploadDate ? formatDateAgo(video.uploadDate) : '08 Days Ago'}
             </div>
             
             {/* Video Title */}
             <div className="mb-4">
-              <h1 className="text-xl font-bold flex items-center gap-2 mb-1">
-                {video.caption || video.name || 'Untitled Video'} 
-                {video.category && (
-                  <>
-                    <span className="text-xs font-normal">•</span> 
-                    <span className="text-sm font-normal">{video.category}</span>
-                  </>
-                )}
-                {video.style && (
-                  <>
-                    <span className="text-xs font-normal">•</span> 
-                    <span className="text-sm font-normal text-[#ED5606]">{video.style}</span>
-                  </>
-                )}
+              <h1 className="text-lg md:text-xl font-bold mb-1">
+                {video.caption || video.name || 'My Neighbor Totoro (1988)'}
               </h1>
+              <p className="text-sm text-gray-300">
+                {video.description || 'A heartwarming story of two sisters and their encounters with forest spirits'}
+              </p>
             </div>
             
-            {/* Creator Info and Action Buttons */}
-            <div className="flex items-center justify-between mb-8">
-              {/* Creator */}
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full overflow-hidden bg-[#222]">
-                  {video.uploadedBy && (() => {
-                    // Find creator in the creators list for profile pic
-                    const creator = creators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
-                    return (
-                      <img 
-                        src={creator?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(video.uploadedBy)}&background=ED5606&color=fff&size=80`} 
-                        alt={video.uploadedBy}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = "/user-avatar.png";
-                        }}
-                      />
-                    );
-                  })()}
+            {/* Chat in Video toggle - Mobile only */}
+            <div className="mb-4 md:hidden">
+              <button 
+                onClick={toggleChat}
+                className="w-full flex items-center justify-between py-3 px-4 bg-[#101010] rounded-lg text-white"
+              >
+                <span className="font-medium">Chat in Video</span>
+                <ChevronDown className={`w-5 h-5 transition-transform ${showChat ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showChat && (
+                <div className="p-3 bg-[#0a0a0a] rounded-b-lg mt-1">
+                  {/* Chat interface would go here */}
+                  <p className="text-sm text-gray-400">Chat is not available for this video</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium">{video.uploadedBy}</h3>
-                  <p className="text-xs text-gray-400">{video.views || 0} views</p>
-                </div>
+              )}
+            </div>
+            
+            {/* Creator Info */}
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
                 {video.uploadedBy && (() => {
-                  // Find creator in the list to get their ID
-                  const creator = apiCreators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
+                  // Find creator in the creators list for profile pic
+                  const creator = creators.find(c => c.name?.toLowerCase() === video.uploadedBy?.toLowerCase());
                   return (
-                    <button 
-                      className={`ml-2 text-xs text-white px-4 py-1 rounded-full ${followLoading ? 'opacity-70' : ''}`}
-                      style={{
-                        background: isFollowing ? 
-                          `linear-gradient(0deg, #333333, #333333),
-                          conic-gradient(from 0deg at 50% 38.89%, #555555 0deg, #333333 160.78deg, #555555 360deg)` 
-                          : 
-                          `linear-gradient(0deg, #270E00, #270E00),
-                          conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg)`,
-                        border: isFollowing ? '1px solid #555555' : '1px solid #ED5606'
+                    <img 
+                      src={creator?.profilePic || "/creator-avatar.png"} 
+                      alt={video.uploadedBy}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/user-avatar.png";
                       }}
-                      onClick={() => {
-                        if (creator && creator._id) {
-                          followCreator(creator._id);
-                        } else {
-                          console.error("Cannot follow creator: Missing valid creator ID");
-                          alert("Cannot follow this creator at the moment. Please try again later.");
-                        }
-                      }}
-                      disabled={followLoading}
-                    >
-                      {followLoading ? 'Processing...' : (isFollowing ? 'Following' : 'Follow')}
-                    </button>
+                    />
                   );
                 })()}
               </div>
-              
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
+              <div className="flex-1">
+                <h3 className="font-medium">{video.uploadedBy || 'Muse Asia'}</h3>
+                <p className="text-xs text-gray-400">{video.creatorSubscribers || '29.7M'} subscribers</p>
+              </div>
+              {video.uploadedBy && (() => {
+                // Find creator in the list to get their ID
+                const creator = apiCreators.find(c => c.name?.toLowerCase() === video.uploadedBy?.toLowerCase());
+                return (
+                  <button 
+                    className="ml-2 text-xs text-white px-4 py-1 rounded-full"
+                    style={{
+                      background: isFollowing ? '#333' : '#FFF',
+                      color: isFollowing ? '#FFF' : '#000'
+                    }}
+                    onClick={() => {
+                      if (creator && creator._id) {
+                        followCreator(creator._id);
+                      }
+                    }}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                );
+              })()}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center">
                   <ThumbsUp className="w-4 h-4" />
-                  <span className="text-xs mr-1">Like {video.likes > 0 ? `(${video.likes})` : ''}</span>
                 </button>
-                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
+                <span className="text-sm">Like</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center">
                   <Share className="w-4 h-4" />
-                  <span className="text-xs mr-1">Share</span>
                 </button>
-                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1">
-                  <div className="w-4 h-4 flex items-center justify-center">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19 21L12 17L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="text-xs mr-1">Save</span>
+                <span className="text-sm">Save</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 21L12 17L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
+                <span className="text-sm">Comments</span>
               </div>
             </div>
             
-            {/* Video Description */}
-            <div className="mb-6 bg-[#101010] p-3 rounded-lg">
-              <p className="text-sm text-gray-300 mb-2">
-                {video.description || video.prompt || 'No description provided.'}
-              </p>
-              {video.tags && video.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {video.tags.map((tag, index) => (
-                    <span key={index} className="text-xs bg-[#1A1A1A] text-[#ED5606] px-2 py-1 rounded">
-                      #{tag}
-                    </span>
+            {/* Mobile Related Videos */}
+            <div className="block md:hidden mb-6">
+              <button
+                onClick={toggleMobileRelated}
+                className="w-full flex items-center justify-between py-3 px-4 bg-[#101010] rounded-lg text-white mb-3"
+              >
+                <span className="font-medium">Related Videos</span>
+                <ChevronDown className={`w-5 h-5 transition-transform ${mobileRelatedOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {mobileRelatedOpen && relatedVideos.length > 0 && (
+                <div className="grid grid-cols-1 gap-3">
+                  {relatedVideos.slice(0, 2).map((relVideo) => (
+                    <div 
+                      key={relVideo._id}
+                      className="flex items-start gap-3 cursor-pointer"
+                      onClick={() => navigate(`/video/${relVideo._id}`)}
+                    >
+                      <div className="w-32 aspect-video rounded-md overflow-hidden relative">
+                        <img 
+                          src={relVideo.thumbnailLogoUrl || "/image 28.png"} 
+                          alt={relVideo.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-1 right-1 bg-black/70 text-[8px] px-1 rounded text-white">
+                          {Math.floor(relVideo.duration / 60)}:{String(relVideo.duration % 60).padStart(2, '0')}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium line-clamp-2">{relVideo.name}</p>
+                        <div className="mt-1 flex items-center">
+                          <span className="text-xs text-gray-400">Music Asia</span>
+                          <span className="mx-1 text-xs text-gray-400">•</span>
+                          <span className="text-xs text-gray-400">
+                            {relVideo.views ? `${relVideo.views} views` : '125K views'}
+                          </span>
+                        </div>
+                        <div className="mt-1">
+                          <span className="text-[10px] bg-gray-800 text-white px-2 py-0.5 rounded">
+                            {relVideo.category || 'Retro Themed'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
-              {video.voiceURL && (
-                <div className="mt-3 text-xs text-[#ED5606]">
-                  <span className="flex items-center gap-1">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Voice narration available (plays automatically with video)
-                  </span>
-                </div>
-              )}
             </div>
-
+            
             {/* Comments Section - Only show if video has comments */}
             {video.comments && video.comments.length > 0 && (
               <div className="mb-6">
@@ -715,17 +759,13 @@ function VideoPage() {
                           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId || 'User')}&background=ED5606&color=fff&size=60`} 
                           alt="User"
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/user-avatar.png";
-                          }}
                         />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-medium">{comment.userId}</h4>
+                          <h4 className="text-sm font-medium">{comment.userId || 'Sparsh Agrawal'}</h4>
                           <span className="text-xs text-gray-400">
-                            {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
+                            {comment.timestamp ? formatDateAgo(comment.timestamp) : '12hr Ago'}
                           </span>
                         </div>
                         <p className="text-sm text-gray-300 mt-1">{comment.comment}</p>
