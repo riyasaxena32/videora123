@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.clear("token")
 
       // Make API call to logout endpoint with appropriate token
-      await fetch('https://api.videora.ai/api/logout', {
+      await fetch('https://videora-ai.onrender.com/api/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
