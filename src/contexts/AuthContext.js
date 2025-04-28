@@ -78,8 +78,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.getItem('access_token') : 
         localStorage.getItem('token');
       
-        localStorage.clear("access_token")
-        localStorage.clear("token")
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("token");
 
       // Make API call to logout endpoint with appropriate token
       await fetch('https://videora-ai.onrender.com/api/logout', {
