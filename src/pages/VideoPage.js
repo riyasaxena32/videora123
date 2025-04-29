@@ -1159,7 +1159,6 @@ function VideoPage() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-md font-medium">Comments {comments.length > 0 ? `(${comments.length})` : ''}</h3>
-                <button className="text-xs text-[#ED5606]">Chat in Video</button>
               </div>
               
               {/* Add comment form */}

@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { User, Plus, Save } from 'lucide-react';
+import { User, Plus, Save, Menu } from 'lucide-react';
 
 const UserProfile = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -70,7 +71,6 @@ const UserProfile = () => {
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     minHeight: '100vh',
-    
   };
 
   // Profile box style
@@ -80,6 +80,14 @@ const UserProfile = () => {
     border: '1px solid #843D0C',
     borderRadius: '12px',
     padding: '30px'
+  };
+
+  // Mobile menu dots style
+  const mobileMenuDotsStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    cursor: 'pointer'
   };
 
   useEffect(() => {
@@ -256,6 +264,10 @@ const UserProfile = () => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
   if (loading && !userData.name) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -266,8 +278,8 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen text-white py-10" style={containerStyle}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] mb-10 bg-black fixed top-0 w-full z-10">
+      {/* Header - Desktop */}
+      <header className="hidden md:flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] mb-10 bg-black fixed top-0 w-full z-10">
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold flex items-center">
             <img src="/Play.png" alt="VIDEORA x PLAYGROUND" className="h-12" />
@@ -307,15 +319,58 @@ const UserProfile = () => {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 mt-20">
-        <div style={profileBoxStyle}>
-          <h1 className="text-3xl font-medium text-center mb-10" style={{ color: '#C6935C', fontFamily: 'serif' }}>User Profile</h1>
+      {/* Header - Mobile */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a] mb-6 bg-black fixed top-0 w-full z-10">
+        <div className="flex items-center">
+          <Link to="/" className="text-xl font-bold flex items-center">
+            <img src="/Play.png" alt="VIDEORA" className="h-8" />
+          </Link>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <button className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors">
+            <img
+              src={userData.profilePic || '/user-avatar.png'}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </button>
           
-          <div className="grid md:grid-cols-[250px_1fr] gap-10">
+          <div onClick={toggleMobileMenu} className="relative">
+            <div className="flex flex-col items-center justify-center w-8 h-8">
+              <div className="w-1 h-1 bg-white rounded-full mb-1"></div>
+              <div className="w-1 h-1 bg-white rounded-full mb-1"></div>
+              <div className="w-1 h-1 bg-white rounded-full"></div>
+            </div>
+            
+            {mobileMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-[#1A0D00] border border-[#843D0C] rounded-md shadow-lg py-2 z-20">
+                {['Generate Video', 'AI Video Edit', 'Video Narration', 'Create'].map((item) => (
+                  <Link
+                    key={item}
+                    to="#"
+                    className="block px-4 py-2 text-sm hover:bg-[#270E00]"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item === 'Create' && <Plus className="inline-block w-3.5 h-3.5 mr-2" />}
+                    {item}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 mt-20 md:mt-20">
+        <div style={profileBoxStyle} className="md:p-8 p-5">
+          <h1 className="text-2xl md:text-3xl font-medium text-center mb-8 md:mb-10" style={{ color: '#C6935C', fontFamily: 'serif' }}>User Profile</h1>
+          
+          <div className="grid md:grid-cols-[250px_1fr] gap-6 md:gap-10">
             {/* Left column - Profile pic and username */}
             <div className="flex flex-col items-center">
               <div 
-                className={`w-[200px] h-[200px] rounded overflow-hidden mb-6 relative ${isEditing ? 'cursor-pointer' : ''}`}
+                className={`w-[150px] h-[150px] md:w-[200px] md:h-[200px] rounded overflow-hidden mb-6 relative ${isEditing ? 'cursor-pointer' : ''}`}
                 style={{ border: '1px solid #843D0C' }}
                 onClick={handleProfilePicClick}
               >
@@ -346,14 +401,14 @@ const UserProfile = () => {
                   onChange={handleInputChange}
                   style={inputStyle}
                   disabled={!isEditing}
+                  className="text-center"
                 />
-                
               </div>
             </div>
             
             {/* Right column - User details */}
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">Name</label>
                   <input
@@ -378,7 +433,7 @@ const UserProfile = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">Country</label>
                   <div className="relative">
@@ -405,7 +460,7 @@ const UserProfile = () => {
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">Phone Number</label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-3 text-sm text-gray-300 bg-[rgba(15,7,0,0.5)] border border-r-0 border-[#843D0C] rounded-l-md" style={{height: '48px'}}>
+                    <span className="inline-flex items-center px-3 text-xs md:text-sm text-gray-300 bg-[rgba(15,7,0,0.5)] border border-r-0 border-[#843D0C] rounded-l-md" style={{height: '48px'}}>
                       +91 🇮🇳
                     </span>
                     <input
@@ -443,10 +498,11 @@ const UserProfile = () => {
                 </div>
               )}
               
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-end mt-4 md:mt-6">
                 <button
                   onClick={handleEditToggle}
                   style={saveButtonStyle}
+                  className="w-full md:w-auto"
                 >
                   {loading ? (
                     <span className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
