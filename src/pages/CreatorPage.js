@@ -214,7 +214,7 @@ function Sidebar({ creators, loading, error, handleCreatorClick, selectedCreator
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-[#252525]">
                   <img
-                    src={creator.profilePic || creator.avatar || creator.logoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=80`}
+                    src={creator.profilePic || creator.avatar || creator.logoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=60`}
                     alt={creator.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -663,6 +663,10 @@ function CreatorPage() {
                 src={user?.profilePic || "/user-avatar.png"}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/user-avatar.png";
+                }}
               />
             </button>
             
@@ -783,7 +787,7 @@ function CreatorPage() {
                   >
                     <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2f2f2f] flex items-center justify-center">
                       <img 
-                        src={creator.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=30`} 
+                        src={creator.profilePic || creator.avatar || creator.logoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=ED5606&color=fff&size=60`} 
                         alt={`${creator.name} avatar`} 
                         width={20} 
                         height={20} 
