@@ -31,6 +31,7 @@ function VideoPage() {
   const [commentText, setCommentText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentPosting, setCommentPosting] = useState(false);
+  const [userMap, setUserMap] = useState({});
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -556,7 +557,55 @@ function VideoPage() {
     }
   };
 
-  // Function to fetch comments
+  // Function to get user names for comments
+  const fetchUserNames = async (commentsList) => {
+    // Skip if no comments or no userIds to fetch
+    if (!commentsList || commentsList.length === 0) return;
+    
+    try {
+      // Get unique user IDs from comments
+      const userIds = new Set();
+      
+      commentsList.forEach(comment => {
+        if (comment.userId) {
+          if (typeof comment.userId === 'object' && comment.userId._id) {
+            userIds.add(comment.userId._id);
+          } else if (typeof comment.userId === 'string') {
+            userIds.add(comment.userId);
+          }
+        }
+      });
+      
+      // Skip if we don't have any user IDs
+      if (userIds.size === 0) return;
+      
+      // Fetch creators from API
+      const response = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
+      if (!response.ok) {
+        throw new Error('Failed to fetch creators');
+      }
+      
+      const data = await response.json();
+      const creatorsList = data.creator || [];
+      
+      // Create a map of user ID to name
+      const newUserMap = {};
+      
+      creatorsList.forEach(creator => {
+        if (creator._id && userIds.has(creator._id)) {
+          newUserMap[creator._id] = creator.name || 'Unknown User';
+        }
+      });
+      
+      // Update the user map
+      setUserMap(prevMap => ({ ...prevMap, ...newUserMap }));
+      
+    } catch (err) {
+      console.error('Error fetching user names:', err);
+    }
+  };
+
+  // Updated fetchComments function
   const fetchComments = async () => {
     if (!videoId) return;
     
@@ -571,7 +620,12 @@ function VideoPage() {
       const data = await response.json();
       console.log('Fetched comments:', data);
       
-      setComments(data.comments || []);
+      const commentsList = data.comments || [];
+      setComments(commentsList);
+      
+      // Fetch user names for these comments
+      fetchUserNames(commentsList);
+      
     } catch (err) {
       console.error('Error fetching comments:', err);
     } finally {
@@ -579,7 +633,7 @@ function VideoPage() {
     }
   };
 
-  // Function to post a comment
+  // Updated postComment function
   const postComment = async () => {
     if (!user) {
       // Redirect to login if user is not authenticated
@@ -619,7 +673,11 @@ function VideoPage() {
       console.log('Comment posted successfully:', data);
       
       // Update comments list with the new comments from the API response
-      setComments(data.comments || []);
+      const newComments = data.comments || [];
+      setComments(newComments);
+      
+      // Fetch user names for any new comments
+      fetchUserNames(newComments);
       
       // Clear the comment input
       setCommentText('');
@@ -1170,7 +1228,7 @@ function VideoPage() {
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
                         {comment.userId && typeof comment.userId === 'object' ? (
                           <img 
-                            src={comment.userId.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId._id || 'User')}&background=ED5606&color=fff&size=60`}
+                            src={comment.userId.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(getUserName(comment.userId._id))}&background=ED5606&color=fff&size=60`}
                             alt="User"
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -1180,7 +1238,7 @@ function VideoPage() {
                           />
                         ) : (
                           <img 
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId || 'User')}&background=ED5606&color=fff&size=60`}
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserName(comment.userId))}&background=ED5606&color=fff&size=60`}
                             alt="User"
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -1194,8 +1252,8 @@ function VideoPage() {
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-medium">
                             {comment.userId && typeof comment.userId === 'object' 
-                              ? (comment.userId.name || 'User') 
-                              : 'User'}
+                              ? getUserName(comment.userId._id)
+                              : getUserName(comment.userId)}
                           </h4>
                           <span className="text-xs text-gray-400">
                             {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
@@ -1218,6 +1276,30 @@ function VideoPage() {
       </div>
     </div>
   );
+
+  // Helper function to get user name from ID
+  function getUserName(userId) {
+    if (!userId) return 'User';
+    
+    // If we have a mapping for this user ID, return the name
+    if (userMap[userId]) {
+      return userMap[userId];
+    }
+    
+    // If the current user's ID matches, use their name
+    if (user && user._id === userId) {
+      return user.name || 'You';
+    }
+    
+    // For unmapped users, return a placeholder and attempt to fetch in the background
+    setTimeout(() => {
+      if (!userMap[userId]) {
+        fetchUserNames([{ userId }]);
+      }
+    }, 100);
+    
+    return 'User';
+  }
 }
 
 export default VideoPage; 
