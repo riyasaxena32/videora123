@@ -188,6 +188,19 @@ function VideoPage() {
         // Set the video
         setVideo(foundVideo);
         
+        // Set video likes/dislikes counts
+        setVideoLikes(foundVideo.likes || 0);
+        setVideoDislikes(foundVideo.dislikes || 0);
+        
+        // Check if the current user has liked or disliked this video
+        if (user && foundVideo.likedBy && Array.isArray(foundVideo.likedBy)) {
+          setUserLiked(foundVideo.likedBy.includes(user._id));
+        }
+        
+        if (user && foundVideo.dislikedBy && Array.isArray(foundVideo.dislikedBy)) {
+          setUserDisliked(foundVideo.dislikedBy.includes(user._id));
+        }
+        
         // Set related videos (videos from the same creator)
         const creatorVideos = videos.filter(v => 
           v._id !== videoId && 
@@ -259,7 +272,7 @@ function VideoPage() {
         audioRef.current.src = '';
       }
     };
-  }, [videoId, apiCreators]);
+  }, [videoId, apiCreators, user]);
 
   // Handle synchronized audio-video playback
   useEffect(() => {
@@ -309,68 +322,6 @@ function VideoPage() {
       };
     }
   }, [video]);
-
-  // New effect to update likes/dislikes when video changes
-  useEffect(() => {
-    if (video && user) {
-      setVideoLikes(video.likes || 0);
-      setVideoDislikes(video.dislikes || 0);
-      
-      // Check if the current user has already liked or disliked this video
-      const checkUserInteraction = async () => {
-        try {
-          const token = localStorage.getItem('token');
-          
-          if (!token) {
-            console.error('No authentication token found');
-            return;
-          }
-          
-          // Fetch video details with user interaction information
-          const response = await fetch(`https://videora-ai.onrender.com/api/videos/${video._id}/check-interaction`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          // If the endpoint doesn't exist, we can modify this approach
-          if (!response.ok) {
-            // Fallback: Check if user ID is in the likes/dislikes arrays directly
-            if (video.likedBy && Array.isArray(video.likedBy)) {
-              setUserLiked(video.likedBy.includes(user._id));
-            }
-            
-            if (video.dislikedBy && Array.isArray(video.dislikedBy)) {
-              setUserDisliked(video.dislikedBy.includes(user._id));
-            }
-            return;
-          }
-          
-          const data = await response.json();
-          setUserLiked(data.hasLiked || false);
-          setUserDisliked(data.hasDisliked || false);
-          
-        } catch (err) {
-          console.error('Error checking user interaction with video:', err);
-          
-          // Fallback approach using localStorage
-          const likedVideos = JSON.parse(localStorage.getItem('likedVideos') || '[]');
-          const dislikedVideos = JSON.parse(localStorage.getItem('dislikedVideos') || '[]');
-          
-          setUserLiked(likedVideos.includes(video._id));
-          setUserDisliked(dislikedVideos.includes(video._id));
-        }
-      };
-      
-      checkUserInteraction();
-    } else {
-      // Reset user interaction states when no video or user
-      setUserLiked(false);
-      setUserDisliked(false);
-    }
-  }, [video, user]);
 
   // Function to follow a creator
   const followCreator = async (creatorId) => {
@@ -443,6 +394,9 @@ function VideoPage() {
         throw new Error('No authentication token found');
       }
 
+      // If already liked, we're toggling the like off
+      const currentLikeState = userLiked;
+
       const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/like`, {
         method: 'PUT',
         headers: {
@@ -461,22 +415,20 @@ function VideoPage() {
 
       const data = await response.json();
       
-      // Update like status and count
-      setVideoLikes(data.TotalLike || videoLikes + 1);
-      setUserLiked(true);
+      // Update like status and count with the value from the API response
+      setVideoLikes(data.TotalLike || (currentLikeState ? videoLikes - 1 : videoLikes + 1));
+      setUserLiked(!currentLikeState);
       
-      // If user previously disliked, remove dislike
-      if (userDisliked) {
+      // If user previously disliked and is now liking, remove dislike
+      if (userDisliked && !currentLikeState) {
         setUserDisliked(false);
         setVideoDislikes(prev => Math.max(0, prev - 1));
       }
-      
-      // Store liked status in localStorage
-      saveInteractionToLocalStorage('like');
 
       console.log('Successfully liked video:', data.message);
     } catch (err) {
       console.error('Error liking video:', err);
+      // Show error notification (optional)
     } finally {
       setLikeLoading(false);
     }
@@ -499,6 +451,9 @@ function VideoPage() {
         throw new Error('No authentication token found');
       }
 
+      // If already disliked, we're toggling the dislike off
+      const currentDislikeState = userDisliked;
+
       const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/dislike`, {
         method: 'PUT',
         headers: {
@@ -517,63 +472,22 @@ function VideoPage() {
 
       const data = await response.json();
       
-      // Update dislike status and count
-      setVideoDislikes(data.TotalDislike || videoDislikes + 1);
-      setUserDisliked(true);
+      // Update dislike status and count with the value from the API response
+      setVideoDislikes(data.TotalDislike || (currentDislikeState ? videoDislikes - 1 : videoDislikes + 1));
+      setUserDisliked(!currentDislikeState);
       
-      // If user previously liked, remove like
-      if (userLiked) {
+      // If user previously liked and is now disliking, remove like
+      if (userLiked && !currentDislikeState) {
         setUserLiked(false);
         setVideoLikes(prev => Math.max(0, prev - 1));
       }
-      
-      // Store disliked status in localStorage
-      saveInteractionToLocalStorage('dislike');
 
       console.log('Successfully disliked video:', data.message);
     } catch (err) {
       console.error('Error disliking video:', err);
+      // Show error notification (optional)
     } finally {
       setLikeLoading(false);
-    }
-  };
-
-  // Helper function to save interaction to localStorage
-  const saveInteractionToLocalStorage = (interactionType) => {
-    if (!video?._id) return;
-    
-    try {
-      // Get current liked and disliked videos
-      const likedVideos = JSON.parse(localStorage.getItem('likedVideos') || '[]');
-      const dislikedVideos = JSON.parse(localStorage.getItem('dislikedVideos') || '[]');
-      
-      if (interactionType === 'like') {
-        // Add to liked videos if not already there
-        if (!likedVideos.includes(video._id)) {
-          likedVideos.push(video._id);
-        }
-        // Remove from disliked videos if it's there
-        const dislikedIndex = dislikedVideos.indexOf(video._id);
-        if (dislikedIndex !== -1) {
-          dislikedVideos.splice(dislikedIndex, 1);
-        }
-      } else if (interactionType === 'dislike') {
-        // Add to disliked videos if not already there
-        if (!dislikedVideos.includes(video._id)) {
-          dislikedVideos.push(video._id);
-        }
-        // Remove from liked videos if it's there
-        const likedIndex = likedVideos.indexOf(video._id);
-        if (likedIndex !== -1) {
-          likedVideos.splice(likedIndex, 1);
-        }
-      }
-      
-      // Save updated lists back to localStorage
-      localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
-      localStorage.setItem('dislikedVideos', JSON.stringify(dislikedVideos));
-    } catch (err) {
-      console.error('Error saving interaction to localStorage:', err);
     }
   };
 
