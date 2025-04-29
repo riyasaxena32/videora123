@@ -25,6 +25,8 @@ function VideoPage() {
   const [userLiked, setUserLiked] = useState(false);
   const [userDisliked, setUserDisliked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
+  const [viewUpdated, setViewUpdated] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -155,8 +157,38 @@ function VideoPage() {
     fetchCreators();
   }, [user]);
 
+  // Function to update view count
+  const updateViewCount = async () => {
+    // Only update view count once per video session
+    if (viewUpdated || !videoId) return;
+
+    try {
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/views`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update view count');
+        return;
+      }
+
+      const data = await response.json();
+      console.log('View count updated:', data.message);
+      
+      // Update view count in state
+      setViewCount(data.views || (viewCount + 1));
+      // Mark as updated so we don't call the API again
+      setViewUpdated(true);
+    } catch (err) {
+      console.error('Error updating view count:', err);
+    }
+  };
+
+  // Fetch video data from API
   useEffect(() => {
-    // Fetch video data from API
     const fetchVideo = async () => {
       try {
         setLoading(true);
@@ -187,6 +219,11 @@ function VideoPage() {
         
         // Set the video
         setVideo(foundVideo);
+        
+        // Set view count
+        setViewCount(foundVideo.views || 0);
+        // Reset view updated flag when a new video is loaded
+        setViewUpdated(false);
         
         // Set video likes/dislikes counts from TotalLike and TotalDislike fields
         setVideoLikes(foundVideo.TotalLike || 0);
@@ -275,54 +312,76 @@ function VideoPage() {
     };
   }, [videoId, apiCreators, user]);
 
-  // Handle synchronized audio-video playback
+  // Handle synchronized audio-video playback and view count update
   useEffect(() => {
-    if (video && video.voiceURL && videoRef.current && audioRef.current) {
-      // Sync video with audio
+    if (video && videoRef.current) {
       const videoElement = videoRef.current;
-      const audioElement = audioRef.current;
-
+      
+      // Function to handle video play event
       const handleVideoPlay = () => {
-        if (audioElement.paused) {
-          audioElement.play()
-            .then(() => setAudioPlaying(true))
-            .catch(err => console.error('Error playing audio:', err));
+        // Update view count when video starts playing
+        updateViewCount();
+        
+        // Handle audio sync if voice narration is available
+        if (video.voiceURL && audioRef.current) {
+          const audioElement = audioRef.current;
+          if (audioElement.paused) {
+            audioElement.play()
+              .then(() => setAudioPlaying(true))
+              .catch(err => console.error('Error playing audio:', err));
+          }
         }
       };
-
+      
+      // Function to handle video pause event
       const handleVideoPause = () => {
-        if (!audioElement.paused) {
-          audioElement.pause();
-          setAudioPlaying(false);
+        // Handle audio sync if voice narration is available
+        if (video.voiceURL && audioRef.current) {
+          const audioElement = audioRef.current;
+          if (!audioElement.paused) {
+            audioElement.pause();
+            setAudioPlaying(false);
+          }
         }
       };
-
+      
+      // Function to handle video time update
       const handleVideoTimeUpdate = () => {
-        // Keep audio in sync with video
-        if (Math.abs(audioElement.currentTime - videoElement.currentTime) > 0.5) {
-          audioElement.currentTime = videoElement.currentTime;
+        // Keep audio in sync with video if voice narration is available
+        if (video.voiceURL && audioRef.current) {
+          const audioElement = audioRef.current;
+          if (Math.abs(audioElement.currentTime - videoElement.currentTime) > 0.5) {
+            audioElement.currentTime = videoElement.currentTime;
+          }
         }
       };
-
+      
+      // Function to handle audio end
       const handleAudioEnd = () => {
         setAudioPlaying(false);
       };
-
+      
       // Add event listeners
       videoElement.addEventListener('play', handleVideoPlay);
       videoElement.addEventListener('pause', handleVideoPause);
       videoElement.addEventListener('timeupdate', handleVideoTimeUpdate);
-      audioElement.addEventListener('ended', handleAudioEnd);
-
+      
+      if (video.voiceURL && audioRef.current) {
+        audioRef.current.addEventListener('ended', handleAudioEnd);
+      }
+      
       // Clean up
       return () => {
         videoElement.removeEventListener('play', handleVideoPlay);
         videoElement.removeEventListener('pause', handleVideoPause);
         videoElement.removeEventListener('timeupdate', handleVideoTimeUpdate);
-        audioElement.removeEventListener('ended', handleAudioEnd);
+        
+        if (video.voiceURL && audioRef.current) {
+          audioRef.current.removeEventListener('ended', handleAudioEnd);
+        }
       };
     }
-  }, [video]);
+  }, [video, videoId]);
 
   // Function to follow a creator
   const followCreator = async (creatorId) => {
@@ -825,7 +884,7 @@ function VideoPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium">{video.uploadedBy}</h3>
-                  <p className="text-xs text-gray-400">{video.views || 0} views</p>
+                  <p className="text-xs text-gray-400">{viewCount || 0} views</p>
                 </div>
                 {video.uploadedBy && (() => {
                   // Find creator in the list to get their ID
