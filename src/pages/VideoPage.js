@@ -31,7 +31,6 @@ function VideoPage() {
   const [commentText, setCommentText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentPosting, setCommentPosting] = useState(false);
-  const [commentUsers, setCommentUsers] = useState({});
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -557,108 +556,27 @@ function VideoPage() {
     }
   };
 
-  // Function to fetch comments and user details
+  // Function to fetch comments
   const fetchComments = async () => {
     if (!videoId) return;
     
     try {
       setCommentsLoading(true);
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/allcomments`);
       
-      // Fetch comments
-      const commentsResponse = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/allcomments`);
-      
-      if (!commentsResponse.ok) {
+      if (!response.ok) {
         throw new Error('Failed to fetch comments');
       }
       
-      const commentsData = await commentsResponse.json();
-      const commentsArray = commentsData.comments || [];
+      const data = await response.json();
+      console.log('Fetched comments:', data);
       
-      console.log('Fetched comments:', commentsData);
-      setComments(commentsArray);
-      
-      // Get unique user IDs from comments
-      const userIds = new Set();
-      commentsArray.forEach(comment => {
-        const userId = typeof comment.userId === 'object' ? comment.userId._id : comment.userId;
-        if (userId) {
-          userIds.add(userId);
-        }
-      });
-      
-      // Only fetch creators if we have user IDs and we don't already have their details
-      const missingUserIds = Array.from(userIds).filter(id => !commentUsers[id]);
-      
-      if (missingUserIds.length > 0) {
-        // Fetch all creators in one call
-        const creatorsResponse = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
-        
-        if (!creatorsResponse.ok) {
-          throw new Error('Failed to fetch creators');
-        }
-        
-        const creatorsData = await creatorsResponse.json();
-        const creatorsList = creatorsData.creator || [];
-        
-        // Create a map of all relevant creators
-        const newUserDetails = {};
-        creatorsList.forEach(creator => {
-          if (userIds.has(creator._id)) {
-            newUserDetails[creator._id] = {
-              name: creator.name || 'Unknown User',
-              profilePic: creator.profilePic && creator.profilePic.length > 0 ? creator.profilePic[0] : null
-            };
-          }
-        });
-        
-        // Update state with all creators at once
-        if (Object.keys(newUserDetails).length > 0) {
-          setCommentUsers(prev => ({
-            ...prev,
-            ...newUserDetails
-          }));
-        }
-      }
+      setComments(data.comments || []);
     } catch (err) {
-      console.error('Error fetching comments and user details:', err);
+      console.error('Error fetching comments:', err);
     } finally {
       setCommentsLoading(false);
     }
-  };
-
-  // Helper function to get user display name - update to not call fetchUserDetails
-  const getUserDisplayName = (userId) => {
-    if (!userId) return 'Unknown User';
-    
-    // If userId is an object with _id
-    const id = typeof userId === 'object' ? userId._id : userId;
-    
-    // Check if we have user details
-    if (commentUsers[id] && commentUsers[id].name) {
-      return commentUsers[id].name;
-    }
-    
-    // Return generic name as fallback
-    return 'User';
-  };
-  
-  // Helper function to get user profile picture
-  const getUserProfilePic = (userId) => {
-    if (!userId) return null;
-    
-    // If userId is an object with profilePic
-    if (typeof userId === 'object' && userId.profilePic) {
-      return userId.profilePic;
-    }
-    
-    // If userId is an ID and we have the profile pic
-    const id = typeof userId === 'object' ? userId._id : userId;
-    if (commentUsers[id] && commentUsers[id].profilePic) {
-      return commentUsers[id].profilePic;
-    }
-    
-    // Return null if we don't have a profile pic
-    return null;
   };
 
   // Function to post a comment
@@ -1247,35 +1165,44 @@ function VideoPage() {
                 </div>
               ) : comments.length > 0 ? (
                 <div className="space-y-4">
-                  {comments.map((comment, index) => {
-                    const userName = getUserDisplayName(comment.userId);
-                    const profilePic = getUserProfilePic(comment.userId);
-                    
-                    return (
-                      <div key={index} className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                  {comments.map((comment, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                        {comment.userId && typeof comment.userId === 'object' ? (
                           <img 
-                            src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ED5606&color=fff&size=60`}
-                            alt={userName}
+                            src={comment.userId.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId._id || 'User')}&background=ED5606&color=fff&size=60`}
+                            alt="User"
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.target.onerror = null;
                               e.target.src = "/user-avatar.png";
                             }}
                           />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-medium">{userName}</h4>
-                            <span className="text-xs text-gray-400">
-                              {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-300 mt-1">{comment.comment}</p>
-                        </div>
+                        ) : (
+                          <img 
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId || 'User')}&background=ED5606&color=fff&size=60`}
+                            alt="User"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/user-avatar.png";
+                            }}
+                          />
+                        )}
                       </div>
-                    );
-                  })}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium">
+                            {comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId}
+                          </h4>
+                          <span className="text-xs text-gray-400">
+                            {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">{comment.comment}</p>
+                      </div>
+                    </div>
+                  ))}
                   <div ref={commentsEndRef} />
                 </div>
               ) : (
