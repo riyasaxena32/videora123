@@ -126,10 +126,6 @@ function CreatePage() {
                 src={user?.profilePic || "/user-avatar.png"}
                 alt="Profile"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/user-avatar.png";
-                }}
               />
             </button>
             
