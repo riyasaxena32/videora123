@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical, ThumbsDown } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical, ThumbsDown, Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 function VideoPage() {
@@ -27,10 +27,15 @@ function VideoPage() {
   const [likeLoading, setLikeLoading] = useState(false);
   const [viewCount, setViewCount] = useState(0);
   const [viewUpdated, setViewUpdated] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentPosting, setCommentPosting] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
+  const commentsEndRef = useRef(null);
   const { logout, user } = useAuth();
 
   // Custom button styles
@@ -551,6 +556,93 @@ function VideoPage() {
     }
   };
 
+  // Function to fetch comments
+  const fetchComments = async () => {
+    if (!videoId) return;
+    
+    try {
+      setCommentsLoading(true);
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/allcomments`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      
+      const data = await response.json();
+      console.log('Fetched comments:', data);
+      
+      setComments(data.comments || []);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  // Function to post a comment
+  const postComment = async () => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    if (!commentText.trim() || !videoId) return;
+    
+    try {
+      setCommentPosting(true);
+      
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/comment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: user._id,
+          comment: commentText.trim()
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to post comment');
+      }
+      
+      const data = await response.json();
+      console.log('Comment posted successfully:', data);
+      
+      // Update comments list with the new comments from the API response
+      setComments(data.comments || []);
+      
+      // Clear the comment input
+      setCommentText('');
+      
+      // Scroll to the bottom to show the new comment
+      setTimeout(() => {
+        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      
+    } catch (err) {
+      console.error('Error posting comment:', err);
+    } finally {
+      setCommentPosting(false);
+    }
+  };
+
+  // Call fetchComments when the video ID changes
+  useEffect(() => {
+    if (videoId) {
+      fetchComments();
+    }
+  }, [videoId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -1020,30 +1112,89 @@ function VideoPage() {
               )}
             </div>
 
-            {/* Comments Section - Only show if video has comments */}
-            {video.comments && video.comments.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-md font-medium">Comments ({video.comments.length})</h3>
-                  <button className="text-xs text-[#ED5606]">Chat in Video</button>
+            {/* Comments Section */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-md font-medium">Comments {comments.length > 0 ? `(${comments.length})` : ''}</h3>
+                <button className="text-xs text-[#ED5606]">Chat in Video</button>
+              </div>
+              
+              {/* Add comment form */}
+              {user && (
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
+                    <img 
+                      src={user.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=ED5606&color=fff&size=60`}
+                      alt="User"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/user-avatar.png";
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      className="w-full bg-[#1a1a1a] border border-[#333] rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:border-[#ED5606]"
+                      placeholder="Add a comment..."
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          postComment();
+                        }
+                      }}
+                    />
+                    <button 
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-[#222]"
+                      onClick={postComment}
+                      disabled={commentPosting || !commentText.trim()}
+                    >
+                      <Send className={`w-4 h-4 ${commentPosting ? 'opacity-50' : ''}`} />
+                    </button>
+                  </div>
                 </div>
+              )}
+              
+              {/* Comments list */}
+              {commentsLoading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ED5606]"></div>
+                </div>
+              ) : comments.length > 0 ? (
                 <div className="space-y-4">
-                  {video.comments.map((comment, index) => (
+                  {comments.map((comment, index) => (
                     <div key={index} className="flex gap-3">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
-                        <img 
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId || 'User')}&background=ED5606&color=fff&size=60`} 
-                          alt="User"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/user-avatar.png";
-                          }}
-                        />
+                        {comment.userId && typeof comment.userId === 'object' ? (
+                          <img 
+                            src={comment.userId.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId._id || 'User')}&background=ED5606&color=fff&size=60`}
+                            alt="User"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/user-avatar.png";
+                            }}
+                          />
+                        ) : (
+                          <img 
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId || 'User')}&background=ED5606&color=fff&size=60`}
+                            alt="User"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/user-avatar.png";
+                            }}
+                          />
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-medium">{comment.userId}</h4>
+                          <h4 className="text-sm font-medium">
+                            {comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId}
+                          </h4>
                           <span className="text-xs text-gray-400">
                             {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
                           </span>
@@ -1052,9 +1203,14 @@ function VideoPage() {
                       </div>
                     </div>
                   ))}
+                  <div ref={commentsEndRef} />
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center text-sm text-gray-400 py-4">
+                  No comments yet. Be the first to comment!
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
