@@ -219,25 +219,24 @@ const LandingPage = () => {
           <span className="inline-block text-left">Infinite Styles, <br className="sm:hidden" />Endless Creativity</span>
         </h2>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
-          {/* Mobile layout is different - 2 columns instead of 3 */}
+        {/* Desktop Layout - Grid */}
+        <div className="hidden sm:grid grid-cols-3 max-w-6xl mx-auto gap-[2px] relative border-[1px] border-[#333]">
+          {/* Top row */}
           <StyleTile 
             name="Animated" 
             imageSrc="/image 57.png" 
             large={false} 
           />
+          <div className="bg-black flex items-center justify-center p-6 text-center text-xs text-gray-400">
+            <p>Customize the look and feel of your videos with AI-powered styles.</p>
+          </div>
           <StyleTile 
             name="Retro" 
             imageSrc="/image 59.png" 
             large={false} 
           />
 
-          {/* Text block only visible on larger screens */}
-          <div className="hidden sm:flex bg-black items-center justify-center p-6 text-center text-xs text-gray-400">
-            <p>Customize the look and feel of your videos with AI-powered styles.</p>
-          </div>
-
-          {/* More style tiles */}
+          {/* Middle row */}
           <StyleTile 
             name="Cinematic" 
             imageSrc="/image 58.png" 
@@ -248,31 +247,103 @@ const LandingPage = () => {
             imageSrc="/image 60.png" 
             large={false} 
           />
-          
-          {/* Mobile text block - only visible on small screens */}
-          <div className="sm:hidden col-span-2 bg-black flex items-center justify-center p-4 text-center text-xs text-gray-400">
-            <p>Customize the look and feel of your videos with AI-powered styles.</p>
-          </div>
-
-          {/* Last row - different on mobile */}
-          <div className="hidden sm:block bg-black"></div>
           <StyleTile 
             name="Cyberpunk" 
             imageSrc="/image 61.png" 
             large={false} 
           />
+
+          {/* Bottom row */}
+          <div className="bg-black"></div>
           <StyleTile 
             name="Custom" 
             imageSrc="/style-custom.png" 
             large={false} 
           />
-          <div className="hidden sm:block bg-black"></div>
+          <div className="bg-black"></div>
 
           {/* Corner dots - larger and positioned outside the grid */}
           <div className="absolute left-0 top-0 w-2 h-2 -translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
           <div className="absolute right-0 top-0 w-2 h-2 translate-x-1 -translate-y-1 bg-[#E5B992] rounded-full"></div>
           <div className="absolute left-0 bottom-0 w-2 h-2 -translate-x-1 translate-y-1 bg-[#E5B992] rounded-full"></div>
           <div className="absolute right-0 bottom-0 w-2 h-2 translate-x-1 translate-y-1 bg-[#E5B992] rounded-full"></div>
+        </div>
+        
+        {/* Mobile Layout - Vertical Stack */}
+        <div className="sm:hidden max-w-6xl mx-auto relative">
+          <div className="flex flex-col gap-[2px]">
+            {/* Mobile vertical sequence as per image */}
+            <div className="aspect-[3/2] relative overflow-hidden group rounded-lg border border-[#333] mb-2">
+              <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute top-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <img src="/image 57.png" alt="Animated" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+              <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Animated</div>
+            </div>
+            
+            <div className="aspect-[3/2] relative overflow-hidden group rounded-lg border border-[#333] mb-2">
+              <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute top-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <img src="/image 59.png" alt="Retro" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+              <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Retro</div>
+            </div>
+            
+            <div className="aspect-[3/2] relative overflow-hidden group rounded-lg border border-[#333] mb-2">
+              <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute top-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <img src="/image 61.png" alt="Cyberpunk" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+              <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Cyberpunk</div>
+            </div>
+            
+            <div className="aspect-[3/2] relative overflow-hidden group rounded-lg border border-[#333] mb-2">
+              <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute top-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+              <img src="/image 58.png" alt="Cinematic" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+              <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Cinematic</div>
+            </div>
+            
+            {/* Custom style with mini gallery below */}
+            <div className="relative">
+              <div className="aspect-[3/2] relative overflow-hidden group rounded-lg border border-[#333] mb-1">
+                <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+                <div className="absolute top-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+                <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+                <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
+                <img src="/style-custom.png" alt="Custom" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+                <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Custom</div>
+              </div>
+              
+              {/* Small gallery below Custom */}
+              <div className="grid grid-cols-3 gap-1">
+                <div className="aspect-square relative overflow-hidden rounded border border-[#333]">
+                  <img src="/creator-thumb-1.png" alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="aspect-square relative overflow-hidden rounded border border-[#333]">
+                  <img src="/creator-thumb-2.png" alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="aspect-square relative overflow-hidden rounded border border-[#333]">
+                  <img src="/creator-thumb-3.png" alt="" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Text explanation */}
+            <div className="mt-4 text-center text-xs text-gray-400 py-2">
+              <p>Customize the look and feel of your videos with AI-powered styles.</p>
+            </div>
+          </div>
         </div>
       </section>
 
