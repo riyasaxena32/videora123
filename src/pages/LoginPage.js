@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Menu } from 'lucide-react';
 import { initiateGoogleAuth } from '../lib/auth';
@@ -38,7 +38,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header with navigation */}
       <header className="flex items-center justify-between px-6 py-3 w-full">
         <Link to="/" className="flex items-center">
@@ -52,36 +52,35 @@ function LoginPage() {
           <Link to="/community" className="hover:text-[#ED5606]">Community</Link>
         </div>
         
-        {/* Desktop: Get Started button, Mobile: Menu icon */}
-        <div className="flex items-center">
+        {/* Desktop CTA button */}
+        <div className="hidden md:block">
           <Link 
             to="/" 
             style={gradientButtonStyle}
-            className="hidden md:flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
+            className="flex items-center gap-2 text-white px-6 py-2 text-sm font-medium"
           >
             Get Started
             <ArrowRight className="w-4 h-4" />
           </Link>
-          
-          <button className="md:hidden text-white">
-            <Menu className="w-6 h-6" />
-          </button>
         </div>
+        
+        {/* Mobile menu button */}
+        <button className="md:hidden text-white">
+          <Menu className="w-6 h-6" />
+        </button>
       </header>
       
-      {/* Main content - Desktop: Row layout, Mobile: Column layout */}
-      <div className="flex flex-col md:flex-row items-center justify-between px-6 md:px-20 py-10 md:py-20">
-        {/* Left content with text and anime girl */}
-        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start justify-center">
-          {/* Desktop: Left-aligned, Mobile: Centered */}
-          <div className="mb-8 text-center md:text-left">
-            <h2 className="text-[#ED5606] text-sm md:text-xl mb-1 md:mb-2">Welcome to</h2>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between px-4 md:px-20 py-8 md:py-20">
+        {/* Content with text and anime girl - Mobile: centered and stacked */}
+        <div className="w-full md:w-1/2 flex flex-col items-center justify-center mb-4 md:mb-0">
+          <div className="mb-4 md:mb-8 text-center">
+            <h2 className="text-[#ED5606] text-base md:text-xl mb-1 md:mb-2">Welcome to</h2>
             <h1 className="text-4xl md:text-7xl font-bold mb-2 md:mb-4">VIDEORA</h1>
-            <p className="text-sm md:text-xl">Where <span className="text-[#ED5606]">AI</span> Meets Creativity</p>
+            <p className="text-lg md:text-xl">Where <span className="text-[#ED5606]">AI</span> Meets Creativity</p>
           </div>
           
-          {/* Image shown in both views but sized differently */}
-          <div className="flex justify-center md:justify-start my-4">
+          <div className="flex justify-center">
             <img 
               src="/image 66.png" 
               alt="Anime girl with laptop" 
@@ -90,11 +89,10 @@ function LoginPage() {
           </div>
         </div>
         
-        {/* Right side with login form */}
-        <div className="w-full md:w-2/5 mt-8 md:mt-0">
-          {/* Mobile: Border style, Desktop: Background style */}
-          <div className="md:bg-[#0A0A0A] border border-[#ED5606]/30 md:border-[#1A1A1A] rounded-lg p-6 md:p-8 max-w-md mx-auto md:mr-0">
-            <h2 className="text-lg md:text-xl font-medium mb-6 md:mb-8 text-center">Get started with us</h2>
+        {/* Login form - Mobile: full width, simplified */}
+        <div className="w-full md:w-2/5 flex flex-col items-center md:items-start">
+          <div className="bg-transparent md:bg-[#0A0A0A] border-0 md:border md:border-[#1A1A1A] rounded-lg p-4 md:p-8 w-full max-w-md mx-auto md:mr-0">
+            <h2 className="text-lg md:text-xl font-medium mb-4 md:mb-8 text-center">Get started with us</h2>
             
             <p className="mb-4 text-sm text-center">Sign in or sign up using</p>
             
