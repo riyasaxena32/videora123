@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical, ThumbsDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 function VideoPage() {
@@ -20,6 +20,11 @@ function VideoPage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showRelatedMobile, setShowRelatedMobile] = useState(false);
+  const [videoLikes, setVideoLikes] = useState(0);
+  const [videoDislikes, setVideoDislikes] = useState(0);
+  const [userLiked, setUserLiked] = useState(false);
+  const [userDisliked, setUserDisliked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -305,6 +310,17 @@ function VideoPage() {
     }
   }, [video]);
 
+  // New effect to update likes/dislikes when video changes
+  useEffect(() => {
+    if (video) {
+      setVideoLikes(video.likes || 0);
+      setVideoDislikes(video.dislikes || 0);
+      // Reset user interaction states when video changes
+      setUserLiked(false);
+      setUserDisliked(false);
+    }
+  }, [video]);
+
   // Function to follow a creator
   const followCreator = async (creatorId) => {
     if (!user) {
@@ -356,6 +372,112 @@ function VideoPage() {
       // Show error notification (optional)
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  // Function to handle like action
+  const handleLike = async () => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setLikeLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/like`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: user._id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to like video');
+      }
+
+      const data = await response.json();
+      
+      // Update like status and count
+      setVideoLikes(data.TotalLike || videoLikes + 1);
+      setUserLiked(true);
+      
+      // If user previously disliked, remove dislike
+      if (userDisliked) {
+        setUserDisliked(false);
+        setVideoDislikes(prev => Math.max(0, prev - 1));
+      }
+
+      console.log('Successfully liked video:', data.message);
+    } catch (err) {
+      console.error('Error liking video:', err);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  // Function to handle dislike action
+  const handleDislike = async () => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setLikeLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/dislike`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: user._id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to dislike video');
+      }
+
+      const data = await response.json();
+      
+      // Update dislike status and count
+      setVideoDislikes(data.TotalDislike || videoDislikes + 1);
+      setUserDisliked(true);
+      
+      // If user previously liked, remove like
+      if (userLiked) {
+        setUserLiked(false);
+        setVideoLikes(prev => Math.max(0, prev - 1));
+      }
+
+      console.log('Successfully disliked video:', data.message);
+    } catch (err) {
+      console.error('Error disliking video:', err);
+    } finally {
+      setLikeLoading(false);
     }
   };
 
@@ -727,10 +849,24 @@ function VideoPage() {
               
               {/* Action Buttons */}
               <div className="flex items-center gap-3 overflow-x-auto py-1 md:py-0 md:overflow-visible">
-                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1 whitespace-nowrap">
-                  <ThumbsUp className="w-4 h-4" />
-                  <span className="text-xs mr-1">Like {video.likes > 0 ? `(${video.likes})` : ''}</span>
-                </button>
+                <div className="bg-[#1a1a1a] rounded-full flex overflow-hidden">
+                  <button 
+                    className={`p-2 flex items-center gap-1 whitespace-nowrap transition-colors ${userLiked ? 'bg-[#270E00] text-[#ED5606]' : 'text-white hover:bg-[#222]'}`}
+                    onClick={handleLike}
+                    disabled={likeLoading}
+                  >
+                    <ThumbsUp className={`w-4 h-4 ${userLiked ? 'fill-[#ED5606] text-[#ED5606]' : ''}`} />
+                    <span className="text-xs mr-1">Like{videoLikes > 0 ? ` ${videoLikes}` : ''}</span>
+                  </button>
+                  <div className="w-px h-full bg-[#333]"></div>
+                  <button 
+                    className={`p-2 flex items-center gap-1 whitespace-nowrap transition-colors ${userDisliked ? 'bg-[#270E00] text-[#ED5606]' : 'text-white hover:bg-[#222]'}`}
+                    onClick={handleDislike}
+                    disabled={likeLoading}
+                  >
+                    <ThumbsDown className={`w-4 h-4 ${userDisliked ? 'fill-[#ED5606] text-[#ED5606]' : ''}`} />
+                  </button>
+                </div>
                 <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1 whitespace-nowrap">
                   <Share className="w-4 h-4" />
                   <span className="text-xs mr-1">Share</span>
