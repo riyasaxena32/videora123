@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical, ThumbsDown, Send } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical, ThumbsDown, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 function VideoPage() {
@@ -31,6 +31,7 @@ function VideoPage() {
   const [commentText, setCommentText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentPosting, setCommentPosting] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -636,6 +637,48 @@ function VideoPage() {
     }
   };
 
+  // Function to delete a comment
+  const deleteComment = async (commentId) => {
+    if (!user || !videoId || !commentId) return;
+    
+    try {
+      setDeleteLoading(true);
+      
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/comment/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: user._id
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete comment');
+      }
+      
+      const data = await response.json();
+      console.log('Comment deleted successfully:', data.message);
+      
+      // Remove the deleted comment from the state
+      setComments(prevComments => prevComments.filter(comment => comment._id !== commentId));
+      
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   // Call fetchComments when the video ID changes
   useEffect(() => {
     if (videoId) {
@@ -1166,7 +1209,7 @@ function VideoPage() {
               ) : comments.length > 0 ? (
                 <div className="space-y-4">
                   {comments.map((comment, index) => (
-                    <div key={index} className="flex gap-3">
+                    <div key={index} className="flex gap-3 group">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
                         {comment.userId && typeof comment.userId === 'object' ? (
                           <img 
@@ -1190,14 +1233,32 @@ function VideoPage() {
                           />
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-medium">
-                            {comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId}
-                          </h4>
-                          <span className="text-xs text-gray-400">
-                            {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
-                          </span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-medium">
+                              {comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId}
+                            </h4>
+                            <span className="text-xs text-gray-400">
+                              {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
+                            </span>
+                          </div>
+                          
+                          {/* Delete button - only show for the user's own comments */}
+                          {user && (
+                            (comment.userId === user._id || 
+                             (comment.userId && typeof comment.userId === 'object' && comment.userId._id === user._id)
+                            ) && (
+                              <button 
+                                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => deleteComment(comment._id)}
+                                disabled={deleteLoading}
+                                title="Delete comment"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )
+                          )}
                         </div>
                         <p className="text-sm text-gray-300 mt-1">{comment.comment}</p>
                       </div>
