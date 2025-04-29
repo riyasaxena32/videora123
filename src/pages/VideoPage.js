@@ -557,71 +557,76 @@ function VideoPage() {
     }
   };
 
-  // Add function to fetch user/creator details
-  const fetchUserDetails = async (userId) => {
-    if (!userId || commentUsers[userId]) return;
-    
-    try {
-      const response = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
-      if (!response.ok) {
-        throw new Error('Failed to fetch creators');
-      }
-      
-      const data = await response.json();
-      const creatorsList = data.creator || [];
-      
-      // Find the creator by ID
-      const creator = creatorsList.find(c => c._id === userId);
-      
-      if (creator) {
-        // Update commentUsers with the new user data
-        setCommentUsers(prev => ({
-          ...prev,
-          [userId]: {
-            name: creator.name || 'Unknown User',
-            profilePic: creator.profilePic && creator.profilePic.length > 0 ? creator.profilePic[0] : null
-          }
-        }));
-      }
-    } catch (err) {
-      console.error('Error fetching user details:', err);
-    }
-  };
-
-  // Function to fetch comments
+  // Function to fetch comments and user details
   const fetchComments = async () => {
     if (!videoId) return;
     
     try {
       setCommentsLoading(true);
-      const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/allcomments`);
       
-      if (!response.ok) {
+      // Fetch comments
+      const commentsResponse = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/allcomments`);
+      
+      if (!commentsResponse.ok) {
         throw new Error('Failed to fetch comments');
       }
       
-      const data = await response.json();
-      console.log('Fetched comments:', data);
+      const commentsData = await commentsResponse.json();
+      const commentsArray = commentsData.comments || [];
       
-      setComments(data.comments || []);
+      console.log('Fetched comments:', commentsData);
+      setComments(commentsArray);
       
-      // Fetch user details for each comment
-      const commentsArray = data.comments || [];
+      // Get unique user IDs from comments
+      const userIds = new Set();
       commentsArray.forEach(comment => {
-        // Check if userId is an object or a string
         const userId = typeof comment.userId === 'object' ? comment.userId._id : comment.userId;
         if (userId) {
-          fetchUserDetails(userId);
+          userIds.add(userId);
         }
       });
+      
+      // Only fetch creators if we have user IDs and we don't already have their details
+      const missingUserIds = Array.from(userIds).filter(id => !commentUsers[id]);
+      
+      if (missingUserIds.length > 0) {
+        // Fetch all creators in one call
+        const creatorsResponse = await fetch('https://videora-ai.onrender.com/api/creator/getcreator');
+        
+        if (!creatorsResponse.ok) {
+          throw new Error('Failed to fetch creators');
+        }
+        
+        const creatorsData = await creatorsResponse.json();
+        const creatorsList = creatorsData.creator || [];
+        
+        // Create a map of all relevant creators
+        const newUserDetails = {};
+        creatorsList.forEach(creator => {
+          if (userIds.has(creator._id)) {
+            newUserDetails[creator._id] = {
+              name: creator.name || 'Unknown User',
+              profilePic: creator.profilePic && creator.profilePic.length > 0 ? creator.profilePic[0] : null
+            };
+          }
+        });
+        
+        // Update state with all creators at once
+        if (Object.keys(newUserDetails).length > 0) {
+          setCommentUsers(prev => ({
+            ...prev,
+            ...newUserDetails
+          }));
+        }
+      }
     } catch (err) {
-      console.error('Error fetching comments:', err);
+      console.error('Error fetching comments and user details:', err);
     } finally {
       setCommentsLoading(false);
     }
   };
 
-  // Helper function to get user display name
+  // Helper function to get user display name - update to not call fetchUserDetails
   const getUserDisplayName = (userId) => {
     if (!userId) return 'Unknown User';
     
@@ -633,8 +638,7 @@ function VideoPage() {
       return commentUsers[id].name;
     }
     
-    // Return ID as fallback but fetch the details if not already fetching
-    fetchUserDetails(id);
+    // Return generic name as fallback
     return 'User';
   };
   
