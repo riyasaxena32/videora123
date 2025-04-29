@@ -1212,8 +1212,8 @@ function VideoPage() {
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#222] flex-shrink-0">
                         {comment.userId && typeof comment.userId === 'object' ? (
                           <img 
-                            src={comment.userId.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId._id || 'User')}&background=ED5606&color=fff&size=60`}
-                            alt="User"
+                            src={comment.userId.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userId.name || comment.userId._id || 'User')}&background=ED5606&color=fff&size=60`}
+                            alt={comment.userId.name || "User"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.target.onerror = null;
@@ -1236,7 +1236,9 @@ function VideoPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-medium">
-                              {comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId}
+                              {comment.userId && typeof comment.userId === 'object' && comment.userId.name 
+                                ? comment.userId.name 
+                                : (comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId)}
                             </h4>
                             <span className="text-xs text-gray-400">
                               {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
