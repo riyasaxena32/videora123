@@ -257,7 +257,7 @@ const LandingPage = () => {
           <div className="bg-black"></div>
           <StyleTile 
             name="Custom" 
-            imageSrc="/style-custom.png" 
+            imageSrc="/custom-collage.png" 
             large={false} 
           />
           <div className="bg-black"></div>
@@ -320,7 +320,7 @@ const LandingPage = () => {
                 <div className="absolute top-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
                 <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
                 <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-[#E5B992] rounded-full"></div>
-                <img src="/style-custom.png" alt="Custom" className="w-full h-full object-cover" />
+                <img src="/custom-collage.png" alt="Custom" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
                 <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Custom</div>
               </div>
