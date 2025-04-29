@@ -188,17 +188,18 @@ function VideoPage() {
         // Set the video
         setVideo(foundVideo);
         
-        // Set video likes/dislikes counts
-        setVideoLikes(foundVideo.likes || 0);
-        setVideoDislikes(foundVideo.dislikes || 0);
+        // Set video likes/dislikes counts from TotalLike and TotalDislike fields
+        setVideoLikes(foundVideo.TotalLike || 0);
+        setVideoDislikes(foundVideo.TotalDislike || 0);
         
         // Check if the current user has liked or disliked this video
-        if (user && foundVideo.likedBy && Array.isArray(foundVideo.likedBy)) {
-          setUserLiked(foundVideo.likedBy.includes(user._id));
+        // The likes and dislikes fields are arrays of user IDs
+        if (user && foundVideo.likes && Array.isArray(foundVideo.likes)) {
+          setUserLiked(foundVideo.likes.includes(user._id));
         }
         
-        if (user && foundVideo.dislikedBy && Array.isArray(foundVideo.dislikedBy)) {
-          setUserDisliked(foundVideo.dislikedBy.includes(user._id));
+        if (user && foundVideo.dislikes && Array.isArray(foundVideo.dislikes)) {
+          setUserDisliked(foundVideo.dislikes.includes(user._id));
         }
         
         // Set related videos (videos from the same creator)
