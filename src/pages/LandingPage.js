@@ -324,19 +324,6 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
                 <div className="absolute bottom-4 left-4 text-sm text-white font-medium">Custom</div>
               </div>
-              
-              {/* Small gallery below Custom */}
-              <div className="grid grid-cols-3 gap-1">
-                <div className="aspect-square relative overflow-hidden rounded border border-[#333]">
-                  <img src="/creator-thumb-1.png" alt="" className="w-full h-full object-cover" />
-                </div>
-                <div className="aspect-square relative overflow-hidden rounded border border-[#333]">
-                  <img src="/creator-thumb-2.png" alt="" className="w-full h-full object-cover" />
-                </div>
-                <div className="aspect-square relative overflow-hidden rounded border border-[#333]">
-                  <img src="/creator-thumb-3.png" alt="" className="w-full h-full object-cover" />
-                </div>
-              </div>
             </div>
             
             {/* Text explanation */}
