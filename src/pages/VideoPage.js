@@ -1193,7 +1193,9 @@ function VideoPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-medium">
-                            {comment.userId && typeof comment.userId === 'object' ? comment.userId._id : comment.userId}
+                            {comment.userId && typeof comment.userId === 'object' 
+                              ? (comment.userId.name || 'User') 
+                              : 'User'}
                           </h4>
                           <span className="text-xs text-gray-400">
                             {comment.timestamp ? formatDateAgo(comment.timestamp) : 'Recently'}
