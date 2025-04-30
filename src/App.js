@@ -8,6 +8,7 @@ import CreatorPage from './pages/CreatorPage';
 import VideoPage from './pages/VideoPage';
 import UserProfile from './pages/UserProfile';
 import LandingPage from './pages/LandingPage';
+import Trending from './pages/Trending';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -27,6 +28,11 @@ function App() {
         <Route path="/home" element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/trending" element={
+          <ProtectedRoute>
+            <Trending />
           </ProtectedRoute>
         } />
         <Route path="/create" element={
