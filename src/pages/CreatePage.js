@@ -594,9 +594,6 @@ function GenerateVideoContent({ gradientButtonStyle }) {
         duration: videoData.duration || 0,
         uploadedBy: user?.name || 'Anonymous User',
         views: 0,
-        likes: 0,
-        dislikes: 0,
-        comments: [],
         isPublic: videoData.isPublic,
         // Add the new fields
         style: selectedStyle,
