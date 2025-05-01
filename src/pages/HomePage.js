@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X, LogOut } from "lucide-react";
+import { Bell, ChevronRight, Clock, Info, MessageSquareShare, Plus, Settings, User, Menu, X, LogOut, Home, Trending, Heart } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
 
@@ -490,17 +490,11 @@ function HomePage() {
                 <h3 className="text-xs font-medium text-[#b0b0b0]">You</h3>
                 <nav className="space-y-1">
                   {[
-                    { name: "Recent", icon: <Clock className="w-4 h-4" /> },
+                    { name: "Recent", icon: <Clock className="w-4 h-4" />, path: "/home" },
                     { name: "Shared", icon: <MessageSquareShare className="w-4 h-4" /> },
-                    { 
-                      name: "Your Videos", 
-                      icon: <User className="w-4 h-4" />,
-                      action: () => {
-                        const userId = user?.name ? user.name.toLowerCase().replace(/\s+/g, '-') : 'profile';
-                        navigate(`/creator/${userId}`);
-                      }
-                    },
-                    { name: "Watch Later", icon: <Clock className="w-4 h-4" /> },
+                    { name: "Your Videos", icon: <User className="w-4 h-4" />, path: `/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}` },
+                    { name: "Watch Later", icon: <Clock className="w-4 h-4" />, path: "/watch-later" },
+                    { name: "Saved", icon: <Heart className="w-4 h-4" />, path: "/saved-videos" }
                   ].map((item) => (
                     <a
                       key={item.name}
@@ -513,8 +507,8 @@ function HomePage() {
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveSidebarItem(item.name);
-                        if (item.action) {
-                          item.action();
+                        if (item.path) {
+                          navigate(item.path);
                         }
                         setMobileMenuOpen(false);
                         setSidebarCollapsed(true);
@@ -564,17 +558,11 @@ function HomePage() {
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
               <nav className="space-y-1">
                 {[
-                  { name: "Recent", icon: <Clock className="w-4 h-4" /> },
+                  { name: "Recent", icon: <Clock className="w-4 h-4" />, path: "/home" },
                   { name: "Shared", icon: <MessageSquareShare className="w-4 h-4" /> },
-                  { 
-                    name: "Your Videos", 
-                    icon: <User className="w-4 h-4" />,
-                    action: () => {
-                      const userId = user?.name ? user.name.toLowerCase().replace(/\s+/g, '-') : 'profile';
-                      navigate(`/creator/${userId}`);
-                    }
-                  },
-                  { name: "Watch Later", icon: <Clock className="w-4 h-4" /> },
+                  { name: "Your Videos", icon: <User className="w-4 h-4" />, path: `/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}` },
+                  { name: "Watch Later", icon: <Clock className="w-4 h-4" />, path: "/watch-later" },
+                  { name: "Saved", icon: <Heart className="w-4 h-4" />, path: "/saved-videos" }
                 ].map((item) => (
                   <a
                     key={item.name}
@@ -587,8 +575,8 @@ function HomePage() {
                     onClick={(e) => {
                       e.preventDefault();
                       setActiveSidebarItem(item.name);
-                      if (item.action) {
-                        item.action();
+                      if (item.path) {
+                        navigate(item.path);
                       }
                       if (isMobile) {
                         setSidebarCollapsed(true);

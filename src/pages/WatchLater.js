@@ -1,0 +1,321 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, User, Bell, ChevronDown, Menu, Clock, LogOut, Search, ArrowUpRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+
+function WatchLater() {
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  // Custom button styles
+  const gradientButtonStyle = {
+    background: `
+      linear-gradient(0deg, #270E00, #270E00),
+      conic-gradient(from 0deg at 50% 38.89%, #ED5606 0deg, #1F1F1F 160.78deg, #ED5606 360deg),
+      linear-gradient(180deg, rgba(69, 24, 0, 0.3) 74.07%, rgba(217, 75, 0, 0.3) 100%),
+      linear-gradient(270deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%),
+      linear-gradient(90deg, rgba(69, 24, 0, 0.3) 91.54%, rgba(217, 75, 0, 0.3) 100%)
+    `,
+    border: '1px solid #ED5606',
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
+    borderRadius: '9999px'
+  };
+
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Format date to show how long ago
+  const formatDateAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) {
+      return 'Today';
+    } else if (diffInDays === 1) {
+      return 'Yesterday';
+    } else if (diffInDays < 30) {
+      return `${diffInDays} days ago`;
+    } else if (diffInDays < 365) {
+      const months = Math.floor(diffInDays / 30);
+      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    } else {
+      const years = Math.floor(diffInDays / 365);
+      return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+    }
+  };
+
+  // Fetch watch later videos
+  useEffect(() => {
+    const fetchWatchLaterVideos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await fetch('https://videora-ai.onrender.com/videos/get/watch-later', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch watch later videos');
+        }
+
+        const data = await response.json();
+        console.log('Watch Later videos:', data);
+        
+        // Set the videos state with the watch later videos
+        setVideos(data.watchLater || []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching watch later videos:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchWatchLaterVideos();
+  }, []);
+
+  // Component for individual video card
+  const VideoCard = ({ video }) => {
+    return (
+      <div 
+        className="relative cursor-pointer group" 
+        onClick={() => navigate(`/video/${video._id}`)}
+      >
+        <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
+          <img 
+            src={video.thumbnailLogoUrl || "/image 28.png"} 
+            alt={video.name} 
+            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "/image 28.png";
+            }}
+          />
+          
+          {/* Category tag */}
+          <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs text-white">
+            {video.category || "Unknown"}
+          </div>
+          
+          {/* Video indicator */}
+          {video.videoURL && (
+            <div className="absolute top-2 left-2 bg-[#ED5606] px-1.5 py-0.5 rounded text-xs text-white flex items-center gap-0.5">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 3L19 12L5 21V3Z" fill="white"/>
+              </svg>
+              Video
+            </div>
+          )}
+          
+          {/* Duration indicator */}
+          {video.duration && (
+            <div className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white">
+              {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
+            </div>
+          )}
+          
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        </div>
+        <div className="mt-2">
+          <h3 className="text-sm font-medium truncate">{video.caption || video.name || "Untitled"}</h3>
+          <p className="text-xs text-[#b0b0b0]">{video.uploadedBy || "Unknown"} • {video.views || 0} views</p>
+          <p className="text-xs text-[#b0b0b0]">{formatDateAgo(video.uploadDate)}</p>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Top Navigation Bar */}
+      <header className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] w-full bg-black">
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center">
+            <img src="/VIDEORA.svg" alt="VIDEORA" className="h-4" />
+          </Link>
+        </div>
+        
+        {/* Center navigation links */}
+        <div className="hidden md:flex items-center justify-center flex-1">
+          <nav className="flex items-center gap-8">
+            {["Home", "Trending", "Genre", "Browse"].map((item) => (
+              <a
+                key={item}
+                href="#"
+                className={`text-sm font-medium transition-colors ${
+                  item === "Home" ? "text-white" : "text-[#b0b0b0] hover:text-white"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (item === "Home") {
+                    navigate('/home');
+                  } else if (item === "Trending") {
+                    navigate('/trending');
+                  } else {
+                    navigate(`/${item.toLowerCase()}`);
+                  }
+                }}
+              >
+                {item}
+              </a>
+            ))}
+          </nav>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <button 
+            style={gradientButtonStyle}
+            className="flex items-center gap-2 text-white px-4 py-1.5 text-sm transition-colors font-medium"
+            onClick={() => navigate('/create')}
+          >
+            Create <Plus className="w-4 h-4" />
+          </button>
+          
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#270E00] hover:border-[#ED5606] transition-colors focus:outline-none"
+              onClick={toggleProfileDropdown}
+            >
+              <img
+                src={user?.profilePic || "/user-avatar.png"}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </button>
+            
+            {/* Dropdown menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333] rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="py-2">
+                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors">
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    User Profile
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1A1A1A] transition-colors"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <LogOut className="w-4 h-4" />
+                    </div>
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <button className="w-9 h-9 flex items-center justify-center bg-[#270E00] hover:bg-[#3a1500] rounded-full transition-colors">
+            <Bell className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Page Content */}
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-6">
+        {/* Header with Search */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-8 mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <div className="p-1.5 bg-[#270E00] rounded-md">
+              <Clock className="w-5 h-5 text-[#ED5606]" />
+            </div>
+            Watch Later
+          </h1>
+          <div className="relative max-w-md w-full">
+            <input 
+              type="text" 
+              className="w-full bg-[#1a1a1a] border border-[#333] rounded-full px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-[#ED5606] pr-12"
+              placeholder="Search watch later videos..."
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-[#777]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="mb-10">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ED5606]"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 bg-[#1a1a1a] rounded-lg">
+              <h3 className="text-xl font-medium text-red-500 mb-2">Error</h3>
+              <p className="text-white/70">{error}</p>
+              <button 
+                className="mt-4 bg-[#2a2a2a] hover:bg-[#333] transition-colors px-4 py-2 rounded-md"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </button>
+            </div>
+          ) : videos.length === 0 ? (
+            <div className="text-center py-12 bg-[#1a1a1a] rounded-lg">
+              <h3 className="text-xl font-medium mb-2">No Watch Later Videos</h3>
+              <p className="text-white/70 mb-4">You haven't added any videos to watch later</p>
+              <button 
+                className="bg-[#ED5606] text-white px-4 py-2 rounded-full hover:bg-[#c84805] transition-colors flex items-center gap-2 mx-auto"
+                onClick={() => navigate('/home')}
+              >
+                Explore Videos
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Video Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {videos.map((video) => (
+                  <VideoCard key={video._id} video={video} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default WatchLater; 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, User, Bell, ChevronRight, Menu, LogOut, Clock, MessageSquareShare } from 'lucide-react';
+import { Plus, User, Bell, ChevronRight, Menu, LogOut, Clock, MessageSquareShare, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 // Components for consistency with other pages
@@ -860,14 +860,15 @@ function CreatorPage() {
               <h3 className="text-xs font-medium text-[#b0b0b0] sidebar-heading">You</h3>
               <nav className="space-y-1">
                 {[
-                  { name: "Recent", icon: <Clock className="w-4 h-4" /> },
+                  { name: "Recent", icon: <Clock className="w-4 h-4" />, path: "/home" },
                   { name: "Shared", icon: <MessageSquareShare className="w-4 h-4" /> },
                   { 
                     name: "Your Videos", 
                     icon: <User className="w-4 h-4" />,
-                    action: () => navigate(`/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`)
+                    path: `/creator/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}`
                   },
-                  { name: "Watch Later", icon: <Clock className="w-4 h-4" /> },
+                  { name: "Watch Later", icon: <Clock className="w-4 h-4" />, path: "/watch-later" },
+                  { name: "Saved", icon: <Heart className="w-4 h-4" />, path: "/saved-videos" }
                 ].map((item) => (
                   <a
                     key={item.name}
@@ -880,8 +881,8 @@ function CreatorPage() {
                     onClick={(e) => {
                       e.preventDefault();
                       setActiveSidebarItem(item.name);
-                      if (item.action) {
-                        item.action();
+                      if (item.path) {
+                        navigate(item.path);
                       }
                       if (isMobile) {
                         setSidebarCollapsed(true);

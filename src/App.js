@@ -9,6 +9,8 @@ import VideoPage from './pages/VideoPage';
 import UserProfile from './pages/UserProfile';
 import LandingPage from './pages/LandingPage';
 import Trending from './pages/Trending';
+import SavedVideos from './pages/SavedVideos';
+import WatchLater from './pages/WatchLater';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -53,6 +55,16 @@ function App() {
         <Route path="/profile" element={
           <ProtectedRoute>
             <UserProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/saved-videos" element={
+          <ProtectedRoute>
+            <SavedVideos />
+          </ProtectedRoute>
+        } />
+        <Route path="/watch-later" element={
+          <ProtectedRoute>
+            <WatchLater />
           </ProtectedRoute>
         } />
         
