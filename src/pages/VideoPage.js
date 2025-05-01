@@ -1134,8 +1134,8 @@ function VideoPage() {
                       <div className="flex items-center gap-2 relative" ref={volumeControlRef}>
                         <button 
                           className="text-white hover:text-[#ED5606]"
-                          onClick={handleVolumeButtonClick}
-                          title={isMuted ? "Unmute (double-click)" : "Mute (double-click)"}
+                          onClick={toggleMute}
+                          title={isMuted ? "Unmute" : "Mute"}
                         >
                           {isMuted ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -1153,27 +1153,19 @@ function VideoPage() {
                           )}
                         </button>
                         
-                        {/* Volume slider - appears when the sound button is clicked */}
-                        {showVolumeSlider && (
-                          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/90 p-2 rounded-md shadow-lg z-10 w-24">
-                            <input 
-                              type="range" 
-                              min="0" 
-                              max="1" 
-                              step="0.01" 
-                              value={volume}
-                              onChange={handleVolumeChange}
-                              className="w-full h-1 rounded-full appearance-none bg-[#333]"
-                              style={{
-                                backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
-                              }}
-                            />
-                            <div className="flex justify-between mt-1 text-[10px] text-gray-400">
-                              <span>0</span>
-                              <span>100</span>
-                            </div>
-                          </div>
-                        )}
+                        {/* Volume slider - horizontal next to the speaker icon */}
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="1" 
+                          step="0.01" 
+                          value={volume}
+                          onChange={handleVolumeChange}
+                          className="w-16 h-1 rounded-full appearance-none bg-[#333]"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
+                          }}
+                        />
                       </div>
 
                       {/* Time display */}
