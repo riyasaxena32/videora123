@@ -1107,6 +1107,10 @@ function VideoPage() {
             
             {/* Video Description */}
             <div className="mb-6 bg-[#101010] p-3 rounded-lg">
+              <div className="text-sm text-gray-400 mb-2 flex items-center">
+                <span className="mr-2">{viewCount || video.views || 0} views</span>
+                {video.uploadDate && <span>• {formatDateAgo(video.uploadDate)}</span>}
+              </div>
               <p className="text-sm text-gray-300 mb-2">
                 {video.description || video.prompt || 'No description provided.'}
               </p>
