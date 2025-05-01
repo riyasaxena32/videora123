@@ -573,7 +573,21 @@ function Trending() {
                                     e.target.src = "/user-avatar.png";
                                   }}
                                 />
-                                <span className="text-sm">{videos[0].uploadedBy}</span>
+                                <span 
+                                  className="text-sm cursor-pointer hover:text-[#ED5606] transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Find creator in the creators list
+                                    const creator = creators.find(c => 
+                                      c.name.toLowerCase() === videos[0].uploadedBy.toLowerCase()
+                                    );
+                                    // Create URL-friendly version of the creator name
+                                    const creatorId = creator?.id || videos[0].uploadedBy.toLowerCase().replace(/\s+/g, '-');
+                                    navigate(`/creator/${creatorId}`);
+                                  }}
+                                >
+                                  {videos[0].uploadedBy}
+                                </span>
                               </>
                             );
                           })()}
