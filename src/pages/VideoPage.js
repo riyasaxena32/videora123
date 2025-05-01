@@ -1040,18 +1040,34 @@ function VideoPage() {
                   </div>
                 )}
 
+                {/* Center play button overlay - visible when paused or on hover */}
+                {(!isPlaying || showControls) && (
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                    onClick={togglePlay}
+                  >
+                    {!isPlaying && (
+                      <div className="w-20 h-20 flex items-center justify-center bg-black/40 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#ED5606" stroke="none">
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Custom video controls */}
                 <div 
                   className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
                 >
                   {/* Progress bar */}
                   <div 
-                    className="w-full h-1 bg-[#333] rounded-full mb-3 cursor-pointer" 
+                    className="w-full h-1 bg-[#222] mb-3 cursor-pointer" 
                     onClick={handleProgressBarClick}
                     ref={progressBarRef}
                   >
                     <div 
-                      className="h-full bg-[#ED5606] rounded-full relative"
+                      className="h-full bg-[#ED5606] relative"
                       style={{ width: `${videoDuration ? (currentTime / videoDuration) * 100 : 0}%` }}
                     >
                       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#ED5606] rounded-full transform translate-x-1/2"></div>
@@ -1059,10 +1075,10 @@ function VideoPage() {
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      {/* Play/Pause button */}
+                    <div className="flex items-center gap-4">
+                      {/* Play/Pause button in bottom left */}
                       <button 
-                        className="w-10 h-10 flex items-center justify-center text-white bg-[#ED5606] rounded-full hover:bg-[#ff6a1a] transition-colors"
+                        className="text-white hover:text-[#ED5606]"
                         onClick={togglePlay}
                       >
                         {isPlaying ? (
@@ -1077,10 +1093,25 @@ function VideoPage() {
                         )}
                       </button>
 
+                      {/* Skip button */}
+                      <button 
+                        className="text-white hover:text-[#ED5606]"
+                        onClick={() => {
+                          if (videoRef.current) {
+                            videoRef.current.currentTime += 10;
+                          }
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                          <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                          <line x1="19" y1="5" x2="19" y2="19"></line>
+                        </svg>
+                      </button>
+
                       {/* Volume control */}
                       <div className="flex items-center gap-2">
                         <button 
-                          className="w-8 h-8 flex items-center justify-center text-white hover:text-[#ED5606] transition-colors"
+                          className="text-white hover:text-[#ED5606]"
                           onClick={toggleMute}
                         >
                           {isMuted ? (
@@ -1098,18 +1129,6 @@ function VideoPage() {
                             </svg>
                           )}
                         </button>
-                        <input 
-                          type="range" 
-                          min="0" 
-                          max="1" 
-                          step="0.01" 
-                          value={volume}
-                          onChange={handleVolumeChange}
-                          className="w-16 h-1 rounded-full appearance-none bg-[#333]"
-                          style={{
-                            backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
-                          }}
-                        />
                       </div>
 
                       {/* Time display */}
@@ -1118,10 +1137,10 @@ function VideoPage() {
                       </div>
                     </div>
 
-                    {/* Right side controls - can add more if needed */}
+                    {/* Right side controls */}
                     <div className="flex items-center">
                       <button 
-                        className="w-8 h-8 flex items-center justify-center text-white hover:text-[#ED5606] transition-colors"
+                        className="text-white hover:text-[#ED5606]"
                         onClick={() => {
                           if (videoRef.current) {
                             if (videoRef.current.requestFullscreen) {
