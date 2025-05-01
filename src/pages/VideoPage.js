@@ -38,12 +38,14 @@ function VideoPage() {
   const [showControls, setShowControls] = useState(true);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const commentsEndRef = useRef(null);
   const progressBarRef = useRef(null);
+  const volumeControlRef = useRef(null);
   const { logout, user } = useAuth();
 
   // Custom button styles
@@ -80,7 +82,24 @@ function VideoPage() {
     logout();
   };
 
-  // Close dropdown when clicking outside
+  // Toggle volume slider visibility
+  const toggleVolumeSlider = (e) => {
+    e.stopPropagation();
+    setShowVolumeSlider(!showVolumeSlider);
+  };
+
+  // Handle volume button double click to mute/unmute
+  const handleVolumeButtonClick = (e) => {
+    if (e.detail === 2) {
+      // Double click
+      toggleMute();
+    } else {
+      // Single click
+      toggleVolumeSlider(e);
+    }
+  };
+
+  // Close volume slider when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
@@ -88,6 +107,9 @@ function VideoPage() {
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
         setMobileMenuOpen(false);
+      }
+      if (volumeControlRef.current && !volumeControlRef.current.contains(event.target)) {
+        setShowVolumeSlider(false);
       }
     };
 
@@ -1109,10 +1131,11 @@ function VideoPage() {
                       </button>
 
                       {/* Volume control */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 relative" ref={volumeControlRef}>
                         <button 
                           className="text-white hover:text-[#ED5606]"
-                          onClick={toggleMute}
+                          onClick={handleVolumeButtonClick}
+                          title={isMuted ? "Unmute (double-click)" : "Mute (double-click)"}
                         >
                           {isMuted ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -1129,6 +1152,28 @@ function VideoPage() {
                             </svg>
                           )}
                         </button>
+                        
+                        {/* Volume slider - appears when the sound button is clicked */}
+                        {showVolumeSlider && (
+                          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/90 p-2 rounded-md shadow-lg z-10 w-24">
+                            <input 
+                              type="range" 
+                              min="0" 
+                              max="1" 
+                              step="0.01" 
+                              value={volume}
+                              onChange={handleVolumeChange}
+                              className="w-full h-1 rounded-full appearance-none bg-[#333]"
+                              style={{
+                                backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
+                              }}
+                            />
+                            <div className="flex justify-between mt-1 text-[10px] text-gray-400">
+                              <span>0</span>
+                              <span>100</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Time display */}
