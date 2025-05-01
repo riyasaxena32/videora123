@@ -1151,7 +1151,7 @@ function VideoCard({ title, image, tag, id }) {
           
           {/* Dropdown menu */}
           {showOptions && (
-            <div className="absolute right-0 z-10 mt-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
+            <div className="absolute right-0 z-10 bottom-full mb-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
               <div className="py-1">
                 <button 
                   onClick={handleWatchLater}
