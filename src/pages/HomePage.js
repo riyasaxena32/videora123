@@ -1010,6 +1010,118 @@ function HomePage() {
 }
 
 function VideoCard({ title, image, tag, id }) {
+  const [showOptions, setShowOptions] = useState(false);
+  const optionsRef = useRef(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const toggleOptions = (e) => {
+    e.stopPropagation(); // Prevent card click when clicking options
+    setShowOptions(!showOptions);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleWatchLater = async (e) => {
+    e.stopPropagation();
+    
+    // Redirect to login if not authenticated
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch('https://videora-ai.onrender.com/videos/add/watch-later', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          videoId: id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add to Watch Later');
+      }
+
+      const data = await response.json();
+      console.log('Added to Watch Later:', data.message);
+      alert('Added to Watch Later');
+    } catch (err) {
+      console.error('Error adding to Watch Later:', err);
+      alert('Failed to add to Watch Later. Please try again.');
+    }
+    
+    setShowOptions(false);
+  };
+
+  const handleSaveVideo = async (e) => {
+    e.stopPropagation();
+    
+    // Redirect to login if not authenticated
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch('https://videora-ai.onrender.com/videos/saved-videos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          videoId: id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save video');
+      }
+
+      const data = await response.json();
+      console.log('Video saved:', data.message);
+      alert('Video saved');
+    } catch (err) {
+      console.error('Error saving video:', err);
+      alert('Failed to save video. Please try again.');
+    }
+    
+    setShowOptions(false);
+  };
+
   return (
     <div className="relative group cursor-pointer video-card">
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
@@ -1029,9 +1141,53 @@ function VideoCard({ title, image, tag, id }) {
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
       </div>
-      <div className="mt-2">
-        <h3 className="text-xs md:text-sm font-medium truncate">{title}</h3>
-        <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">{tag || "Unknown"}</p>
+      <div className="mt-2 flex justify-between items-start">
+        <div className="flex-1 pr-2">
+          <h3 className="text-xs md:text-sm font-medium truncate">{title}</h3>
+          <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">{tag || "Unknown"}</p>
+        </div>
+        
+        {/* Three dots menu */}
+        <div className="relative" ref={optionsRef}>
+          <button 
+            onClick={toggleOptions}
+            className="p-1 rounded-full hover:bg-[#333] transition-colors"
+            aria-label="Video options"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-more-vertical">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+          
+          {/* Dropdown menu */}
+          {showOptions && (
+            <div className="absolute right-0 z-10 mt-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
+              <div className="py-1">
+                <button 
+                  onClick={handleWatchLater}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-clock">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  Watch Later
+                </button>
+                <button 
+                  onClick={handleSaveVideo}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
+                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+                  </svg>
+                  Save Video
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
