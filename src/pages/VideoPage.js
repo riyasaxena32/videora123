@@ -1018,8 +1018,23 @@ function VideoPage() {
                   })()}
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium">{video.uploadedBy}</h3>
-                  <p className="text-xs text-gray-400">{viewCount || 0} views</p>
+                  <h3 
+                    className="text-sm font-medium cursor-pointer hover:text-[#ED5606]" 
+                    onClick={() => {
+                      const creator = apiCreators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
+                      if (creator && creator._id) {
+                        navigate(`/creator/${creator._id}`);
+                      }
+                    }}
+                  >
+                    {video.uploadedBy}
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    {(() => {
+                      const creator = apiCreators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
+                      return creator ? `${creator.followers || 0} followers` : '0 followers';
+                    })()}
+                  </p>
                 </div>
                 {video.uploadedBy && (() => {
                   // Find creator in the list to get their ID
