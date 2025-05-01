@@ -1022,8 +1022,11 @@ function VideoPage() {
                     className="text-sm font-medium cursor-pointer hover:text-[#ED5606]" 
                     onClick={() => {
                       const creator = apiCreators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
-                      if (creator && creator._id) {
-                        navigate(`/creator/${creator.id}`);
+                      if (creator) {
+                        // Use the 'id' property which is the URL-friendly name format
+                        // or create a URL-friendly version of the name if 'id' doesn't exist
+                        const creatorId = creator.id || video.uploadedBy.toLowerCase().replace(/\s+/g, '-');
+                        navigate(`/creator/${creatorId}`);
                       }
                     }}
                   >
