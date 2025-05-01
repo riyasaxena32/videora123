@@ -359,21 +359,9 @@ function WatchLater() {
             {/* Video Grid Section */}
             <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-6">
               {/* Header with Search */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <h2 className="text-xl md:text-2xl font-bold">Watch Later</h2>
-                  <Clock className="w-5 h-5 md:w-6 md:h-6 ml-2 text-[#ED5606]" />
-                </div>
-                <div className="relative max-w-md w-full">
-                  <input 
-                    type="text" 
-                    className="w-full bg-[#1a1a1a] border border-[#333] rounded-full px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-[#ED5606] pr-12"
-                    placeholder="Search watch later videos..."
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="w-4 h-4 text-[#777]" />
-                  </div>
-                </div>
+              <div className="flex items-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold">Watch Later</h2>
+                <Clock className="w-5 h-5 md:w-6 md:h-6 ml-2 text-[#ED5606]" />
               </div>
 
               {/* Video Grid */}
