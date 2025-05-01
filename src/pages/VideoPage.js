@@ -1023,7 +1023,7 @@ function VideoPage() {
                     onClick={() => {
                       const creator = apiCreators.find(c => c.name.toLowerCase() === video.uploadedBy.toLowerCase());
                       if (creator && creator._id) {
-                        navigate(`/creator/${creator._id}`);
+                        navigate(`/creator/${creator.id}`);
                       }
                     }}
                   >
