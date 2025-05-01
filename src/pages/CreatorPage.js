@@ -413,25 +413,6 @@ function CreatorPage() {
         // Try to find the creator by ID
         let foundCreator = uniqueCreators.find(c => c.id === normalizedCreatorId);
         
-        // If not found by normalized name ID, try to find by MongoDB _id in apiCreators
-        if (!foundCreator) {
-          const apiCreator = apiCreators.find(c => c._id === creatorId);
-          if (apiCreator) {
-            // Convert API creator to the format used in this component
-            const creatorVideos = videos.filter(v => v.uploadedBy?.toLowerCase() === apiCreator.name.toLowerCase());
-            foundCreator = {
-              name: apiCreator.name,
-              id: apiCreator.id || apiCreator.name.toLowerCase().replace(/\s+/g, '-'),
-              videoCount: creatorVideos.length,
-              uploadedVideos: creatorVideos,
-              thumbnailUrl: apiCreator.profilePic || '/user-avatar.png',
-              followers: apiCreator.followers,
-              _id: apiCreator._id,
-              isFollowing: apiCreator.isFollowing
-            };
-          }
-        }
-        
         // If not found, use profile for current user
         if (!foundCreator && (normalizedCreatorId === 'profile' || normalizedCreatorId === user?.name?.toLowerCase().replace(/\s+/g, '-'))) {
           // Current user's profile
@@ -793,7 +774,7 @@ function CreatorPage() {
                     onClick={(e) => {
                       e.preventDefault();
                       setActiveSidebarItem(creator.name);
-                      navigate(`/creator/${creator._id || creator.id}`);
+                      navigate(`/creator/${creator.id}`);
                       if (isMobile) {
                         setSidebarCollapsed(true);
                       }
