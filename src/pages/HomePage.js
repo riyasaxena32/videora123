@@ -828,7 +828,15 @@ function HomePage() {
                                             e.target.src = "/user-avatar.png";
                                           }}
                                         />
-                                        <span className="text-sm">{featuredVideo.uploadedBy}</span>
+                                        <button 
+                                          className="text-sm hover:text-[#ED5606] transition-colors"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/creator/${creator.id}`);
+                                          }}
+                                        >
+                                          {featuredVideo.uploadedBy}
+                                        </button>
                                         <span className="text-xs text-[#ED5606] ml-2">Top Creator</span>
                                       </>
                                     );
@@ -893,6 +901,8 @@ function HomePage() {
                               title={video.caption || video.name}
                               image={video.thumbnailLogoUrl}
                               tag={video.category + (video.tags?.length > 0 ? `/${video.tags[0]}` : '')}
+                              creator={video.uploadedBy}
+                              creatorId={video.uploadedBy ? video.uploadedBy.toLowerCase().replace(/\s+/g, '-') : ''}
                             />
                           </div>
                         ))}
@@ -997,7 +1007,7 @@ function HomePage() {
   );
 }
 
-function VideoCard({ title, image, tag, id }) {
+function VideoCard({ title, image, tag, id, creator, creatorId }) {
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef(null);
   const { user } = useAuth();
@@ -1132,6 +1142,20 @@ function VideoCard({ title, image, tag, id }) {
       <div className="mt-2 flex justify-between items-start">
         <div className="flex-1 pr-2">
           <h3 className="text-xs md:text-sm font-medium truncate">{title}</h3>
+          {creator && (
+            <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">
+              By{" "}
+              <button 
+                className="text-[#ED5606] hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/creator/${creatorId}`);
+                }}
+              >
+                {creator}
+              </button>
+            </p>
+          )}
           <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">{tag || "Unknown"}</p>
         </div>
         

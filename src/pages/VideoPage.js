@@ -32,11 +32,18 @@ function VideoPage() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentPosting, setCommentPosting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const commentsEndRef = useRef(null);
+  const progressBarRef = useRef(null);
   const { logout, user } = useAuth();
 
   // Custom button styles
@@ -318,6 +325,80 @@ function VideoPage() {
     };
   }, [videoId, apiCreators, user]);
 
+  // Function to format time in MM:SS format
+  const formatTime = (timeInSeconds) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  // Handle play/pause toggle
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+    }
+  };
+
+  // Update video progress
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
+  // Handle progress bar click
+  const handleProgressBarClick = (e) => {
+    if (videoRef.current && progressBarRef.current) {
+      const progressBar = progressBarRef.current;
+      const rect = progressBar.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / progressBar.offsetWidth;
+      videoRef.current.currentTime = pos * videoDuration;
+    }
+  };
+
+  // Update video duration when metadata is loaded
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setVideoDuration(videoRef.current.duration);
+      console.log('Video metadata loaded, duration:', videoRef.current.duration);
+    }
+  };
+
+  // Toggle mute
+  const toggleMute = () => {
+    if (videoRef.current) {
+      const newMutedState = !isMuted;
+      videoRef.current.muted = newMutedState;
+      setIsMuted(newMutedState);
+    }
+  };
+
+  // Handle volume change
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setVolume(newVolume);
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  // Show/hide controls based on mouse movement
+  const handleMouseMove = () => {
+    setShowControls(true);
+    // Add a timer to hide controls after inactivity
+    clearTimeout(window.controlsTimer);
+    window.controlsTimer = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false);
+      }
+    }, 3000);
+  };
+
   // Handle synchronized audio-video playback and view count update
   useEffect(() => {
     if (video && videoRef.current) {
@@ -327,6 +408,7 @@ function VideoPage() {
       const handleVideoPlay = () => {
         // Update view count when video starts playing
         updateViewCount();
+        setIsPlaying(true);
         
         // Handle audio sync if voice narration is available
         if (video.voiceURL && audioRef.current) {
@@ -341,6 +423,8 @@ function VideoPage() {
       
       // Function to handle video pause event
       const handleVideoPause = () => {
+        setIsPlaying(false);
+        
         // Handle audio sync if voice narration is available
         if (video.voiceURL && audioRef.current) {
           const audioElement = audioRef.current;
@@ -353,6 +437,9 @@ function VideoPage() {
       
       // Function to handle video time update
       const handleVideoTimeUpdate = () => {
+        // Update current time for progress bar
+        setCurrentTime(videoElement.currentTime);
+        
         // Keep audio in sync with video if voice narration is available
         if (video.voiceURL && audioRef.current) {
           const audioElement = audioRef.current;
@@ -917,18 +1004,20 @@ function VideoPage() {
         {/* Main Video Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Video Player */}
-          <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }}>
+          <div className="w-full bg-black relative" style={{ maxHeight: '70vh' }} onMouseMove={handleMouseMove}>
             {!loading && (video.videoURL || video.videoUrl) ? (
-              <div className="video-container" style={{ maxHeight: '70vh' }}>
+              <div className="video-container relative" style={{ maxHeight: '70vh' }}>
                 <video
                   ref={videoRef}
                   src={video.videoURL || video.videoUrl}
                   poster={video.thumbnailLogoUrl || "/image 28.png"}
-                  controls
                   className="w-full h-full object-contain"
                   style={{ maxHeight: '70vh' }}
                   playsInline
                   preload="auto"
+                  onClick={togglePlay}
+                  onLoadedMetadata={handleLoadedMetadata}
+                  onTimeUpdate={handleTimeUpdate}
                   onLoadedData={() => console.log('Video loaded successfully')}
                   onError={(e) => console.error('Video load error:', e)}
                 />
@@ -950,6 +1039,111 @@ function VideoPage() {
                     Voice Narration
                   </div>
                 )}
+
+                {/* Custom video controls */}
+                <div 
+                  className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  {/* Progress bar */}
+                  <div 
+                    className="w-full h-1 bg-[#333] rounded-full mb-3 cursor-pointer" 
+                    onClick={handleProgressBarClick}
+                    ref={progressBarRef}
+                  >
+                    <div 
+                      className="h-full bg-[#ED5606] rounded-full relative"
+                      style={{ width: `${videoDuration ? (currentTime / videoDuration) * 100 : 0}%` }}
+                    >
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#ED5606] rounded-full transform translate-x-1/2"></div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      {/* Play/Pause button */}
+                      <button 
+                        className="w-10 h-10 flex items-center justify-center text-white bg-[#ED5606] rounded-full hover:bg-[#ff6a1a] transition-colors"
+                        onClick={togglePlay}
+                      >
+                        {isPlaying ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Volume control */}
+                      <div className="flex items-center gap-2">
+                        <button 
+                          className="w-8 h-8 flex items-center justify-center text-white hover:text-[#ED5606] transition-colors"
+                          onClick={toggleMute}
+                        >
+                          {isMuted ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                              <line x1="1" y1="1" x2="23" y2="23"></line>
+                              <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                              <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+                              <line x1="12" y1="19" x2="12" y2="23"></line>
+                              <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                          )}
+                        </button>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="1" 
+                          step="0.01" 
+                          value={volume}
+                          onChange={handleVolumeChange}
+                          className="w-16 h-1 rounded-full appearance-none bg-[#333]"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
+                          }}
+                        />
+                      </div>
+
+                      {/* Time display */}
+                      <div className="text-white text-xs">
+                        {formatTime(currentTime)} / {formatTime(videoDuration)}
+                      </div>
+                    </div>
+
+                    {/* Right side controls - can add more if needed */}
+                    <div className="flex items-center">
+                      <button 
+                        className="w-8 h-8 flex items-center justify-center text-white hover:text-[#ED5606] transition-colors"
+                        onClick={() => {
+                          if (videoRef.current) {
+                            if (videoRef.current.requestFullscreen) {
+                              videoRef.current.requestFullscreen();
+                            } else if (videoRef.current.webkitRequestFullscreen) {
+                              videoRef.current.webkitRequestFullscreen();
+                            } else if (videoRef.current.msRequestFullscreen) {
+                              videoRef.current.msRequestFullscreen();
+                            }
+                          }
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                          <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                          <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                          <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                          <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center" style={{ height: '50vh' }}>
@@ -1298,6 +1492,48 @@ function VideoPage() {
           </div>
         </div>
       </div>
+      
+      {/* Custom CSS for video controls */}
+      <style jsx>{`
+        input[type="range"] {
+          -webkit-appearance: none;
+          height: 4px;
+          border-radius: 5px;
+          background: #333;
+          outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #ED5606;
+          cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #ED5606;
+          cursor: pointer;
+          border: none;
+        }
+
+        input[type="range"]::-ms-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #ED5606;
+          cursor: pointer;
+        }
+
+        .video-container {
+          cursor: pointer;
+        }
+      `}</style>
     </div>
   );
 }
