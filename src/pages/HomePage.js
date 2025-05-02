@@ -1010,6 +1010,7 @@ function HomePage() {
 function VideoCard({ title, image, tag, id, creator, creatorId }) {
   const [showOptions, setShowOptions] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isWatchLater, setIsWatchLater] = useState(false);
   const optionsRef = useRef(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -1055,6 +1056,42 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
     }
   };
 
+  // Check if video is in watch later list
+  const checkIfVideoInWatchLater = async () => {
+    if (!user || !id) return;
+
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return;
+      }
+      
+      // Fetch watch later videos
+      const response = await fetch('https://videora-ai.onrender.com/videos/get/watch-later', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const watchLaterVideos = data.watchLater || [];
+      
+      // Check if current video is in watch later list
+      const isInWatchLater = watchLaterVideos.some(video => video._id === id);
+      setIsWatchLater(isInWatchLater);
+      
+    } catch (err) {
+      console.error('Error checking watch later status:', err);
+    }
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1068,6 +1105,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
     // Check if the video is saved when component mounts
     if (user && id) {
       checkIfVideoSaved();
+      checkIfVideoInWatchLater();
     }
     
     return () => {
@@ -1105,15 +1143,16 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add to Watch Later');
+        throw new Error(errorData.error || 'Failed to update Watch Later');
       }
 
       const data = await response.json();
-      console.log('Added to Watch Later:', data.message);
-      // Success feedback could be shown with a toast notification instead of alert
+      console.log('Watch Later updated:', data.message);
+      
+      // Toggle the watch later state
+      setIsWatchLater(!isWatchLater);
     } catch (err) {
-      console.error('Error adding to Watch Later:', err);
-      // Error feedback could be shown with a toast notification instead of alert
+      console.error('Error updating Watch Later:', err);
     }
     
     setShowOptions(false);
@@ -1227,13 +1266,13 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
               <div className="py-1">
                 <button 
                   onClick={handleWatchLater}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2"
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2 ${isWatchLater ? 'text-[#ED5606]' : ''}`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-clock">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isWatchLater ? "#ED5606" : "none"} stroke={isWatchLater ? "#ED5606" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-clock">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                   </svg>
-                  Watch Later
+                  {isWatchLater ? 'Remove from Watch Later' : 'Watch Later'}
                 </button>
                 <button 
                   onClick={handleSaveVideo}
