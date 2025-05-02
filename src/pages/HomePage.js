@@ -1009,6 +1009,7 @@ function HomePage() {
 
 function VideoCard({ title, image, tag, id, creator, creatorId }) {
   const [showOptions, setShowOptions] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const optionsRef = useRef(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -1016,6 +1017,42 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
   const toggleOptions = (e) => {
     e.stopPropagation(); // Prevent card click when clicking options
     setShowOptions(!showOptions);
+  };
+
+  // Check if video is already saved
+  const checkIfVideoSaved = async () => {
+    if (!user || !id) return;
+
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return;
+      }
+      
+      // Use the correct endpoint to get saved videos
+      const response = await fetch('https://videora-ai.onrender.com/videos/get/saved-videos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const savedVideos = data.savedVideos || [];
+      
+      // Check if current video is in the saved videos list
+      const isCurrentVideoSaved = savedVideos.some(video => video._id === id);
+      setIsSaved(isCurrentVideoSaved);
+      
+    } catch (err) {
+      console.error('Error checking saved videos:', err);
+    }
   };
 
   // Close dropdown when clicking outside
@@ -1027,10 +1064,16 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    
+    // Check if the video is saved when component mounts
+    if (user && id) {
+      checkIfVideoSaved();
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [user, id]);
 
   const handleWatchLater = async (e) => {
     e.stopPropagation();
@@ -1112,6 +1155,9 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
       const data = await response.json();
       console.log('Video saved:', data.message);
       alert('Video saved');
+      
+      // Update saved state
+      setIsSaved(true);
     } catch (err) {
       console.error('Error saving video:', err);
       alert('Failed to save video. Please try again.');
@@ -1189,9 +1235,9 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
                 </button>
                 <button 
                   onClick={handleSaveVideo}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2"
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2 ${isSaved ? 'text-[#ED5606]' : ''}`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? "#ED5606" : "none"} stroke={isSaved ? "#ED5606" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
                     <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
                   </svg>
                   Save Video
@@ -1362,7 +1408,7 @@ function FilmIcon(props) {
 function FeedbackIcon(props) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
       <path d="M14 9a2 2 0 0 0-2-2H6" />
       <path d="M14 13a2 2 0 0 0-2-2H6" />
     </svg>

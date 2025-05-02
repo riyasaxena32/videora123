@@ -8,7 +8,10 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
   const [imageError, setImageError] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const optionsRef = useRef(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const handleDelete = async (e) => {
     e.stopPropagation(); // Prevent triggering the onClick of the card
@@ -58,6 +61,42 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
     setShowOptions(!showOptions);
   };
 
+  // Check if video is already saved
+  const checkIfVideoSaved = async () => {
+    if (!user || !video?._id) return;
+
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return;
+      }
+      
+      // Use the correct endpoint to get saved videos
+      const response = await fetch('https://videora-ai.onrender.com/videos/get/saved-videos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const savedVideos = data.savedVideos || [];
+      
+      // Check if current video is in the saved videos list
+      const isCurrentVideoSaved = savedVideos.some(savedVideo => savedVideo._id === video._id);
+      setIsSaved(isCurrentVideoSaved);
+      
+    } catch (err) {
+      console.error('Error checking saved videos:', err);
+    }
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,10 +106,16 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    
+    // Check if the video is saved when component mounts
+    if (user && video?._id) {
+      checkIfVideoSaved();
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [user, video?._id]);
 
   const handleWatchLater = async (e) => {
     e.stopPropagation();
@@ -140,6 +185,9 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
       const data = await response.json();
       console.log('Video saved:', data.message);
       alert('Video saved');
+      
+      // Update saved state
+      setIsSaved(true);
     } catch (err) {
       console.error('Error saving video:', err);
       alert('Failed to save video. Please try again.');
@@ -252,13 +300,28 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
                   </button>
                   <button 
                     onClick={handleSaveVideo}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2"
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2 ${isSaved ? 'text-[#ED5606]' : ''}`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? "#ED5606" : "none"} stroke={isSaved ? "#ED5606" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
                       <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
                     </svg>
                     Save Video
                   </button>
+                  {isCurrentUser && (
+                    <button 
+                      onClick={handleDelete}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2 text-red-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             )}
