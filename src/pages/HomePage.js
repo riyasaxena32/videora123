@@ -1055,7 +1055,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
     }
   };
 
-  // Close dropdown when clicking outside and check saved status
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (optionsRef.current && !optionsRef.current.contains(event.target)) {
@@ -1065,7 +1065,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
 
     document.addEventListener('mousedown', handleClickOutside);
     
-    // Check if the video is saved when component mounts or user changes
+    // Check if the video is saved when component mounts
     if (user && id) {
       checkIfVideoSaved();
     }
@@ -1238,7 +1238,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
                   className={`w-full text-left px-3 py-2 text-xs hover:bg-[#333] transition-colors flex items-center gap-2 ${isSaved ? 'text-[#ED5606]' : ''}`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? "#ED5606" : "none"} stroke={isSaved ? "#ED5606" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
-                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
                   </svg>
                   Save Video
                 </button>

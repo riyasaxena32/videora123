@@ -107,7 +107,7 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
 
     document.addEventListener('mousedown', handleClickOutside);
     
-    // Check if the video is saved when component mounts or user changes
+    // Check if the video is saved when component mounts
     if (user && video?._id) {
       checkIfVideoSaved();
     }

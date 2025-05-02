@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus, User, Bell, ChevronRight, Menu, Heart, Share, MessageSquare, ThumbsUp, LogOut, X, ArrowLeft, MoreVertical, ThumbsDown, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'react-hot-toast';
 
 function VideoPage() {
   const { videoId } = useParams();
@@ -798,19 +797,19 @@ function VideoPage() {
     }
   }, [videoId]);
 
-  // Check if the video is saved when component mounts or when user/videoId changes
-  useEffect(() => {
-    if (user && videoId) {
-      checkIfVideoSaved();
-    }
-  }, [user, videoId]);
-
-  // Function to check if video is saved
+  // Function to check if video is already saved
   const checkIfVideoSaved = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+    if (!user || !videoId) return;
 
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return;
+      }
+      
+      // Use the correct endpoint from the curl example: 'videos/get/saved-videos'
       const response = await fetch('https://videora-ai.onrender.com/videos/get/saved-videos', {
         method: 'GET',
         headers: {
@@ -834,19 +833,31 @@ function VideoPage() {
     }
   };
 
+  // Call checkIfVideoSaved when the component loads
+  useEffect(() => {
+    if (user && videoId) {
+      checkIfVideoSaved();
+    }
+  }, [user, videoId]);
+
   // Function to handle save video action
   const handleSaveVideo = async () => {
     if (!user) {
+      // Redirect to login if user is not authenticated
       navigate('/login');
       return;
     }
 
     try {
+      setSaveLoading(true);
+      // Get token from localStorage
       const token = localStorage.getItem('token');
+      
       if (!token) {
         throw new Error('No authentication token found');
       }
-
+      
+      // Use the direct endpoint from the curl example without toggle logic
       const response = await fetch('https://videora-ai.onrender.com/videos/saved-videos', {
         method: 'POST',
         headers: {
@@ -865,12 +876,18 @@ function VideoPage() {
 
       const data = await response.json();
       console.log('Video saved:', data.message);
-      // Update the UI to show the video is saved
+      
+      // Set saved state to true since we've saved it
       setIsSaved(true);
-      toast.success('Video saved successfully!');
+      
+      // Show success message
+      alert('Video saved');
+      
     } catch (err) {
       console.error('Error saving video:', err);
-      toast.error(err.message || 'Failed to save video. Please try again.');
+      alert('Failed to save video. Please try again.');
+    } finally {
+      setSaveLoading(false);
     }
   };
 
