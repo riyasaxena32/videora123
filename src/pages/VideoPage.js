@@ -809,8 +809,8 @@ function VideoPage() {
         return;
       }
       
-      // Use GET request to fetch saved videos
-      const response = await fetch('https://videora-ai.onrender.com/videos/get-saved-videos', {
+      // Use the correct endpoint from the curl example: 'videos/get/saved-videos'
+      const response = await fetch('https://videora-ai.onrender.com/videos/get/saved-videos', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -857,12 +857,8 @@ function VideoPage() {
         throw new Error('No authentication token found');
       }
       
-      // Use the correct endpoint based on whether we're saving or removing
-      const endpoint = isSaved 
-        ? 'https://videora-ai.onrender.com/videos/remove-saved-video' 
-        : 'https://videora-ai.onrender.com/videos/add-saved-video';
-      
-      const response = await fetch(endpoint, {
+      // Use the direct endpoint from the curl example without toggle logic
+      const response = await fetch('https://videora-ai.onrender.com/videos/saved-videos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -879,21 +875,17 @@ function VideoPage() {
       }
 
       const data = await response.json();
-      console.log(isSaved ? 'Video removed:' : 'Video saved:', data.message);
+      console.log('Video saved:', data.message);
       
-      // Toggle the saved state
-      setIsSaved(!isSaved);
+      // Set saved state to true since we've saved it
+      setIsSaved(true);
       
-      // Show appropriate message
-      if (!isSaved) {
-        alert('Video saved');
-      } else {
-        alert('Video removed from saved videos');
-      }
+      // Show success message
+      alert('Video saved');
       
     } catch (err) {
-      console.error('Error saving/removing video:', err);
-      alert('Failed to update saved videos. Please try again.');
+      console.error('Error saving video:', err);
+      alert('Failed to save video. Please try again.');
     } finally {
       setSaveLoading(false);
     }
