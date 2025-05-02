@@ -302,13 +302,13 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
       </div>
       {video && (
         <div className="mt-1.5 sm:mt-2 flex justify-between items-start">
-          <div className="flex-1 pr-2">
-            <h3 className="text-xs sm:text-sm font-medium truncate">{video.caption || video.name || 'Untitled'}</h3>
+          <div className="flex-1 min-w-0 pr-2">
+            <h3 className="text-xs sm:text-sm font-medium truncate max-w-full">{video.caption || video.name || 'Untitled'}</h3>
             <p className="text-xs text-[#b0b0b0] truncate">{video.views || 0} views • {formatDateAgo(video.uploadDate)}</p>
           </div>
           
           {/* Three dots menu */}
-          <div className="relative" ref={optionsRef}>
+          <div className="relative z-20 flex-shrink-0" ref={optionsRef}>
             <button 
               onClick={toggleOptions}
               className="p-1 rounded-full hover:bg-[#333] transition-colors"
@@ -323,7 +323,7 @@ function VideoCard({ video, onClick, onDelete, isCurrentUser }) {
             
             {/* Dropdown menu */}
             {showOptions && (
-              <div className="absolute right-0 z-10 bottom-full mb-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
+              <div className="absolute right-0 z-30 bottom-full mb-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
                 <div className="py-1">
                   <button 
                     onClick={handleWatchLater}
