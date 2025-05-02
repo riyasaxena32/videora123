@@ -875,17 +875,17 @@ function VideoPage() {
       }
 
       const data = await response.json();
-      console.log('Video saved:', data.message);
+      console.log('Video saved/unsaved:', data.message);
       
-      // Set saved state to true since we've saved it
-      setIsSaved(true);
+      // Toggle the saved state based on API response
+      const newSavedState = !isSaved;
+      setIsSaved(newSavedState);
       
-      // Show success message
-      alert('Video saved');
+      // No alert dialog - could use a toast notification instead
       
     } catch (err) {
-      console.error('Error saving video:', err);
-      alert('Failed to save video. Please try again.');
+      console.error('Error updating saved video:', err);
+      // No alert dialog - could use a toast notification instead
     } finally {
       setSaveLoading(false);
     }
@@ -1450,7 +1450,7 @@ function VideoPage() {
                       <path d="M19 21L12 17L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke={isSaved ? "#ED5606" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <span className="text-xs mr-1">{saveLoading ? 'Saving...' : (isSaved ? 'Saved' : 'Save')}</span>
+                  <span className="text-xs mr-1">{saveLoading ? 'Saving...' : (isSaved ? 'Unsave' : 'Save')}</span>
                 </button>
               </div>
             </div>

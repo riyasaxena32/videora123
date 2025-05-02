@@ -1110,10 +1110,10 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
 
       const data = await response.json();
       console.log('Added to Watch Later:', data.message);
-      alert('Added to Watch Later');
+      // Success feedback could be shown with a toast notification instead of alert
     } catch (err) {
       console.error('Error adding to Watch Later:', err);
-      alert('Failed to add to Watch Later. Please try again.');
+      // Error feedback could be shown with a toast notification instead of alert
     }
     
     setShowOptions(false);
@@ -1153,14 +1153,16 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
       }
 
       const data = await response.json();
-      console.log('Video saved:', data.message);
-      alert('Video saved');
+      console.log('Video saved/unsaved:', data.message);
       
-      // Update saved state
-      setIsSaved(true);
+      // Toggle the saved state
+      const newSavedState = !isSaved;
+      setIsSaved(newSavedState);
+      
+      // No alert - could use a toast notification instead
     } catch (err) {
-      console.error('Error saving video:', err);
-      alert('Failed to save video. Please try again.');
+      console.error('Error saving/unsaving video:', err);
+      // No alert - could use a toast notification instead
     }
     
     setShowOptions(false);
@@ -1240,7 +1242,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? "#ED5606" : "none"} stroke={isSaved ? "#ED5606" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark">
                     <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
                   </svg>
-                  Save Video
+                  {isSaved ? 'Unsave Video' : 'Save Video'}
                 </button>
               </div>
             </div>
