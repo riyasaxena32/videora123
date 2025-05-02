@@ -40,6 +40,7 @@ function VideoPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -796,6 +797,48 @@ function VideoPage() {
     }
   }, [videoId]);
 
+  // Function to check if video is already saved
+  const checkIfVideoSaved = async () => {
+    if (!user || !videoId) return;
+
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return;
+      }
+      
+      const response = await fetch('https://videora-ai.onrender.com/videos/saved-videos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const savedVideos = data.savedVideos || [];
+      
+      // Check if current video is in the saved videos list
+      const isCurrentVideoSaved = savedVideos.some(video => video._id === videoId);
+      setIsSaved(isCurrentVideoSaved);
+      
+    } catch (err) {
+      console.error('Error checking saved videos:', err);
+    }
+  };
+
+  // Call checkIfVideoSaved when the component loads
+  useEffect(() => {
+    if (user && videoId) {
+      checkIfVideoSaved();
+    }
+  }, [user, videoId]);
+
   // Function to handle save video action
   const handleSaveVideo = async () => {
     if (!user) {
@@ -831,7 +874,17 @@ function VideoPage() {
 
       const data = await response.json();
       console.log('Video saved:', data.message);
-      alert('Video saved');
+      
+      // Toggle the saved state
+      setIsSaved(prev => !prev);
+      
+      // Show appropriate message
+      if (!isSaved) {
+        alert('Video saved');
+      } else {
+        alert('Video removed from saved videos');
+      }
+      
     } catch (err) {
       console.error('Error saving video:', err);
       alert('Failed to save video. Please try again.');
@@ -1388,16 +1441,16 @@ function VideoPage() {
                   <span className="text-xs mr-1">Share</span>
                 </button>
                 <button 
-                  className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1 whitespace-nowrap"
+                  className={`bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1 whitespace-nowrap ${isSaved ? 'bg-[#270E00] text-[#ED5606] border border-[#ED5606]' : ''}`}
                   onClick={handleSaveVideo}
                   disabled={saveLoading}
                 >
                   <div className="w-4 h-4 flex items-center justify-center">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19 21L12 17L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? "#ED5606" : "none"} xmlns="http://www.w3.org/2000/svg">
+                      <path d="M19 21L12 17L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke={isSaved ? "#ED5606" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <span className="text-xs mr-1">{saveLoading ? 'Saving...' : 'Save'}</span>
+                  <span className="text-xs mr-1">{saveLoading ? 'Saving...' : (isSaved ? 'Saved' : 'Save')}</span>
                 </button>
               </div>
             </div>
