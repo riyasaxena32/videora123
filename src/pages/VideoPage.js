@@ -90,7 +90,7 @@ function VideoPage() {
     setShowVolumeSlider(!showVolumeSlider);
   };
 
-  // Handle volume button double click to mute/unmute
+  // Remove the hover behavior - only show volume slider on click
   const handleVolumeButtonClick = (e) => {
     if (e.detail === 2) {
       // Double click
@@ -1226,11 +1226,11 @@ function VideoPage() {
                         </svg>
                       </button>
 
-                      {/* Volume control */}
+                      {/* Volume control - modified to prevent showing slider on hover */}
                       <div className="flex items-center gap-2 relative" ref={volumeControlRef}>
                         <button 
                           className="text-white hover:text-[#ED5606]"
-                          onClick={toggleMute}
+                          onClick={handleVolumeButtonClick}
                           title={isMuted ? "Unmute" : "Mute"}
                         >
                           {isMuted ? (
@@ -1247,19 +1247,21 @@ function VideoPage() {
                           )}
                         </button>
                         
-                        {/* Inline volume slider */}
-                        <input 
-                          type="range" 
-                          min="0" 
-                          max="1" 
-                          step="0.01" 
-                          value={volume}
-                          onChange={handleVolumeChange}
-                          className="w-16 h-1 rounded-full appearance-none bg-[#333]"
-                          style={{
-                            backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
-                          }}
-                        />
+                        {/* Inline volume slider - only visible when showVolumeSlider is true */}
+                        {showVolumeSlider && (
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="1" 
+                            step="0.01" 
+                            value={volume}
+                            onChange={handleVolumeChange}
+                            className="w-16 h-1 rounded-full appearance-none bg-[#333]"
+                            style={{
+                              backgroundImage: `linear-gradient(to right, #ED5606 0%, #ED5606 ${volume * 100}%, #333 ${volume * 100}%, #333 100%)`
+                            }}
+                          />
+                        )}
                       </div>
 
                       {/* Time display */}
