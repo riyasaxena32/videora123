@@ -39,6 +39,7 @@ function VideoPage() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const profileDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const videoRef = useRef(null);
@@ -795,6 +796,50 @@ function VideoPage() {
     }
   }, [videoId]);
 
+  // Function to handle save video action
+  const handleSaveVideo = async () => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setSaveLoading(true);
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch('https://videora-ai.onrender.com/videos/saved-videos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          videoId: videoId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save video');
+      }
+
+      const data = await response.json();
+      console.log('Video saved:', data.message);
+      alert('Video saved');
+    } catch (err) {
+      console.error('Error saving video:', err);
+      alert('Failed to save video. Please try again.');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -1342,13 +1387,17 @@ function VideoPage() {
                   <Share className="w-4 h-4" />
                   <span className="text-xs mr-1">Share</span>
                 </button>
-                <button className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1 whitespace-nowrap">
+                <button 
+                  className="bg-[#1c1c1c] hover:bg-[#222] text-white rounded-full p-2 flex items-center gap-1 whitespace-nowrap"
+                  onClick={handleSaveVideo}
+                  disabled={saveLoading}
+                >
                   <div className="w-4 h-4 flex items-center justify-center">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M19 21L12 17L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <span className="text-xs mr-1">Save</span>
+                  <span className="text-xs mr-1">{saveLoading ? 'Saving...' : 'Save'}</span>
                 </button>
               </div>
             </div>
