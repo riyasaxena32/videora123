@@ -1228,24 +1228,44 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
         </div>
         {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-12"></div>
-
-        {/* Move three dots menu to overlay for consistent visibility */}
-        <div className="absolute top-2 left-2 z-40" ref={optionsRef}>
+      </div>
+      <div className="mt-2 flex justify-between items-start">
+        <div className="flex-1 min-w-0 pr-2">
+          <h3 className="text-xs md:text-sm font-medium truncate max-w-full">{title}</h3>
+          {creator && (
+            <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">
+              By{" "}
+              <button 
+                className="text-[#ED5606] hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/creator/${creatorId}`);
+                }}
+              >
+                {creator}
+              </button>
+            </p>
+          )}
+          <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">{tag || "Unknown"}</p>
+        </div>
+        
+        {/* Three dots menu */}
+        <div className="relative z-20 flex-shrink-0" ref={optionsRef}>
           <button 
             onClick={toggleOptions}
-            className="p-1.5 rounded-full bg-black/70 hover:bg-black/90 transition-colors"
+            className="p-1 rounded-full hover:bg-[#333] transition-colors"
             aria-label="Video options"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-more-vertical">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-more-vertical">
               <circle cx="12" cy="12" r="1"></circle>
               <circle cx="12" cy="5" r="1"></circle>
               <circle cx="12" cy="19" r="1"></circle>
             </svg>
           </button>
           
-          {/* Dropdown menu - positioned to the right instead of up */}
+          {/* Dropdown menu */}
           {showOptions && (
-            <div className="fixed sm:absolute left-0 sm:left-auto sm:right-0 top-10 z-50 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
+            <div className="absolute right-0 z-30 bottom-full mb-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
               <div className="py-1">
                 <button 
                   onClick={handleWatchLater}
@@ -1269,26 +1289,6 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
               </div>
             </div>
           )}
-        </div>
-      </div>
-      <div className="mt-2 flex justify-between items-start">
-        <div className="flex-1 pr-2">
-          <h3 className="text-xs md:text-sm font-medium truncate">{title}</h3>
-          {creator && (
-            <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">
-              By{" "}
-              <button 
-                className="text-[#ED5606] hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/creator/${creatorId}`);
-                }}
-              >
-                {creator}
-              </button>
-            </p>
-          )}
-          <p className="text-[10px] md:text-xs text-[#b0b0b0] truncate">{tag || "Unknown"}</p>
         </div>
       </div>
     </div>
