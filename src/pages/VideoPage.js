@@ -196,10 +196,23 @@ function VideoPage() {
 
   // Function to update view count
   const updateViewCount = async () => {
-    // Only update view count once per video session
+    // Only update view count once per video
     if (viewUpdated || !videoId) return;
 
     try {
+      // Create a unique storage key for each user (or use 'guest' for non-logged in users)
+      const userKey = user ? `viewedVideos_${user._id}` : 'viewedVideos_guest';
+      
+      // Get the user's viewed videos from localStorage
+      const viewedVideos = JSON.parse(localStorage.getItem(userKey) || '[]');
+      
+      // If this video ID exists in the viewed videos array, don't increment view count
+      if (viewedVideos.includes(videoId)) {
+        console.log('Video already viewed by this user, not updating view count');
+        setViewUpdated(true);
+        return;
+      }
+
       const response = await fetch(`https://videora-ai.onrender.com/api/videos/${videoId}/views`, {
         method: 'PUT',
         headers: {
@@ -217,8 +230,14 @@ function VideoPage() {
       
       // Update view count in state
       setViewCount(data.views || (viewCount + 1));
+      
       // Mark as updated so we don't call the API again
       setViewUpdated(true);
+      
+      // Add this video ID to the viewed videos in localStorage for this user
+      viewedVideos.push(videoId);
+      localStorage.setItem(userKey, JSON.stringify(viewedVideos));
+      
     } catch (err) {
       console.error('Error updating view count:', err);
     }
@@ -259,8 +278,14 @@ function VideoPage() {
         
         // Set view count
         setViewCount(foundVideo.views || 0);
-        // Reset view updated flag when a new video is loaded
-        setViewUpdated(false);
+        
+        // Check if this video has already been viewed by this user
+        const userKey = user ? `viewedVideos_${user._id}` : 'viewedVideos_guest';
+        const viewedVideos = JSON.parse(localStorage.getItem(userKey) || '[]');
+        const alreadyViewed = viewedVideos.includes(videoId);
+        
+        // Only reset view updated flag when the video hasn't been viewed yet by this user
+        setViewUpdated(alreadyViewed);
         
         // Set video likes/dislikes counts from TotalLike and TotalDislike fields
         setVideoLikes(foundVideo.TotalLike || 0);
@@ -431,7 +456,11 @@ function VideoPage() {
       // Function to handle video play event
       const handleVideoPlay = () => {
         // Update view count when video starts playing
-        updateViewCount();
+        // Only update view count if not already updated in this session
+        if (!viewUpdated) {
+          updateViewCount();
+        }
+        
         setIsPlaying(true);
         
         // Handle audio sync if voice narration is available
@@ -890,6 +919,19 @@ function VideoPage() {
       setSaveLoading(false);
     }
   };
+
+  // Recheck viewed status when user changes (login/logout)
+  useEffect(() => {
+    if (videoId && video) {
+      // Check if this video has already been viewed by this user
+      const userKey = user ? `viewedVideos_${user._id}` : 'viewedVideos_guest';
+      const viewedVideos = JSON.parse(localStorage.getItem(userKey) || '[]');
+      const alreadyViewed = viewedVideos.includes(videoId);
+      
+      // Update view status based on the user's history
+      setViewUpdated(alreadyViewed);
+    }
+  }, [user, videoId, video]);
 
   if (loading) {
     return (

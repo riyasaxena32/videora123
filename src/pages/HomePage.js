@@ -1017,6 +1017,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
 
   const toggleOptions = (e) => {
     e.stopPropagation(); // Prevent card click when clicking options
+    e.preventDefault(); // Add this to prevent any default behavior
     setShowOptions(!showOptions);
   };
 
@@ -1115,6 +1116,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
 
   const handleWatchLater = async (e) => {
     e.stopPropagation();
+    e.preventDefault(); // Add this to prevent any default behavior
     
     // Redirect to login if not authenticated
     if (!user) {
@@ -1160,6 +1162,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
 
   const handleSaveVideo = async (e) => {
     e.stopPropagation();
+    e.preventDefault(); // Add this to prevent any default behavior
     
     // Redirect to login if not authenticated
     if (!user) {
@@ -1208,7 +1211,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
   };
 
   return (
-    <div className="relative group cursor-pointer video-card">
+    <div className="relative group cursor-pointer video-card" onClick={() => navigate(`/video/${id}`)}>
       <div className="overflow-hidden rounded-md aspect-video bg-[#1a1a1a]">
         <img 
           src={image || "/image 28.png"} 
@@ -1247,7 +1250,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
         </div>
         
         {/* Three dots menu */}
-        <div className="relative" ref={optionsRef}>
+        <div className="relative z-20" ref={optionsRef}>
           <button 
             onClick={toggleOptions}
             className="p-1 rounded-full hover:bg-[#333] transition-colors"
@@ -1262,7 +1265,7 @@ function VideoCard({ title, image, tag, id, creator, creatorId }) {
           
           {/* Dropdown menu */}
           {showOptions && (
-            <div className="absolute right-0 z-10 bottom-full mb-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
+            <div className="absolute right-0 z-30 bottom-full mb-1 w-40 bg-[#1A1A1A] border border-[#333] rounded-md shadow-lg overflow-hidden">
               <div className="py-1">
                 <button 
                   onClick={handleWatchLater}
