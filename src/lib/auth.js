@@ -2,7 +2,7 @@
 
 // Use consistent redirect URLs across the application
 const API_URL = 'https://videora-ai.onrender.com';
-const REDIRECT_URI = 'https://videora123.vercel.app/auth/google/callback';
+const REDIRECT_URI = 'https://videora-frontend.vercel.app/auth/google/callback';
 const CLIENT_ID = '1035965460197-fingmcmt79qnhidf5j3iiubdb7ge2tas.apps.googleusercontent.com';
 
 /**
